@@ -1,4 +1,4 @@
-# Automated-MultiLingual-Complaint-System
+# Automated-BiltiLingual-Complaint-System
 
 ## Project Overview
 An automated system handles multilingual bank complaints. It classifies complaints and routes them to the correct department and agent. This improves resolution time and enhances customer satisfaction.
