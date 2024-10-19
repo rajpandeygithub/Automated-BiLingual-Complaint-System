@@ -16,7 +16,7 @@ Key features include:
 
 ### Clone the Repository:
 ```bash
-git clone https://github.com/yourusername/Automated-BiLingual-Complaint-System.git
+git clone https://github.com/rajpandeygithub/Automated-BiLingual-Complaint-System.git
 cd Automated-BiLingual-Complaint-System
 ```
 
