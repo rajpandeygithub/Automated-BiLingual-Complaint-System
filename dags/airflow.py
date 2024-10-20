@@ -1,7 +1,7 @@
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
 from datetime import datetime, timedelta
-from scripts.preprocessing import data_cleaning  # Importing the function from preprocessing.py
+from scripts.preprocessing import data_cleaning, remove_abusive_data  # Importing the functions from preprocessing.py
 
 # Default arguments for the DAG
 default_args = {
@@ -23,12 +23,19 @@ with DAG(
     catchup=False,
 ) as dag:
 
-    # Task to process data
+    # Task 1: Data Cleaning Task
     data_cleaning_task = PythonOperator(
         task_id='datacleaning_process',
-        python_callable=data_cleaning,  # Reference the process_data function
+        python_callable=data_cleaning,  # Reference the data_cleaning function
         provide_context=True,
     )
 
-    # Task dependencies 
-    data_cleaning_task
+    # Task 2: Remove Abusive Data Task
+    remove_abusive_task = PythonOperator(
+        task_id='remove_abusive_data_task',
+        python_callable=remove_abusive_data,  # Reference the remove_abusive_data function
+        provide_context=True,
+    )
+
+    # Set task dependencies: remove_abusive_task runs after data_cleaning_task
+    data_cleaning_task >> remove_abusive_task
