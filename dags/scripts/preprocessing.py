@@ -1,6 +1,8 @@
 # preprocessing.py
-import pandas as pd
 import os
+import re
+import pandas as pd
+
 
 def deduplicate_records(df):
     """Remove duplicate records based on specific columns."""
@@ -61,3 +63,7 @@ def remove_abusive_data(**kwargs):
     df.to_csv(output_path, index=False)
 
     print(f"Data after removing abusive content has been saved to {output_path}")
+
+def remove_special_characters(text: str) -> str:
+    cleaned_text = re.sub(r'[^A-Za-z0-9\s]', '', text)
+    return cleaned_text

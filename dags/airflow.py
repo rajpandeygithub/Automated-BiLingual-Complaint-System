@@ -1,7 +1,7 @@
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
 from datetime import datetime, timedelta
-from scripts.preprocessing import data_cleaning, remove_abusive_data  # Importing the functions from preprocessing.py
+from scripts.preprocessing import data_cleaning, remove_abusive_data, remove_special_characters  # Importing the functions from preprocessing.py
 
 # Default arguments for the DAG
 default_args = {
@@ -30,7 +30,14 @@ with DAG(
         provide_context=True,
     )
 
-    # Task 2: Remove Abusive Data Task
+    # Task 2: Remove Special Characters Task
+    remove_special_characters_task = PythonOperator(
+        task_id='remove_special_characters',
+        python_callable=remove_special_characters,
+        provide_context=True,
+    )
+
+    # Task 3: Remove Abusive Data Task
     remove_abusive_task = PythonOperator(
         task_id='remove_abusive_data_task',
         python_callable=remove_abusive_data,  # Reference the remove_abusive_data function
@@ -38,4 +45,4 @@ with DAG(
     )
 
     # Set task dependencies: remove_abusive_task runs after data_cleaning_task
-    data_cleaning_task >> remove_abusive_task
+    data_cleaning_task >> remove_abusive_task >> remove_abusive_task
