@@ -1,69 +1,171 @@
-# preprocessing.py
 import os
 import re
-import pandas as pd
+import io
+import logging
+import polars as pl
+from lingua import Language, LanguageDetectorBuilder
+from rbloom import Bloom
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
+logging.basicConfig(
+    filename='preprocessinglog.txt',
+    level=logging.INFO,
+    filemode='a'
+    )
 
-def deduplicate_records(df):
-    """Remove duplicate records based on specific columns."""
-    deduped_df = df.drop_duplicates(subset=['Product', 'Sub-product', 'Consumer complaint narrative'], keep='first')
-    return deduped_df
+def data_loading() -> str:
+    data_path = os.path.join(os.path.dirname(__file__), "../../data/JPMORGAN_CHASE_COMPLAINTS.csv")
+    try:
+        # Serialize and return the loaded dataset
+        dataset = pl.read_csv(data_path).serialize(format='json')
+        logging.info('dataset loading complete!')
+        return dataset
+    except Exception as e:
+        print(f'Exception:\n{e}')
+        raise("Error With Dataset Loading")
 
-def remove_null_records(df, columns):
-    """Remove rows where any of the specified columns have null values."""
-    cleaned_df = df.dropna(subset=columns)
-    return cleaned_df
+def minimum_word_check(
+        dataset: str,
+        min_word_length: int
+        ) -> str:
+    # Deserialize the dataset and filter out the records that don't match minimum word length
+    dataset = pl.DataFrame.deserialize(io.StringIO(dataset), format='json')
+    # Filtering based on Number of words
+    dataset = dataset.with_columns(
+        num_words = pl.col('Consumer complaint narrative').str.split(' ').list.len()
+        ).filter(
+            pl.col('num_words') > min_word_length
+            )
+    logging.info('Min word check complete!')
+    # Serialize and return dataset
+    return dataset.serialize(format='json')
 
-def data_cleaning(**kwargs):
-    """Main data cleaning function that deduplicates and removes null records."""
-    file_path = os.path.join(os.path.dirname(__file__), "../../data/JPMORGAN_CHASE_COMPLAINTS.csv")
+def detect_language(
+    dataset: str
+    ) -> str:
+    
+    # Deserialize the dataset and filter out the records that don't meet the language criteria
+    dataset = pl.DataFrame.deserialize(io.StringIO(dataset), format='json')
+    
+    # Setup language detector
+    languages = list(Language.all_spoken_ones())
+    detector = LanguageDetectorBuilder.from_languages(*languages).build()
 
-    # Read the CSV file
-    df = pd.read_csv(file_path)
+    # Multi-threading the language detection task
+    language_detected = []
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        # Submit tasks to the thread pool
+        future_to_sentence = {executor.submit(detector.detect_language_of, sentence): sentence for sentence in dataset['Consumer complaint narrative'].to_list()}
+
+        # Collect the results as they complete
+        for future in as_completed(future_to_sentence):
+            language_detected.append(future.result())
+
+    language_detected = [item.iso_code_639_1.name for item in language_detected]
+    # Adding and filtering based on language column
+    dataset.with_columns(
+        pl.Series(name='language', values=language_detected)
+    ).filter(
+        pl.col('language').is_in(['HI', 'EN'])
+    ).drop(['language'])
+
+    logging.info('Language detection complete!')
+    # Serialize and return dataset
+    return dataset.serialize(format='json')
+
+def aggregate_filtered_task(
+        dataset_a: str,
+        dataset_b: str,
+        ) -> None:
+    
+    output_path = os.path.join(os.path.dirname(__file__), "../../data/PREPROCESSED_JPMORGAN_CHASE_COMPLAINTS.parquet")
+
+    # Deserialize Set A and Set B and Join them based on their company id
+    dataset_a = pl.DataFrame.deserialize(io.StringIO(dataset_a), format='json')
+    dataset_b = pl.DataFrame.deserialize(io.StringIO(dataset_b), format='json')
+    # Dont select additional columns
+    dataset_joined = dataset_a.join(dataset_b, on='Complaint ID', how='inner').select(['Date received','Product','Sub-product','Issue','Sub-issue','Consumer complaint narrative','Company public response','Company', 'State','ZIP code','Tags','Consumer consent provided?','Submitted via','Date sent to company','Company response to consumer','Timely response?','Consumer disputed?','Complaint ID','Department',])
+    # Write the output to the output file
+    dataset_joined.write_parquet(output_path, compression='gzip')
+
+def data_cleaning() -> str:
+    # Read the Dataset processed from other DAG
+    datapath = os.path.join(os.path.dirname(__file__), "../../data/PREPROCESSED_JPMORGAN_CHASE_COMPLAINTS.parquet")
+    dataset = pl.read_parquet(datapath)
+
+    # Lowercase complaints
+    dataset = dataset.with_columns(
+        pl.col('Consumer complaint narrative').str.to_lowercase().alias('Consumer complaint narrative')
+    )
 
     # Deduplicate the records
-    deduped_df = deduplicate_records(df)
+    dataset = dataset.unique(subset=['Product', 'Sub-product', 'Consumer complaint narrative'], maintain_order=True)
+    
+    # Drop Nulls
+    dataset = dataset.drop_nulls(subset=['Product', 'Sub-product', 'Department', 'Consumer complaint narrative'])
 
-    # Remove rows where specific columns have null values
-    columns_to_check = ['Product', 'Sub-product', 'Department', 'Consumer complaint narrative']
-    cleaned_df = remove_null_records(deduped_df, columns_to_check)
+    # Serialize and return dataset
+    return dataset.serialize(format='json')
 
-    # Push the cleaned data to XCom for the next task to use
-    return cleaned_df.to_dict()
 
-def remove_abusive_data(**kwargs):
-    """Remove abusive words from the 'Consumer complaint narrative' and save the cleaned data."""
-    # Get the data from the previous task via XCom
-    task_instance = kwargs['ti']
-    df_dict = task_instance.xcom_pull(task_ids='datacleaning_process')
+def remove_special_characters(dataset: str) -> str:
+    # Deserialize dataset
+    dataset = pl.DataFrame.deserialize(io.StringIO(dataset), format='json')
+    # Removing Special Characters
+    dataset = dataset.with_columns(
+        pl.col('Consumer complaint narrative').map_elements(lambda x: re.sub(r'[^A-Za-z0-9\s]', '', x), return_dtype=pl.Utf8).alias('Consumer complaint narrative')
+    )
+    # Serialize and return dataset
+    return dataset.serialize(format='json')
 
-    if df_dict is None:
-        raise ValueError("No data found from the previous task.")
 
-    # Convert the dictionary back to a DataFrame
-    df = pd.DataFrame(df_dict)
+def remove_abusive_data(
+        dataset: str,
+        abuse_placeholder: str = 'yyy'
+        ) -> str:
+    # Deserialize dataset
+    dataset = pl.DataFrame.deserialize(io.StringIO(dataset), format='json')
+    # Set Output Path
+    output_path = os.path.join(os.path.dirname(__file__), "../../data/PREPROCESSED_JPMORGAN_CHASE_COMPLAINTS.parquet")
+
+    # Setup Bloom Filter
+    profane_set = set()
+    profanity_bloom = Bloom(200_000, 0.01)
 
     # Load abusive words
     abusive_words_path = os.path.join(os.path.dirname(__file__), "../../data/profanity_bank_dataset.csv")
-    abusive_words_df = pd.read_csv(abusive_words_path)
-    abusive_words = abusive_words_df['Profanity'].dropna().tolist()
-    abusive_words_set = set([word.lower() for word in abusive_words if word.strip()])
+    abusive_words = pl.read_csv(abusive_words_path).with_columns(
+        pl.col('Profanity').str.to_lowercase()
+        ).filter(
+            pl.col('Profanity').is_not_null()
+            )['Profanity'].to_list()
 
-    def clean_text(input_text):
-        """Clean a single text input by replacing abusive words with 'yyy'."""
-        words = input_text.split()
-        cleaned_words = ['yyy' if word.lower() in abusive_words_set else word for word in words]
-        return ' '.join(cleaned_words)
+    for item in abusive_words:
+        profanity_bloom.add(item)
+        profane_set.add(item)
+    
+    # Tokenize Complaints
+    tokenized_complaints = dataset.with_columns(
+        pl.col('Consumer complaint narrative').str.split(' ')
+    )['Consumer complaint narrative'].to_list()
 
-    # Clean the 'Consumer complaint narrative' column in the DataFrame
-    df['Consumer complaint narrative'] = df['Consumer complaint narrative'].apply(clean_text)
+    # Remove abusive words
+    cleaned_records = []
+    for idx, record in enumerate(tokenized_complaints):
+        clean_record = []
+        for w in record:
+            if w not in profanity_bloom:
+                clean_record.append(w)
+            # The 10% error case or the token is actually a profane word
+            elif w in profane_set:
+                clean_record.append(abuse_placeholder)
+            else:
+                clean_record.append(w)
+        
+        cleaned_records.append(" ".join(clean_record))
 
-    # Save the cleaned data to a new file
-    output_path = os.path.join(os.path.dirname(__file__), "../../data/PREPROCESSED_JPMORGAN_CHASE_COMPLAINTS.csv")
-    df.to_csv(output_path, index=False)
-
-    print(f"Data after removing abusive content has been saved to {output_path}")
-
-def remove_special_characters(text: str) -> str:
-    cleaned_text = re.sub(r'[^A-Za-z0-9\s]', '', text)
-    return cleaned_text
+    dataset.with_columns(
+        pl.Series(name='abuse_free_complaints', values=cleaned_records)
+    )
+    # Save the processed results to output path
+    dataset.write_parquet(output_path, compression='gzip')
