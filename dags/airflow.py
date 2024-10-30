@@ -1,5 +1,6 @@
 import logging
 from airflow import DAG
+from airflow.utils.db import provide_session
 from airflow.operators.python_operator import PythonOperator
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from datetime import datetime, timedelta
@@ -25,15 +26,14 @@ default_args = {
 }
 
 # Define the function to clear XComs
-def clear_xcom(context):
-    dag_id = context['dag'].dag_id
-    execution_date = context['execution_date']
-    session = context['session']
+@provide_session
+def clear_xcom(context, session=None):
+    dag_id = context['ti']['dag']
+    execution_date = context['ti']['execution_date']
     session.query(XCom).filter(
         XCom.dag_id == dag_id,
         XCom.execution_date == execution_date
     ).delete()
-    session.commit()
 
 MIN_WORD: int = 5
 
@@ -91,6 +91,7 @@ with DAG(
     schedule_interval=timedelta(days=1),
     start_date=datetime(2024, 10, 17),
     catchup=False,
+    on_success_callback=clear_xcom,
 ) as dag:
 
     # Task 1: Data Cleaning
@@ -105,13 +106,6 @@ with DAG(
         task_id="remove_abusive_data_task",
         python_callable=remove_abusive_data,
         op_args=[data_cleaning_task.output],
-    )
-
-    # Task 4: Clean up all XComs
-    clear_xcom_task = PythonOperator(
-        task_id='clear_xcoms',
-        python_callable=clear_xcom,
-        provide_context=True,
     )
 
 
