@@ -229,9 +229,7 @@ def remove_abusive_data(dataset: str, abuse_placeholder: str = "yyy") -> str:
     profanity_bloom = Bloom(200_000, 0.01)
 
     # Load abusive words
-    abusive_words = (
-        pl.read_parquet(abusive_words_path)["profanity"].to_list()
-    )
+    abusive_words = pl.read_parquet(abusive_words_path)["profanity"].to_list()
 
     for word in abusive_words:
         profanity_bloom.add(word)

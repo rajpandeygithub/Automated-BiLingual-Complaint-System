@@ -41,23 +41,27 @@ with DAG(
         task_id="load_data",
         python_callable=load_data,
     )
-    # Task 2: Removing records with less than 5 words
-    minimum_words_filter = PythonOperator(
-        task_id="remove_records_with_minimum_words",
-        python_callable=filter_records_by_word_count,
-        op_args=[data_loading_task.output, MIN_WORD],
-    )
-    # Task 3: Detect language and remove un-recognized language
-    language_filter = PythonOperator(
-        task_id="detect_language",
-        python_callable=filter_records_by_language,
-        op_args=[minimum_words_filter.output],
-    )
+
+    # Task 2 & 3: Parallel Data Processing
+    # - Remove records with less than MIN_WORD words & Detect language and remove un-recognized language
+    filter_parallel_tasks = [
+        PythonOperator(
+            task_id="remove_records_with_minimum_words",
+            python_callable=filter_records_by_word_count,
+            op_args=[data_loading_task.output, MIN_WORD],
+        ),
+        PythonOperator(
+            task_id="detect_language",
+            python_callable=filter_records_by_language,
+            op_args=[data_loading_task.output],
+        ),
+    ]
+
     # Task 4: Aggregate results from Task 2 & Task 3
     aggregate_parallel_tasks = PythonOperator(
         task_id="validation_aggregation",
         python_callable=aggregate_filtered_task,
-        op_args=[minimum_words_filter.output, language_filter.output],
+        op_args=[filter_parallel_tasks[0].output, filter_parallel_tasks[1].output],
         provide_context=True,
     )
     # Task 5: Trigger Data Cleaning DAG
@@ -101,7 +105,7 @@ with DAG(
 
 (
     data_loading_task
-    >> [language_filter, minimum_words_filter]
+    >> filter_parallel_tasks
     >> aggregate_parallel_tasks
     >> trigger_data_cleaning_dag_task
 )
