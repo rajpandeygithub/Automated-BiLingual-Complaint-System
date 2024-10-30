@@ -10,7 +10,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 logging.basicConfig(filename="preprocessinglog.txt", level=logging.INFO, filemode="a")
 
 
-
 def load_data() -> str:
     """
     Load the JPMorgan Chase complaints dataset in Parquet format.
@@ -28,7 +27,7 @@ def load_data() -> str:
         raise Exception("Error With Dataset Loading")
 
 
-def filter_records_by_word_count(dataset: str, min_word_length: int) -> str:
+def filter_records_by_word_count_and_date(dataset: str, min_word_length: int) -> str:
     """
     Remove records from the dataset that do not meet the minimum word count
     in the 'complaint' column.
@@ -44,9 +43,15 @@ def filter_records_by_word_count(dataset: str, min_word_length: int) -> str:
 
     # Filter records based on the minimum word count and remove the count column
     dataset = (
-        dataset.with_columns(num_words=pl.col("complaint").str.split(" ").list.len())
-        .filter(pl.col("num_words") > min_word_length)
-        .drop("num_words")
+    dataset
+    .with_columns(num_words=pl.col("complaint").str.split(" ").arr.lengths())
+    .filter(pl.col("num_words") > min_word_length)
+    .drop("num_words")
+    .with_columns(pl.col("date_received").str.strptime(pl.Date, "%Y-%m-%d").alias("date_received"))
+    .filter(
+        (pl.col("date_received") >= pl.date("2020-01-01")) &
+        (pl.col("date_received") <= pl.date("2023-12-31"))
+        )
     )
 
     # Serialize and return the filtered dataset
@@ -243,27 +248,4 @@ def remove_abusive_data(dataset: str, abuse_placeholder: str = "yyy") -> str:
     dataset.write_parquet(output_path)
 
     # Return the serialized dataset
-    return dataset.serialize(format="json")
-
-def filter_outdated_records(dataset: str, start_date: str, end_date: str) -> str:
-    """
-    Filter records with 'date_received' outside the specified date range.
-
-    Args:
-        dataset (str): Serialized dataset in JSON format containing records with a 'date_received' field.
-        start_date (str): The earliest allowable date in "YYYY-MM-DD" format.
-        end_date (str): The latest allowable date in "YYYY-MM-DD" format.
-
-    Returns:
-        str: Serialized dataset in JSON format, with only records within the specified date range.
-    """
-    # Deserialize the dataset to a Polars DataFrame
-    dataset = pl.DataFrame.deserialize(io.StringIO(dataset), format="json")
-
-    # Apply filter to include only records where 'date_received' is within the specified date range
-    dataset = dataset.filter(
-        (pl.col("date_received") >= start_date) & (pl.col("date_received") <= end_date)
-    )
-
-    # Serialize the filtered dataset back to JSON format and return
     return dataset.serialize(format="json")
