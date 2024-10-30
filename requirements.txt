@@ -1,7 +1,0 @@
-pandas
-datetime
-timedelta
-langdetect
-polars
-rbloom
-lingua-language-detector
