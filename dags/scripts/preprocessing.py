@@ -194,6 +194,8 @@ def remove_abusive_data(dataset: str, abuse_placeholder: str = "yyy") -> str:
     Returns:
         str: Serialized dataset with abusive words removed.
     """
+    # Start the abusive data removal process
+    logging.info("Starting abusive data filtering.")
     # Define paths for input and output
     output_path = os.path.join(
         os.path.dirname(__file__),
@@ -235,8 +237,9 @@ def remove_abusive_data(dataset: str, abuse_placeholder: str = "yyy") -> str:
         pl.Series(name="abuse_free_complaints", values=cleaned_records)
     )
 
+    logging.info("Abusive data filtering complete. Saving results to file.")
     # Save the processed dataset to output path
     dataset.write_parquet(output_path)
 
     # Return the serialized dataset
-    return dataset.serialize(format="json")
+    #return dataset.serialize(format="json")
