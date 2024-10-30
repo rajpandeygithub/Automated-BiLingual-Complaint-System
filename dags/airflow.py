@@ -3,6 +3,7 @@ from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from datetime import datetime, timedelta
+from airflow.models import XCom
 from airflow.utils.trigger_rule import TriggerRule
 from scripts.preprocessing import (
     load_data,
@@ -10,7 +11,6 @@ from scripts.preprocessing import (
     filter_records_by_language,
     aggregate_filtered_task,
     data_cleaning,
-    remove_special_characters,
     remove_abusive_data,
 )
 
@@ -23,6 +23,17 @@ default_args = {
     "retries": 1,
     "retry_delay": timedelta(minutes=5),
 }
+
+# Define the function to clear XComs
+def clear_xcom(context):
+    dag_id = context['dag'].dag_id
+    execution_date = context['execution_date']
+    session = context['session']
+    session.query(XCom).filter(
+        XCom.dag_id == dag_id,
+        XCom.execution_date == execution_date
+    ).delete()
+    session.commit()
 
 MIN_WORD: int = 5
 
@@ -89,19 +100,20 @@ with DAG(
         provide_context=True,
     )
 
-    # Task 2: Remove Special Characters
-    remove_special_characters_task = PythonOperator(
-        task_id="remove_special_characters",
-        python_callable=remove_special_characters,
-        op_args=[data_cleaning_task.output],
-    )
-
-    # Task 3: Remove Abusive Data
+    # Task 2: Remove Abusive Data
     remove_abusive_task = PythonOperator(
         task_id="remove_abusive_data_task",
         python_callable=remove_abusive_data,
-        op_args=[remove_special_characters_task.output],
+        op_args=[data_cleaning_task.output],
     )
+
+    # Task 4: Clean up all XComs
+    clear_xcom_task = PythonOperator(
+        task_id='clear_xcoms',
+        python_callable=clear_xcom,
+        provide_context=True,
+    )
+
 
 (
     data_loading_task

@@ -147,10 +147,9 @@ def aggregate_filtered_task(dataset_a: str, dataset_b: str) -> None:
 
 def data_cleaning() -> str:
     """
-    Clean the dataset by lowercasing complaint narratives, removing duplicates,
-    and dropping records with null values in key columns.
+    Clean the dataset by lowercasing complaint narratives, removing special characters, removing duplicates, and dropping records with null values in key columns.
     Returns:
-        str: Serialized cleaned dataset in JSON format.
+        str: Serialized cleaned dataset in JSON serialized format.
     """
     # Define the data path and read the dataset
     data_path = os.path.join(
@@ -161,6 +160,13 @@ def data_cleaning() -> str:
 
     # Lowercase complaint narratives
     dataset = dataset.with_columns(pl.col("complaint").str.to_lowercase())
+
+    # Remove special characters from 'complaint' column
+    dataset = dataset.with_columns(
+        pl.col("complaint").map_elements(
+            lambda x: re.sub(r"[^A-Za-z0-9\s]", "", x), return_dtype=pl.Utf8
+        )
+    )
 
     # Remove duplicate records based on specific columns
     dataset = dataset.unique(
@@ -174,30 +180,6 @@ def data_cleaning() -> str:
     )
 
     # Serialize and return the cleaned dataset
-    return dataset.serialize(format="json")
-
-
-def remove_special_characters(dataset: str) -> str:
-    """
-    Remove special characters from the 'complaint' column
-    in the dataset.
-    Args:
-        dataset (str): Serialized dataset in JSON format.
-    Returns:
-        str: Serialized dataset in JSON format with special characters removed
-             from 'complaint'.
-    """
-    # Deserialize the dataset
-    dataset = pl.DataFrame.deserialize(io.StringIO(dataset), format="json")
-
-    # Remove special characters from 'complaint' column
-    dataset = dataset.with_columns(
-        pl.col("complaint").map_elements(
-            lambda x: re.sub(r"[^A-Za-z0-9\s]", "", x), return_dtype=pl.Utf8
-        )
-    )
-
-    # Serialize and return the modified dataset
     return dataset.serialize(format="json")
 
 
