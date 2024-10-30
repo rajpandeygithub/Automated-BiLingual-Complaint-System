@@ -107,7 +107,12 @@ with DAG(
         python_callable=remove_abusive_data,
         op_args=[data_cleaning_task.output],
     )
-
+    # Task 3: Filter outdated records
+    filter_outdated_task = PythonOperator(
+        task_id="filter_outdated_records",
+        python_callable=filter_outdated_records,
+        op_args=[remove_null_task.output, "2020-01-01", "2023-12-31"],
+    )
 
 (
     data_loading_task

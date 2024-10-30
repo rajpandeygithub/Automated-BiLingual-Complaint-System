@@ -10,6 +10,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 logging.basicConfig(filename="preprocessinglog.txt", level=logging.INFO, filemode="a")
 
 
+
 def load_data() -> str:
     """
     Load the JPMorgan Chase complaints dataset in Parquet format.
@@ -239,4 +240,28 @@ def remove_abusive_data(dataset: str, abuse_placeholder: str = "yyy") -> str:
     dataset.write_parquet(output_path)
 
     # Return the serialized dataset
+    return dataset.serialize(format="json")
+
+# This function filters rows outside a specified date range.
+def filter_outdated_records(dataset: str, start_date: str, end_date: str) -> str:
+    """
+    Filter records with 'date_received' outside the specified date range.
+
+    Args:
+        dataset (str): Serialized dataset in JSON format containing records with a 'date_received' field.
+        start_date (str): The earliest allowable date in "YYYY-MM-DD" format.
+        end_date (str): The latest allowable date in "YYYY-MM-DD" format.
+
+    Returns:
+        str: Serialized dataset in JSON format, with only records within the specified date range.
+    """
+    # Deserialize the dataset to a Polars DataFrame
+    dataset = pl.DataFrame.deserialize(io.StringIO(dataset), format="json")
+
+    # Apply filter to include only records where 'date_received' is within the specified date range
+    dataset = dataset.filter(
+        (pl.col("date_received") >= start_date) & (pl.col("date_received") <= end_date)
+    )
+
+    # Serialize the filtered dataset back to JSON format and return
     return dataset.serialize(format="json")
