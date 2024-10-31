@@ -1,0 +1,17 @@
+2024-10-31 03:51:31,069 - INFO - load_data - Starting data load process.
+2024-10-31 03:51:34,306 - INFO - load_data - Data load successful.
+2024-10-31 03:52:05,354 - INFO - filter_records_by_language - Starting language filtering for 'HI' and 'EN' languages.
+2024-10-31 03:52:06,193 - INFO - filter_records_by_word_count - Filtering records by word count, minimum words required: 5
+2024-10-31 03:52:08,167 - INFO - filter_records_by_word_count - Word count filtering complete. Records meeting criteria: 45047
+2024-10-31 03:55:24,231 - INFO - filter_records_by_language - Language filtering complete. Filtered records count: 45093
+2024-10-31 03:56:03,686 - INFO - aggregate_filtered_task - Starting dataset aggregation.
+2024-10-31 03:56:08,190 - INFO - aggregate_filtered_task - Dataset aggregation complete and saved to file.
+2024-10-31 03:56:12,368 - INFO - data_cleaning - Starting data cleaning.
+2024-10-31 03:56:19,356 - INFO - data_cleaning - Data cleaning complete. Cleaned records count: 44669
+2024-10-31 03:56:51,569 - INFO - remove_abusive_data - Starting abusive data filtering.
+2024-10-31 03:57:01,960 - INFO - remove_abusive_data - Abusive data filtering complete. Saving results to file.
+2024-10-31 04:02:18,341 - INFO - load_data - Starting data load process.
+2024-10-31 04:02:21,562 - INFO - load_data - Data load successful.
+2024-10-31 04:02:56,328 - INFO - filter_records_by_language - Starting language filtering for 'HI' and 'EN' languages.
+2024-10-31 04:02:56,917 - INFO - filter_records_by_word_count - Filtering records by word count, minimum words required: 5
+2024-10-31 04:02:58,504 - INFO - filter_records_by_word_count - Word count filtering complete. Records meeting criteria: 45047
