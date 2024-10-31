@@ -7,8 +7,24 @@ from lingua import Language, LanguageDetectorBuilder
 from rbloom import Bloom
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-logging.basicConfig(filename="preprocessinglog.txt", level=logging.INFO, filemode="a")
+# Defining a custom logger
+def get_custom_logger():
+    # Customer logs are stored in the below path
+    log_path = os.path.join(os.path.dirname(__file__), "../../logs/application_logs/preprocessing_log.txt")
+    custom_logger = logging.getLogger("preprocessing_logger")
+    custom_logger.setLevel(logging.INFO)
+    
+    # Avoid default logs by setting propagate to False
+    custom_logger.propagate = False
 
+    # Set up a file handler for the custom logger
+    if not custom_logger.handlers:
+        file_handler = logging.FileHandler(log_path, mode="a")
+        formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(funcName)s - %(message)s")
+        file_handler.setFormatter(formatter)
+        custom_logger.addHandler(file_handler)
+    
+    return custom_logger
 
 def load_data() -> str:
     """
@@ -18,12 +34,19 @@ def load_data() -> str:
     Raises:
         Exception: If there is an error loading the dataset.
     """
-    data_path = os.path.join(os.path.dirname(__file__), "../../data/dataset.parquet")
+    logger = get_custom_logger()  # Get the custom logger instance
+    logger.info("Starting data load process.")
+    #data_path = os.path.join(os.path.dirname(__file__), "../../data/dataset.parquet")
+
+    # File is hosted on Google Cloud Storage (GCS), reading data from GCP
+    data_path ="https://storage.googleapis.com/mlops-group6-raw-data/dataset.parquet"
     try:
         dataset = pl.read_parquet(data_path).serialize(format="json")
+        
+        logger.info("Data load successful.")
         return dataset
     except Exception as error:
-        print(f"Exception:\n{error}")
+        logger.error(f"Error loading dataset: {error}")
         raise Exception("Error With Dataset Loading")
 
 
@@ -38,6 +61,9 @@ def filter_records_by_word_count_and_date(dataset: str, min_word_length: int) ->
         str: Serialized dataset in JSON format with records removed if they
              have fewer words than the specified minimum.
     """
+    logger = get_custom_logger()
+    logger.info(f"Filtering records by word count, minimum words required: {min_word_length}")
+    
     # Deserialize the dataset
     dataset = pl.DataFrame.deserialize(io.StringIO(dataset), format="json")
 
@@ -60,6 +86,8 @@ def filter_records_by_word_count_and_date(dataset: str, min_word_length: int) ->
     )
 )
 
+    logger.info(f"Word count filtering complete. Records meeting criteria: {len(dataset)}")
+    
     # Serialize and return the filtered dataset
     return dataset.serialize(format="json")
 
@@ -74,6 +102,9 @@ def filter_records_by_language(dataset: str) -> str:
         str: Serialized dataset in JSON format with records filtered to only
              include specified languages.
     """
+    logger = get_custom_logger()
+    logger.info("Starting language filtering for 'HI' and 'EN' languages.")
+    
     # Deserialize the dataset
     dataset = pl.DataFrame.deserialize(io.StringIO(dataset), format="json")
 
@@ -103,6 +134,8 @@ def filter_records_by_language(dataset: str) -> str:
         .drop(["language"])
     )
 
+    logger.info("Language filtering complete. Filtered records count: %d", len(dataset))
+    
     # Serialize and return the filtered dataset
     return dataset.serialize(format="json")
 
@@ -115,6 +148,9 @@ def aggregate_filtered_task(dataset_a: str, dataset_b: str) -> None:
         dataset_a (str): Serialized first dataset in JSON format.
         dataset_b (str): Serialized second dataset in JSON format.
     """
+    logger = get_custom_logger()
+    logger.info("Starting dataset aggregation.")
+    
     output_path = os.path.join(
         os.path.dirname(__file__),
         "../../data/preprocessed_dataset.parquet",
@@ -155,14 +191,19 @@ def aggregate_filtered_task(dataset_a: str, dataset_b: str) -> None:
 
     # Write the output to the specified parquet file
     dataset_joined.write_parquet(output_path)
+    logger.info("Dataset aggregation complete and saved to file.")
 
 
 def data_cleaning() -> str:
     """
-    Clean the dataset by lowercasing complaint narratives, removing special characters, removing duplicates, and dropping records with null values in key columns.
+    Clean the dataset by lowercasing complaint narratives, removing special characters,
+    removing duplicates, and dropping records with null values in key columns.
     Returns:
         str: Serialized cleaned dataset in JSON serialized format.
     """
+    logger = get_custom_logger()
+    logger.info("Starting data cleaning.")
+    
     # Define the data path and read the dataset
     data_path = os.path.join(
         os.path.dirname(__file__),
@@ -191,6 +232,8 @@ def data_cleaning() -> str:
         subset=["product", "sub_product", "department", "complaint"]
     )
 
+    logger.info("Data cleaning complete. Cleaned records count: %d", len(dataset))
+    
     # Serialize and return the cleaned dataset
     return dataset.serialize(format="json")
 
@@ -206,8 +249,9 @@ def remove_abusive_data(dataset: str, abuse_placeholder: str = "yyy") -> str:
     Returns:
         str: Serialized dataset with abusive words removed.
     """
-    # Start the abusive data removal process
-    logging.info("Starting abusive data filtering.")
+    logger = get_custom_logger()
+    logger.info("Starting abusive data filtering.")
+    
     # Define paths for input and output
     output_path = os.path.join(
         os.path.dirname(__file__),
@@ -232,9 +276,7 @@ def remove_abusive_data(dataset: str, abuse_placeholder: str = "yyy") -> str:
         profane_set.add(word)
 
     # Tokenize and clean complaints
-    tokenized_complaints = dataset.with_columns(pl.col("complaint").str.split(" "))[
-        "complaint"
-    ].to_list()
+    tokenized_complaints = dataset.with_columns(pl.col("complaint").str.split(" "))[ "complaint" ].to_list()
 
     cleaned_records = []
     for record in tokenized_complaints:
@@ -249,7 +291,8 @@ def remove_abusive_data(dataset: str, abuse_placeholder: str = "yyy") -> str:
         pl.Series(name="abuse_free_complaints", values=cleaned_records)
     )
 
-    logging.info("Abusive data filtering complete. Saving results to file.")
+    logger.info("Abusive data filtering complete. Saving results to file.")
+    
     # Save the processed dataset to output path
     dataset.write_parquet(output_path)
 
