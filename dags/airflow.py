@@ -25,15 +25,16 @@ default_args = {
     "retry_delay": timedelta(minutes=5),
 }
 
+
 # Define the function to clear XComs
 @provide_session
 def clear_xcom(context, session=None):
-    dag_id = context['ti']['dag']
-    execution_date = context['ti']['execution_date']
+    dag_id = context["ti"]["dag"]
+    execution_date = context["ti"]["execution_date"]
     session.query(XCom).filter(
-        XCom.dag_id == dag_id,
-        XCom.execution_date == execution_date
+        XCom.dag_id == dag_id, XCom.execution_date == execution_date
     ).delete()
+
 
 MIN_WORD: int = 5
 

@@ -257,9 +257,7 @@ def remove_abusive_data(dataset: str, abuse_placeholder: str = "yyy") -> str:
         os.path.dirname(__file__),
         "../../data/preprocessed_dataset.parquet",
     )
-    abusive_words_path = os.path.join(
-        os.path.dirname(__file__), "../../data/profanity_bank_dataset.parquet"
-    )
+    abusive_words_path = "https://storage.googleapis.com/mlops-group6-raw-data/profanity_bank_dataset.parquet"
 
     # Deserialize the dataset
     dataset = pl.DataFrame.deserialize(io.StringIO(dataset), format="json")
@@ -297,4 +295,4 @@ def remove_abusive_data(dataset: str, abuse_placeholder: str = "yyy") -> str:
     dataset.write_parquet(output_path)
 
     # Return the serialized dataset
-    return dataset.serialize(format="json")
+    # return dataset.serialize(format="json")
