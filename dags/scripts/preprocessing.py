@@ -43,16 +43,22 @@ def filter_records_by_word_count_and_date(dataset: str, min_word_length: int) ->
 
     # Filter records based on the minimum word count and remove the count column
     dataset = (
-    dataset
-    .with_columns(num_words=pl.col("complaint").str.split(" ").arr.lengths())
+    dataset.with_columns(
+        num_words=pl.col("complaint").str.split(" ").list.len()
+    )
     .filter(pl.col("num_words") > min_word_length)
     .drop("num_words")
-    .with_columns(pl.col("date_received").str.strptime(pl.Date, "%Y-%m-%d").alias("date_received"))
-    .filter(
-        (pl.col("date_received") >= pl.date("2020-01-01")) &
-        (pl.col("date_received") <= pl.date("2023-12-31"))
-        )
+    .with_columns(
+        pl.col("date_received")
+        .cast(pl.Utf8)  # Cast to String type
+        .str.strptime(pl.Date, "%Y-%m-%d", strict=False)
+        .alias("date_received")
     )
+    .filter(
+        (pl.col("date_received") >= pl.date(2015, 3, 19)) &
+        (pl.col("date_received") <= pl.date(2024, 7, 28))
+    )
+)
 
     # Serialize and return the filtered dataset
     return dataset.serialize(format="json")

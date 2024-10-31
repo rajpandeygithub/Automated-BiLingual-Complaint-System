@@ -8,7 +8,7 @@ from airflow.models import XCom
 from airflow.utils.trigger_rule import TriggerRule
 from scripts.preprocessing import (
     load_data,
-    filter_records_by_word_count_and_date_range,
+    filter_records_by_word_count_and_date,
     filter_records_by_language,
     aggregate_filtered_task,
     data_cleaning,
@@ -61,7 +61,7 @@ with DAG(
     filter_parallel_tasks = [
         PythonOperator(
             task_id="remove_records_with_minimum_words_and_outdated_records",
-            python_callable=filter_records_by_word_count_and_date_range,
+            python_callable=filter_records_by_word_count_and_date,
             op_args=[data_loading_task.output, MIN_WORD],
         ),
         PythonOperator(
