@@ -134,24 +134,9 @@ with DAG(
         op_args=[data_cleaning_task.output],
     )
 
-    # Task 3: Trigger Send Success Email DAG
-    trigger_send_email_dag_task = TriggerDagRunOperator(
-        task_id="trigger_send_success_email_dag",
-        trigger_dag_id="send_success_email_dag",
-        trigger_rule=TriggerRule.ALL_SUCCESS,  # Only trigger if previous tasks succeeded
-    )
-    data_cleaning_task >> remove_abusive_task >> trigger_send_email_dag_task
-# Send Success Email DAG
-with DAG(
-    "send_success_email_dag",
-    default_args=default_args,
-    description="DAG for Sending Success Email",
-    schedule_interval=None,  # It will be triggered externally
-    start_date=datetime(2024, 10, 17),
-    catchup=False,
-) as send_email_dag:
-
-    send_email_task = PythonOperator(
-        task_id="send_success_email_task",
-        python_callable=send_success_email,
-    )
+(
+    data_loading_task
+    >> filter_parallel_tasks
+    >> aggregate_parallel_tasks
+    >> trigger_data_cleaning_dag_task
+)
