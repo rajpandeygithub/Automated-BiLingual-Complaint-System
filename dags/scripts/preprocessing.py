@@ -293,6 +293,3 @@ def remove_abusive_data(dataset: str, abuse_placeholder: str = "yyy") -> str:
     
     # Save the processed dataset to output path
     dataset.write_parquet(output_path)
-
-    # Return the serialized dataset
-    # return dataset.serialize(format="json")

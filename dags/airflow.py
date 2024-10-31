@@ -22,7 +22,7 @@ default_args = {
     "email_on_failure": False,
     "email_on_retry": False,
     "retries": 1,
-    "retry_delay": timedelta(minutes=5),
+    "retry_delay": timedelta(minutes=2),
 }
 
 
@@ -38,9 +38,29 @@ def clear_xcom(context, session=None):
 
 MIN_WORD: int = 5
 
+# Data Preprocessing Pipeline Initialization DAG
+
+with DAG(
+    'Data_Preprocessing_INIT',
+    default_args=default_args,
+    description="DAG to start Data Preprocessing pipeline",
+    schedule_interval=timedelta(days=1),
+    start_date=datetime(2024, 10, 17),
+    catchup=False,
+) as dag:
+    # Task: Run other DAGs
+    trigger_data_validation_dag_task = TriggerDagRunOperator(
+        task_id="data_validation_trigger",
+        trigger_rule=TriggerRule.ALL_DONE,
+        trigger_dag_id="Data_Validation_Pipeline",
+        dag=dag
+    )
+
+    trigger_data_validation_dag_task
+ 
 # Data Validation DAG
 with DAG(
-    "Data_validation_pipeline",
+    "Data_Validation_Pipeline",
     default_args=default_args,
     description="DAG for Data Validation",
     schedule_interval=timedelta(days=1),
@@ -72,24 +92,27 @@ with DAG(
         ),
     ]
 
-    # Task 4: Aggregate results from Task 2 & Task 3
+    # Task 4: Aggregate results from Task 2, 3 & Task 4
     aggregate_parallel_tasks = PythonOperator(
         task_id="validation_aggregation",
         python_callable=aggregate_filtered_task,
         op_args=[filter_parallel_tasks[0].output, filter_parallel_tasks[1].output],
         provide_context=True,
     )
+    
     # Task 5: Trigger Data Cleaning DAG
     trigger_data_cleaning_dag_task = TriggerDagRunOperator(
         task_id="data_cleaning_trigger",
         trigger_rule=TriggerRule.ALL_DONE,
-        trigger_dag_id="Data_cleaning_pipeline",
+        trigger_dag_id="Data_Cleaning_Pipeline",
         dag=dag,
     )
 
-# Data Preprocessing DAG
+    data_loading_task >> filter_parallel_tasks >> aggregate_parallel_tasks >> trigger_data_cleaning_dag_task
+
+# Data Cleaning DAG
 with DAG(
-    "Data_cleaning_pipeline",
+    "Data_Cleaning_Pipeline",
     default_args=default_args,
     description="DAG for Data Preprocessing",
     schedule_interval=timedelta(days=1),
@@ -112,9 +135,4 @@ with DAG(
         op_args=[data_cleaning_task.output],
     )
 
-(
-    data_loading_task
-    >> filter_parallel_tasks
-    >> aggregate_parallel_tasks
-    >> trigger_data_cleaning_dag_task
-)
+    data_cleaning_task >> remove_abusive_task
