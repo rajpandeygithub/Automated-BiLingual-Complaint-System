@@ -99,7 +99,7 @@ with DAG(
         op_args=[filter_parallel_tasks[0].output, filter_parallel_tasks[1].output],
         provide_context=True,
     )
-    
+
     # Task 5: Trigger Data Cleaning DAG
     trigger_data_cleaning_dag_task = TriggerDagRunOperator(
         task_id="data_cleaning_trigger",
