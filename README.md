@@ -45,13 +45,7 @@ For API Access: [Link](https://cfpb.github.io/api/ccdb/api.html)
 | `consumer_disputed`         | Whether the consumer disputed the company’s response                                     | String    |
 
 
-### License Information
-
-The Consumer Financial Protection Bureau (CFPB) data is open to the public under the OPEN Government Data Act, enabling transparency and broad accessibility. Users should follow privacy guidelines, particularly around any personally identifiable information (PII) within consumer data.
-
-For further details, refer to the [CFPB Data Policy](https://www.consumerfinance.gov/data/).
-
-## Data Preparation Setup
+## Project Setup
 
 ### Clone the Repository:
 ```bash
@@ -63,3 +57,101 @@ docker compose up
 **Note: Make sure you have docker installed, and provided enough resources to run**
 
 
+## Data Preprocessing Pipeline
+
+The preprocessing pipeline performs comprehensive data cleaning, filtering, and anonymization on the Consumer Complaint Database from Consumer Financial Protection Bureau (CFPB). The pipeline includes multiple stages to ensure data quality and privacy.
+
+### Preprocessing Steps
+
+### 1. Data Loading
+- Loads the raw dataset from Google Cloud Storage
+- Dataset format: Parquet
+
+### 2. Basic Filtering
+- Removes records with insufficient word count
+- Filters records based on date range (March 19, 2015 to July 28, 2024)
+- Converts date fields to proper date format
+
+### 3. Language Detection
+- Uses `fast_langdetect` (based on fast-text) for language identification
+- Implements multi-threaded processing for improved performance
+- Retains only English (EN) and Hindi (HI) complaints
+- Removes records in other languages
+
+### 4. Data Cleaning
+- Converts complaint text to lowercase
+- Removes special characters using regex
+- Eliminates duplicate records based on:
+  - Product
+  - Sub-product
+  - Complaint text
+- Removes records with null values in critical fields:
+  - Product
+  - Sub-product
+  - Department
+  - Complaint text
+
+### 5. Abusive Content Filtering
+- Removes words from a set of abusive words
+- Implements Bloom filter for abusive words set to efficient filter out abusive words
+- Replaces abusive words with placeholder text
+- Processes text while maintaining sentence structure
+
+### 6. PII Data Anonymization
+- Detects and masks personally identifiable information (PII)
+- PII types handled:
+  - Bank account numbers
+  - Routing numbers
+  - Credit card numbers (multiple formats)
+  - Transaction dates
+  - SSN/TIN numbers
+  - EIN numbers
+  - Passport numbers
+  - Email addresses
+  - Phone numbers
+  - Home addresses
+  - Demographic information (race, ethnicity, gender)
+  - Transaction amounts
+
+### 7. Data Aggregation
+- Joins filtered datasets on complaint ID
+- Selects and maintains relevant columns
+
+### Output
+- Final preprocessed dataset saved in Parquet format
+- Location: `data/preprocessed_dataset.parquet`
+- Includes comprehensive logging of all preprocessing steps
+- Send a pipeline success / failure email
+
+### Preprocessing Workflow
+Summarizing entire Airflow Orchestration Graph Below:
+
+```mermaid
+graph TB
+    subgraph "Data Preprocessing INIT DAG"
+        A[Start] --> B[Trigger Data Validation]
+    end
+
+    subgraph "Data Validation Pipeline DAG"
+        C[Load Data] --> D[Filter Records]
+        D --> |Parallel Process 1| E[Word Count & Date Filter]
+        D --> |Parallel Process 2| F[Language Detection]
+        E --> G[Aggregate Results]
+        F --> G
+        G --> H[Trigger Data Cleaning]
+    end
+
+    subgraph "Data Cleaning Pipeline DAG"
+        I[Data Cleaning] --> J[Anonymize Sensitive Data]
+        J --> K[Remove Abusive Content]
+        K --> L[Send Success Email]
+    end
+
+    B --> C
+    H --> I
+```
+## License Information
+
+The Consumer Financial Protection Bureau (CFPB) data is open to the public under the OPEN Government Data Act, enabling transparency and broad accessibility. Users should follow privacy guidelines, particularly around any personally identifiable information (PII) within consumer data.
+
+For further details, refer to the [CFPB Data Policy](https://www.consumerfinance.gov/data/).
