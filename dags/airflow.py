@@ -15,6 +15,7 @@ from scripts.preprocessing import (
     data_cleaning,
     remove_abusive_data,
 )
+from scripts.deidentification import anonymize_sensitive_data
 
 # Default arguments for the DAG
 default_args = {
@@ -128,19 +129,25 @@ with DAG(
         provide_context=True,
     )
 
-    # Task 2: Remove Abusive Data
+    # Task 2: Anonymize sensitive data
+    anonymization_task = PythonOperator(
+        task_id="anonymize_sensitive_data_task",
+        python_callable=anonymize_sensitive_data,
+        op_args=[data_cleaning_task.output],
+    )
+    # Task 3: Remove Abusive Data
     remove_abusive_task = PythonOperator(
         task_id="remove_abusive_data_task",
         python_callable=remove_abusive_data,
-        op_args=[data_cleaning_task.output],
+        op_args=[anonymization_task.output],
     )
 
-    # 
-     # Task 3: Send Success Email
+
+    # Task 4: Send Success Email
     send_email_task = PythonOperator(
         task_id="send_success_email_task",
         python_callable=send_success_email,
         provide_context=True
     )
 
-    data_cleaning_task >> remove_abusive_task >> send_email_task
+    data_cleaning_task >> anonymization_task >> remove_abusive_task >> send_email_task
