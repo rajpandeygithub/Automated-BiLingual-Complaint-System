@@ -4,9 +4,9 @@ from email.mime.text import MIMEText
 from jinja2 import Template
 
 def send_failure_email(task_instance, exception):
-    sender_email = Variable.get('EMAIL_USER')
+    sender_email = "sucessemailtrigger@gmail.com"
     receiver_email = "hegde.anir@northeastern.edu"
-    password = Variable.get('EMAIL_PASSWORD')
+    password = 'jomnpxbfunwjgitb'
 
     # Subject and body for the failure email
     subject_template = 'Airflow Failure: {{ task_instance.dag_id }} - {{ task_instance.task_id }}'
