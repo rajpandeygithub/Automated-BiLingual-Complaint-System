@@ -3,7 +3,7 @@ import re
 import io
 import logging
 import polars as pl
-from lingua import Language, LanguageDetectorBuilder
+from fast_langdetect import detect_language
 from rbloom import Bloom
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -107,29 +107,21 @@ def filter_records_by_language(dataset: str) -> str:
     
     # Deserialize the dataset
     dataset = pl.DataFrame.deserialize(io.StringIO(dataset), format="json")
-
-    # Initialize language detector
-    languages = list(Language.all_spoken_ones())
-    detector = LanguageDetectorBuilder.from_languages(*languages).build()
-
     # Perform language detection with multi-threading
     language_detected = []
     with ThreadPoolExecutor(max_workers=10) as executor:
         future_to_sentence = {
-            executor.submit(detector.detect_language_of, sentence): sentence
-            for sentence in dataset["complaint"].to_list()
+            executor.submit(detect_language, re.sub(r'\n', '', sentence)): sentence
+            for sentence in dataset['complaint'].to_list()
         }
 
         # Collect results as they complete
         for future in as_completed(future_to_sentence):
             language_detected.append(future.result())
 
-    # Convert detected languages to ISO codes
-    language_codes = [item.iso_code_639_1.name for item in language_detected]
-
     # Add language column to dataset and filter based on language criteria
     dataset = (
-        dataset.with_columns(pl.Series(name="language", values=language_codes))
+        dataset.with_columns(pl.Series(name="language", values=language_detected))
         .filter(pl.col("language").is_in(["HI", "EN"]))
         .drop(["language"])
     )
