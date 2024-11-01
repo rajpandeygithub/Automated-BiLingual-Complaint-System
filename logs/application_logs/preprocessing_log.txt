@@ -290,3 +290,43 @@
 2024-11-01 12:54:46,392 - INFO - anonymize_sensitive_data - Saving anonymized data to file.
 2024-11-01 12:54:58,517 - INFO - remove_abusive_data - Starting abusive data filtering.
 2024-11-01 12:55:02,014 - INFO - remove_abusive_data - Abusive data filtering complete. Saving results to file.
+2024-11-01 18:47:00,872 - INFO - data_cleaning - Starting data cleaning.
+2024-11-01 18:47:00,903 - INFO - load_data - Starting data load process.
+2024-11-01 18:47:00,926 - INFO - load_data - Starting data load process.
+2024-11-01 18:47:00,983 - INFO - load_data - Starting data load process.
+2024-11-01 18:47:04,499 - INFO - data_cleaning - Data cleaning complete. Cleaned records count: 44274
+2024-11-01 18:47:17,679 - INFO - load_data - Data load successful.
+2024-11-01 18:47:17,991 - INFO - load_data - Data load successful.
+2024-11-01 18:47:18,152 - INFO - load_data - Data load successful.
+2024-11-01 18:57:19,377 - INFO - filter_records_by_language - Starting language filtering for 'HI' and 'EN' languages.
+2024-11-01 18:57:19,394 - INFO - filter_records_by_word_count_and_date - Filtering records by word count, minimum words required: 5
+2024-11-01 18:57:19,823 - INFO - filter_records_by_word_count_and_date - Filtering records by word count, minimum words required: 5
+2024-11-01 18:57:23,257 - INFO - filter_records_by_language - Starting language filtering for 'HI' and 'EN' languages.
+2024-11-01 18:57:24,301 - INFO - filter_records_by_language - Starting language filtering for 'HI' and 'EN' languages.
+2024-11-01 18:57:27,015 - INFO - filter_records_by_word_count_and_date - Filtering records by word count, minimum words required: 5
+2024-11-01 19:01:32,185 - INFO - filter_records_by_word_count_and_date - Word count filtering complete. Records meeting criteria: 45047
+2024-11-01 19:01:36,253 - INFO - filter_records_by_word_count_and_date - Word count filtering complete. Records meeting criteria: 45047
+2024-11-01 19:01:43,236 - INFO - filter_records_by_word_count_and_date - Word count filtering complete. Records meeting criteria: 45047
+2024-11-01 19:23:47,090 - INFO - data_cleaning - Starting data cleaning.
+2024-11-01 19:23:49,457 - INFO - data_cleaning - Data cleaning complete. Cleaned records count: 44274
+2024-11-01 19:24:22,285 - INFO - data_cleaning - Starting data cleaning.
+2024-11-01 19:24:22,345 - INFO - data_cleaning - Starting data cleaning.
+2024-11-01 19:24:27,288 - INFO - data_cleaning - Data cleaning complete. Cleaned records count: 44274
+2024-11-01 19:24:27,325 - INFO - data_cleaning - Data cleaning complete. Cleaned records count: 44274
+2024-11-01 19:26:24,424 - INFO - anonymize_sensitive_data - Starting anonymization of sensitive data in complaints
+2024-11-01 19:27:17,533 - INFO - filter_records_by_language - Starting language filtering for 'HI' and 'EN' languages.
+2024-11-01 19:28:48,688 - INFO - anonymize_sensitive_data - Starting anonymization of sensitive data in complaints
+2024-11-01 19:28:48,701 - INFO - anonymize_sensitive_data - Starting anonymization of sensitive data in complaints
+2024-11-01 19:28:57,087 - INFO - filter_records_by_language - Language filtering complete. Filtered records count: 44709
+2024-11-01 19:29:31,769 - INFO - anonymize_sensitive_data - Anonymization of sensitive data completed successfully.
+2024-11-01 19:29:31,778 - INFO - anonymize_sensitive_data - Saving anonymized data to file.
+2024-11-01 19:30:56,080 - INFO - anonymize_sensitive_data - Anonymization of sensitive data completed successfully.
+2024-11-01 19:30:56,091 - INFO - anonymize_sensitive_data - Saving anonymized data to file.
+2024-11-01 19:30:56,982 - INFO - anonymize_sensitive_data - Anonymization of sensitive data completed successfully.
+2024-11-01 19:30:56,994 - INFO - anonymize_sensitive_data - Saving anonymized data to file.
+2024-11-01 19:31:07,794 - INFO - remove_abusive_data - Starting abusive data filtering.
+2024-11-01 19:31:51,221 - INFO - remove_abusive_data - Abusive data filtering complete. Saving results to file.
+2024-11-01 19:33:26,160 - INFO - remove_abusive_data - Starting abusive data filtering.
+2024-11-01 19:33:26,395 - INFO - remove_abusive_data - Starting abusive data filtering.
+2024-11-01 19:33:42,285 - INFO - remove_abusive_data - Abusive data filtering complete. Saving results to file.
+2024-11-01 19:33:42,407 - INFO - remove_abusive_data - Abusive data filtering complete. Saving results to file.
