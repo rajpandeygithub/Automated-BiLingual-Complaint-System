@@ -1,11 +1,12 @@
 import logging
 from airflow import DAG
 from airflow.utils.db import provide_session
-from airflow.operators.python_operator import PythonOperator
+from airflow.operators.python import PythonOperator
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from datetime import datetime, timedelta
-from airflow.models import XCom
+from airflow.models.xcom import XCom
 from airflow.utils.trigger_rule import TriggerRule
+from scripts.success_email import send_success_email
 from scripts.preprocessing import (
     load_data,
     filter_records_by_word_count_and_date,
@@ -134,9 +135,12 @@ with DAG(
         op_args=[data_cleaning_task.output],
     )
 
-(
-    data_loading_task
-    >> filter_parallel_tasks
-    >> aggregate_parallel_tasks
-    >> trigger_data_cleaning_dag_task
-)
+    # 
+     # Task 3: Send Success Email
+    send_email_task = PythonOperator(
+        task_id="send_success_email_task",
+        python_callable=send_success_email,
+        provide_context=True
+    )
+
+    data_cleaning_task >> remove_abusive_task >> send_email_task

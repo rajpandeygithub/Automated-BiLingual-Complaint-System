@@ -40,7 +40,6 @@
 #
 # Feel free to modify this file to suit your needs.
 ---
-version: '3'
 x-airflow-common:
   &airflow-common
   # In order to add custom dependencies or upgrade provider packages you can use your extended image.
@@ -111,12 +110,11 @@ services:
       - 8080:8080
     environment:
       <<: *airflow-common-env
-      # SMTP Configuration
       AIRFLOW__SMTP__SMTP_HOST: smtp.gmail.com
       AIRFLOW__SMTP__SMTP_PORT: 587
       AIRFLOW__SMTP__SMTP_STARTTLS: 'True'
-      AIRFLOW__SMTP__SMTP_USER: ${EMAIL_USER}
-      AIRFLOW__SMTP__SMTP_PASSWORD: ${EMAIL_PASSWORD}
+      AIRFLOW__SMTP__SMTP_USER: "sucessemailtrigger@gmail.com"
+      AIRFLOW__SMTP__SMTP_PASSWORD: jomnpxbfunwjgitb
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
       interval: 10s
@@ -133,12 +131,11 @@ services:
     command: scheduler
     environment:
       <<: *airflow-common-env
-      # SMTP Configuration
       AIRFLOW__SMTP__SMTP_HOST: smtp.gmail.com
       AIRFLOW__SMTP__SMTP_PORT: 587
       AIRFLOW__SMTP__SMTP_STARTTLS: 'True'
-      AIRFLOW__SMTP__SMTP_USER: ${EMAIL_USER}
-      AIRFLOW__SMTP__SMTP_PASSWORD: ${EMAIL_PASSWORD}
+      AIRFLOW__SMTP__SMTP_USER: "sucessemailtrigger@gmail.com"
+      AIRFLOW__SMTP__SMTP_PASSWORD: jomnpxbfunwjgitb
     healthcheck:
       test: ["CMD-SHELL", 'airflow jobs check --job-type SchedulerJob --hostname "$${HOSTNAME}"']
       interval: 10s
@@ -162,12 +159,11 @@ services:
       retries: 5
     environment:
       <<: *airflow-common-env
-      # SMTP Configuration
       AIRFLOW__SMTP__SMTP_HOST: smtp.gmail.com
       AIRFLOW__SMTP__SMTP_PORT: 587
       AIRFLOW__SMTP__SMTP_STARTTLS: 'True'
-      AIRFLOW__SMTP__SMTP_USER: ${EMAIL_USER}
-      AIRFLOW__SMTP__SMTP_PASSWORD: ${EMAIL_PASSWORD}
+      AIRFLOW__SMTP__SMTP_USER: "sucessemailtrigger@gmail.com"
+      AIRFLOW__SMTP__SMTP_PASSWORD: jomnpxbfunwjgitb
       DUMB_INIT_SETSID: "0"
     restart: always
     depends_on:
