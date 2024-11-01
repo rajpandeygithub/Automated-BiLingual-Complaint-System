@@ -1,4 +1,4 @@
 [core]
     remote = gcsremote
 ['remote "gcsremote"']
-    url = gs://automated-bilingual-complaint-system-bucket/dvc-storage
+    url = gs://project-dvc-bucket/dvc-storage
