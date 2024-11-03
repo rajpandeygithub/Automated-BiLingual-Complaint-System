@@ -173,6 +173,8 @@ The preprocessing pipeline performs comprehensive data cleaning, filtering, and 
 
 ### 10. Slack Alerts Integration
 - On every DAG success and failure, we trigger a slack notification a private channel in the MLOps workspace.
+![image](https://github.com/user-attachments/assets/324c90ac-e6fa-40c5-a61e-8a9e3c138bf6)
+
 
 ### Output
 - Final preprocessed dataset saved in Parquet format
