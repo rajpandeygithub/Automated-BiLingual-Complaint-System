@@ -207,9 +207,9 @@ graph TB
 ```
 
 ## Data Versioning with DVC
-- 1. DVC (Data Version Control) to manage and version control our datasets throughout the preprocessing pipeline
-- 2. Raw data is loaded from Google Cloud Storage (GCS), processed and cleaned using our Airflow pipeline, and the preprocessed data is then stored back to 
-- 3. Metadata versions are stored in GCS 
+- DVC (Data Version Control) to manage and version control our datasets throughout the preprocessing pipeline
+- Raw data is loaded from Google Cloud Storage (GCS), processed and cleaned using our Airflow pipeline, and the preprocessed data is then stored back to 
+- Metadata versions are stored in GCS 
 ## Tracking and Logging
 
 Our pipeline includes detailed logging to track progress and identify issues about errors during data processing. We use Python's `logging` library to set up a custom logger that captures important information at each stage of the process.
