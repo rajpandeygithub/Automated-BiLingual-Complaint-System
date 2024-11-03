@@ -21,6 +21,8 @@ cd Automated-BiLingual-Complaint-System
 Open the project folder (`Automated-BiLingual-Complaint-System`) in **Visual Studio Code**.
 
 #### Step 3: Initialize and Start Docker Containers
+**Note: All necessary libraries are listed in the `requirements.txt` file, making it easy to install dependencies automatically. This file is also used in the `docker-compose.yaml` setup to ensure all dependencies are installed when running the project.**
+
 Run the following commands in your Visual Studio Code terminal to initialize and start the Docker containers for Airflow:
 
 1. Initialize Airflow:
