@@ -2,7 +2,7 @@
 .DS_Store
 data/*
 !data/**/*.dvc
-logs/
+logs/*
 __pycache__/
 *.py[cod]
 venv/

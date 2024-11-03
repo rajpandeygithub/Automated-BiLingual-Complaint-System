@@ -8,8 +8,3 @@ dvc add data/preprocessed_dataset.parquet
 
 # Push the data and metadata to the DVC remote
 dvc push
-
-# Commit DVC metadata changes to Git
-git add data/preprocessed_dataset.parquet.dvc dvc.lock
-git commit -m "Automated DVC push for processed data"
-git push
