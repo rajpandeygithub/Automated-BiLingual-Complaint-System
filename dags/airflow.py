@@ -67,7 +67,7 @@ with DAG(
     "Data_Validation_Pipeline",
     default_args=default_args,
     description="DAG for Data Validation",
-    schedule_interval=None
+    schedule_interval=None,
     catchup=False,
 ) as dag:
 
@@ -124,7 +124,7 @@ with DAG(
     "Data_Cleaning_Pipeline",
     default_args=default_args,
     description="DAG for Data Preprocessing",
-    schedule_interval=None
+    schedule_interval=None,
     catchup=False,
 ) as dag:
 
