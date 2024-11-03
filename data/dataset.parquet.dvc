@@ -3,3 +3,11 @@ outs:
   size: 22956349
   hash: md5
   path: dataset.parquet
+md5: 20f9732f3e150c2d5e5818e03eb72bac
+frozen: true
+deps:
+- etag: 088197ff9cebc089031002
+  size: 22956349
+  version_id: '1730660085517185'
+  hash: md5
+  path: gs://mlops-group6-raw-data/dataset.parquet
