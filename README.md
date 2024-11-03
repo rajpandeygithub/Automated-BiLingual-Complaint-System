@@ -67,7 +67,7 @@ Key features include:
 - Agent assignment based on language proficiency and availability.
 
 
-## Data Information
+## Data Acquisition
 
 We make use of the Consumer Complaint Database from Consumer Financial Protection Bureau (CFPB). This database compiles real-time U.S. consumer complaints regarding financial products and services. It includes data on consumer narratives (anonymized), banking products, and company responses, providing insight into financial sector issues.
 
@@ -168,7 +168,7 @@ The preprocessing pipeline performs comprehensive data cleaning, filtering, and 
 - Includes comprehensive logging of all preprocessing steps
 - Send a pipeline success / failure email
 
-### Preprocessing Workflow
+### Pipeline Orchestration (Airflow DAGs)
 Summarizing entire Airflow Orchestration Graph Below:
 
 ```mermaid
@@ -196,7 +196,7 @@ graph TB
     B --> C
     I --> J
 ```
-# Tracking and Logging
+## Tracking and Logging
 
 Our pipeline includes detailed logging to track progress and identify issues about errors during data processing. We use Python's `logging` library to set up a custom logger that captures important information at each stage of the process.
 
@@ -204,6 +204,14 @@ Our pipeline includes detailed logging to track progress and identify issues abo
 - **Progress Tracking**: Logs are generated at each stage of the pipeline, including all functions.
 - **Error Monitoring**: Errors are logged with relevant details, making it easier to locate and fix issues quickly.
 - **Custom Log Path**: All logs are saved in `logs/application_logs/preprocessing_log.txt` for easy access and troubleshooting.
+
+## Data Schema & Statistics Generation
+
+
+## Anomaly Detection & Alerts
+
+
+## Pipeline Flow Optimization
   
 ## Data Bias Detection and Mitigation
 
