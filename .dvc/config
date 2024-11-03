@@ -1,0 +1,11 @@
+[core]
+    remote = dvc-remote
+['remote "gcp-storage"']
+    url = gs://project-dvc-bucket
+    credentialpath = /Users/anirudhhegde/Desktop/Northeastern University/Machine Learning Operations/Project/bilingualcomplaint-system-375b3f4f9a2d.json
+['remote "gcp-raw-data"']
+    url = gs://mlops-group6-raw-data/path/to/raw_data_folder
+    credentialpath = /Users/anirudhhegde/Desktop/Northeastern University/Machine Learning Operations/Project/bilingualcomplaint-system-375b3f4f9a2d.json
+['remote "dvc-remote"']
+    url = gs://project-dvc-bucket
+    credentialpath = /Users/anirudhhegde/Desktop/Northeastern University/Machine Learning Operations/Project/bilingualcomplaint-system-375b3f4f9a2d.json

@@ -1,0 +1,145 @@
+/Library/Frameworks/Python.framework/Versions/3.12/Resources/Python.app/Contents/MacOS/Python: can't open file '/Users/anirudhhegde/Desktop/Northeastern University/Machine Learning Operations/Project/Automated-BiLingual-Complaint-System/preprocess.py': [Errno 2] No such file or directory
+ERROR: output 'data/processed_data.parquet' does not exist: [Errno 2] No such file or directory: '/Users/anirudhhegde/Desktop/Northeastern University/Machine Learning Operations/Project/Automated-BiLingual-Complaint-System/data/processed_data.parquet'
+_request out of retries on exception: Cannot connect to host storage.googleapis.com:443 ssl:True [SSLCertVerificationError: (1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1000)')]
+Traceback (most recent call last):
+  File "/Users/anirudhhegde/Desktop/Northeastern University/Machine Learning Operations/Project/Automated-BiLingual-Complaint-System/.venv/lib/python3.12/site-packages/aiohttp/connector.py", line 1098, in _wrap_create_connection
+    return await self._loop.create_connection(*args, **kwargs, sock=sock)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py", line 1126, in create_connection
+    transport, protocol = await self._create_connection_transport(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py", line 1159, in _create_connection_transport
+    await waiter
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/sslproto.py", line 575, in _on_handshake_complete
+    raise handshake_exc
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/sslproto.py", line 557, in _do_handshake
+    self._sslobj.do_handshake()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/ssl.py", line 917, in do_handshake
+    self._sslobj.do_handshake()
+ssl.SSLCertVerificationError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1000)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/anirudhhegde/Desktop/Northeastern University/Machine Learning Operations/Project/Automated-BiLingual-Complaint-System/.venv/lib/python3.12/site-packages/gcsfs/retry.py", line 130, in retry_request
+    return await func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/anirudhhegde/Desktop/Northeastern University/Machine Learning Operations/Project/Automated-BiLingual-Complaint-System/.venv/lib/python3.12/site-packages/gcsfs/core.py", line 426, in _request
+    async with self.session.request(
+  File "/Users/anirudhhegde/Desktop/Northeastern University/Machine Learning Operations/Project/Automated-BiLingual-Complaint-System/.venv/lib/python3.12/site-packages/aiohttp/client.py", line 1359, in __aenter__
+    self._resp: _RetType = await self._coro
+                           ^^^^^^^^^^^^^^^^
+  File "/Users/anirudhhegde/Desktop/Northeastern University/Machine Learning Operations/Project/Automated-BiLingual-Complaint-System/.venv/lib/python3.12/site-packages/aiohttp/client.py", line 663, in _request
+    conn = await self._connector.connect(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/anirudhhegde/Desktop/Northeastern University/Machine Learning Operations/Project/Automated-BiLingual-Complaint-System/.venv/lib/python3.12/site-packages/aiohttp/connector.py", line 563, in connect
+    proto = await self._create_connection(req, traces, timeout)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/anirudhhegde/Desktop/Northeastern University/Machine Learning Operations/Project/Automated-BiLingual-Complaint-System/.venv/lib/python3.12/site-packages/aiohttp/connector.py", line 1032, in _create_connection
+    _, proto = await self._create_direct_connection(req, traces, timeout)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/anirudhhegde/Desktop/Northeastern University/Machine Learning Operations/Project/Automated-BiLingual-Complaint-System/.venv/lib/python3.12/site-packages/aiohttp/connector.py", line 1366, in _create_direct_connection
+    raise last_exc
+  File "/Users/anirudhhegde/Desktop/Northeastern University/Machine Learning Operations/Project/Automated-BiLingual-Complaint-System/.venv/lib/python3.12/site-packages/aiohttp/connector.py", line 1335, in _create_direct_connection
+    transp, proto = await self._wrap_create_connection(
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/anirudhhegde/Desktop/Northeastern University/Machine Learning Operations/Project/Automated-BiLingual-Complaint-System/.venv/lib/python3.12/site-packages/aiohttp/connector.py", line 1100, in _wrap_create_connection
+    raise ClientConnectorCertificateError(req.connection_key, exc) from exc
+aiohttp.client_exceptions.ClientConnectorCertificateError: Cannot connect to host storage.googleapis.com:443 ssl:True [SSLCertVerificationError: (1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1000)')]
+ERROR: unexpected error - Cannot connect to host storage.googleapis.com:443 ssl:True [SSLCertVerificationError: (1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1000)')]: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1000)
+
+Having any troubles? Hit us up at https://dvc.org/support, we are always happy to help!
+fatal: pathspec 'data/processed_data.parquet.dvc' did not match any files
+On branch Dev
+Your branch is ahead of 'origin/Dev' by 3 commits.
+  (use "git push" to publish your local commits)
+
+Changes not staged for commit:
+  (use "git add/rm <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   .dvc/config
+	deleted:    data/dataset.parquet.dvc
+	modified:   logs/application_logs/preprocessing_log.txt
+	modified:   tests/test_preprocessing.py
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	dvc_automation.log
+	dvc_automation.sh
+
+no changes added to commit (use "git add" and/or "git commit -a")
+To https://github.com/rajpandeygithub/Automated-BiLingual-Complaint-System.git
+   9d0f087..90968b8  Dev -> Dev
+/Library/Frameworks/Python.framework/Versions/3.12/Resources/Python.app/Contents/MacOS/Python: can't open file '/Users/anirudhhegde/Desktop/Northeastern University/Machine Learning Operations/Project/Automated-BiLingual-Complaint-System/preprocessing.py': [Errno 2] No such file or directory
+
+To track the changes with git, run:
+
+	git add data/preprocessed_dataset.parquet.dvc
+
+To enable auto staging, run:
+
+	dvc config core.autostage true
+_request out of retries on exception: Cannot connect to host storage.googleapis.com:443 ssl:True [SSLCertVerificationError: (1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1000)')]
+Traceback (most recent call last):
+  File "/Users/anirudhhegde/Desktop/Northeastern University/Machine Learning Operations/Project/Automated-BiLingual-Complaint-System/.venv/lib/python3.12/site-packages/aiohttp/connector.py", line 1098, in _wrap_create_connection
+    return await self._loop.create_connection(*args, **kwargs, sock=sock)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py", line 1126, in create_connection
+    transport, protocol = await self._create_connection_transport(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py", line 1159, in _create_connection_transport
+    await waiter
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/sslproto.py", line 575, in _on_handshake_complete
+    raise handshake_exc
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/sslproto.py", line 557, in _do_handshake
+    self._sslobj.do_handshake()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/ssl.py", line 917, in do_handshake
+    self._sslobj.do_handshake()
+ssl.SSLCertVerificationError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1000)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/anirudhhegde/Desktop/Northeastern University/Machine Learning Operations/Project/Automated-BiLingual-Complaint-System/.venv/lib/python3.12/site-packages/gcsfs/retry.py", line 130, in retry_request
+    return await func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/anirudhhegde/Desktop/Northeastern University/Machine Learning Operations/Project/Automated-BiLingual-Complaint-System/.venv/lib/python3.12/site-packages/gcsfs/core.py", line 426, in _request
+    async with self.session.request(
+  File "/Users/anirudhhegde/Desktop/Northeastern University/Machine Learning Operations/Project/Automated-BiLingual-Complaint-System/.venv/lib/python3.12/site-packages/aiohttp/client.py", line 1359, in __aenter__
+    self._resp: _RetType = await self._coro
+                           ^^^^^^^^^^^^^^^^
+  File "/Users/anirudhhegde/Desktop/Northeastern University/Machine Learning Operations/Project/Automated-BiLingual-Complaint-System/.venv/lib/python3.12/site-packages/aiohttp/client.py", line 663, in _request
+    conn = await self._connector.connect(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/anirudhhegde/Desktop/Northeastern University/Machine Learning Operations/Project/Automated-BiLingual-Complaint-System/.venv/lib/python3.12/site-packages/aiohttp/connector.py", line 563, in connect
+    proto = await self._create_connection(req, traces, timeout)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/anirudhhegde/Desktop/Northeastern University/Machine Learning Operations/Project/Automated-BiLingual-Complaint-System/.venv/lib/python3.12/site-packages/aiohttp/connector.py", line 1032, in _create_connection
+    _, proto = await self._create_direct_connection(req, traces, timeout)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/anirudhhegde/Desktop/Northeastern University/Machine Learning Operations/Project/Automated-BiLingual-Complaint-System/.venv/lib/python3.12/site-packages/aiohttp/connector.py", line 1366, in _create_direct_connection
+    raise last_exc
+  File "/Users/anirudhhegde/Desktop/Northeastern University/Machine Learning Operations/Project/Automated-BiLingual-Complaint-System/.venv/lib/python3.12/site-packages/aiohttp/connector.py", line 1335, in _create_direct_connection
+    transp, proto = await self._wrap_create_connection(
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/anirudhhegde/Desktop/Northeastern University/Machine Learning Operations/Project/Automated-BiLingual-Complaint-System/.venv/lib/python3.12/site-packages/aiohttp/connector.py", line 1100, in _wrap_create_connection
+    raise ClientConnectorCertificateError(req.connection_key, exc) from exc
+aiohttp.client_exceptions.ClientConnectorCertificateError: Cannot connect to host storage.googleapis.com:443 ssl:True [SSLCertVerificationError: (1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1000)')]
+ERROR: unexpected error - Cannot connect to host storage.googleapis.com:443 ssl:True [SSLCertVerificationError: (1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1000)')]: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1000)
+
+Having any troubles? Hit us up at https://dvc.org/support, we are always happy to help!
+fatal: pathspec 'data/processed_data.parquet.dvc' did not match any files
+On branch Dev
+Your branch is up to date with 'origin/Dev'.
+
+Changes not staged for commit:
+  (use "git add/rm <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   .dvc/config
+	deleted:    data/dataset.parquet.dvc
+	modified:   logs/application_logs/preprocessing_log.txt
+	modified:   tests/test_preprocessing.py
+
+no changes added to commit (use "git add" and/or "git commit -a")
+Everything up-to-date
+ClientConnectorCertificateError
