@@ -86,8 +86,12 @@ http://localhost:8080/home
 In the Airflow web interface:
 1. Enable the toggles for all DAGs to activate them.
 2. **First-time Setup**: If this is your first time running the DAGs, they should start automatically.
+![image](https://github.com/user-attachments/assets/59721744-b1eb-435a-a7c8-365cac76f783)
+
 3. **Subsequent Runs**: If the DAGs have been run before, trigger the `Data_Preprocessing_INIT` DAG manually. This will initiate a sequence:
    - `Data_Preprocessing_INIT` will trigger `data_validation_trigger`, which will, in turn, trigger the `Data_Validation_Pipeline`.
+![image](https://github.com/user-attachments/assets/23bfa4cd-d7d8-4b91-9993-966873143c04)
+
 
 #### Step 6: Shut Down Docker Containers
 To stop and shut down the Docker containers, go to the **Visual Studio Code** terminal and run:
@@ -193,7 +197,7 @@ graph TB
 Our pipeline includes detailed logging to track progress and identify issues about errors during data processing. We use Python's `logging` library to set up a custom logger that captures important information at each stage of the process.
 
 ### Key Features:
-- **Progress Tracking**: Logs are generated at each stage of the pipeline, including data loading, filtering, language detection, aggregation, data cleaning, abusive word filtering, text_quality_checks, validate_and_transform_dates, validate_numeric_fields, validate_text_fields, validate_issues_and_sub_issues, validate_interdependent_constraints, validate_date_constraints, validate_zipcode, validate_enum_values, validate_data_quality, replace_pii_with_placeholders, and send_success_email.
+- **Progress Tracking**: Logs are generated at each stage of the pipeline, including all functions.
 - **Error Monitoring**: Errors are logged with relevant details, making it easier to locate and fix issues quickly.
 - **Custom Log Path**: All logs are saved in `logs/application_logs/preprocessing_log.txt` for easy access and troubleshooting.
   
