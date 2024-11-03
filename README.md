@@ -47,15 +47,53 @@ For API Access: [Link](https://cfpb.github.io/api/ccdb/api.html)
 
 ## Project Setup
 
-### Clone the Repository:
+### Prerequisites
+- Ensure you have **Docker** installed.
+- Ensure you have **Visual Studio Code** installed.
+- Allocate sufficient resources to Docker (e.g., memory, CPU) to ensure the project runs smoothly.
+
+### Step-by-Step Guide
+
+#### Step 1: Clone the Repository
+Clone the repository to your local machine and navigate into the project directory:
 ```bash
 git clone https://github.com/rajpandeygithub/Automated-BiLingual-Complaint-System.git
 cd Automated-BiLingual-Complaint-System
-docker compose up
 ```
 
-**Note: Make sure you have docker installed, and provided enough resources to run**
+#### Step 2: Open the Project in Visual Studio Code
+Open the project folder (`Automated-BiLingual-Complaint-System`) in **Visual Studio Code**.
 
+#### Step 3: Initialize and Start Docker Containers
+Run the following commands in your Visual Studio Code terminal to initialize and start the Docker containers for Airflow:
+
+1. Initialize Airflow:
+   ```bash
+   docker compose up airflow-init
+   ```
+2. Start all containers:
+   ```bash
+   docker compose up
+   ```
+
+#### Step 4: Access the Airflow Web Interface
+Once the containers are up and running, open your browser and go to:
+```
+http://localhost:8080/home
+```
+
+#### Step 5: Enable and Run DAGs
+In the Airflow web interface:
+1. Enable the toggles for all DAGs to activate them.
+2. **First-time Setup**: If this is your first time running the DAGs, they should start automatically.
+3. **Subsequent Runs**: If the DAGs have been run before, trigger the `Data_Preprocessing_INIT` DAG manually. This will initiate a sequence:
+   - `Data_Preprocessing_INIT` will trigger `data_validation_trigger`, which will, in turn, trigger the `Data_Validation_Pipeline`.
+
+#### Step 6: Shut Down Docker Containers
+To stop and shut down the Docker containers, go to the **Visual Studio Code** terminal and run:
+```bash
+docker compose down
+```
 
 ## Data Preprocessing Pipeline
 
