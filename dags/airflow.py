@@ -16,6 +16,8 @@ from scripts.preprocessing import (
     remove_abusive_data,
 )
 from scripts.deidentification import anonymize_sensitive_data
+from scripts.data_quality import validate_data_quality
+
 
 # Default arguments for the DAG
 default_args = {
@@ -65,7 +67,8 @@ with DAG(
     "Data_Validation_Pipeline",
     default_args=default_args,
     description="DAG for Data Validation",
-    schedule_interval=None,
+    schedule_interval=timedelta(days=1),
+    start_date=datetime(2024, 10, 17),
     catchup=False,
 ) as dag:
 
@@ -75,25 +78,31 @@ with DAG(
         python_callable=load_data,
     )
 
-    # Task 2, 3, & 4: Parallel Data Processing
-    # Task 2: Remove records which have words less than min count
-    # Task 3: Remove records outside of range
+    # Task 2: Validate the data
+    data_validation_task = PythonOperator(
+    task_id="validate_data",
+    python_callable=validate_data_quality,
+    op_args=[data_loading_task.output]
+    )
+
+    # Task 3, 4: Parallel Data Processing
+    # Task 3: Filter out records based on word count and specified range criteria.
     # Task 4: Remove un-recognised language
    
     filter_parallel_tasks = [
         PythonOperator(
             task_id="remove_records_with_minimum_words_and_outdated_records",
             python_callable=filter_records_by_word_count_and_date,
-            op_args=[data_loading_task.output, MIN_WORD],
+            op_args=[data_validation_task.output, MIN_WORD],
         ),
         PythonOperator(
             task_id="detect_language",
             python_callable=filter_records_by_language,
-            op_args=[data_loading_task.output],
+            op_args=[data_validation_task.output],
         ),
     ]
 
-    # Task 4: Aggregate results from Task 2, 3 & Task 4
+    # Task 5: Aggregate results from Task 3, 4
     aggregate_parallel_tasks = PythonOperator(
         task_id="validation_aggregation",
         python_callable=aggregate_filtered_task,
@@ -101,7 +110,7 @@ with DAG(
         provide_context=True,
     )
 
-    # Task 5: Trigger Data Cleaning DAG
+    # Task 6: Trigger Data Cleaning DAG
     trigger_data_cleaning_dag_task = TriggerDagRunOperator(
         task_id="data_cleaning_trigger",
         trigger_rule=TriggerRule.ALL_DONE,
@@ -109,14 +118,15 @@ with DAG(
         dag=dag,
     )
 
-    data_loading_task >> filter_parallel_tasks >> aggregate_parallel_tasks >> trigger_data_cleaning_dag_task
+    data_loading_task >> data_validation_task >> filter_parallel_tasks >> aggregate_parallel_tasks >> trigger_data_cleaning_dag_task
 
 # Data Cleaning DAG
 with DAG(
     "Data_Cleaning_Pipeline",
     default_args=default_args,
     description="DAG for Data Preprocessing",
-    schedule_interval=None,
+    schedule_interval=timedelta(days=1),
+    start_date=datetime(2024, 10, 17),
     catchup=False,
 ) as dag:
 
