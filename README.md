@@ -174,26 +174,27 @@ Summarizing entire Airflow Orchestration Graph Below:
 ```mermaid
 graph TB
     subgraph "Data Preprocessing INIT DAG"
-        A[Start] --> B[Trigger Data Validation]
+        A[Start] --> B[Trigger Data Validation Pipeline]
     end
 
     subgraph "Data Validation Pipeline DAG"
-        C[Load Data] --> D[Filter Records]
-        D --> |Parallel Process 1| E[Word Count & Date Filter]
-        D --> |Parallel Process 2| F[Language Detection]
-        E --> G[Aggregate Results]
-        F --> G
-        G --> H[Trigger Data Cleaning]
+        C[Load Data] --> D[Schema Validation]
+        D --> E[Filter Records]
+        E --> |Parallel Process 1| F[Filter by Word Count & Date]
+        E --> |Parallel Process 2| G[Filter by Language]
+        F --> H[Aggregate Validation Results]
+        G --> H
+        H --> I[Trigger Data Cleaning Pipeline]
     end
 
     subgraph "Data Cleaning Pipeline DAG"
-        I[Data Cleaning] --> J[Anonymize Sensitive Data]
-        J --> K[Remove Abusive Content]
-        K --> L[Send Success Email]
+        J[Data Cleaning] --> K[Anonymize Sensitive Data]
+        K --> L[Remove Abusive Content]
+        L --> M[Send Success Email]
     end
 
     B --> C
-    H --> I
+    I --> J
 ```
 # Tracking and Logging
 
