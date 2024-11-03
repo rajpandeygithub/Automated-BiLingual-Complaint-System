@@ -41,11 +41,19 @@ def load_data() -> str:
     # File is hosted on Google Cloud Storage (GCS), reading data from GCP
     data_path ="https://storage.googleapis.com/mlops-group6-raw-data/dataset.parquet"
     try:
-        dataset = pl.read_parquet(data_path).serialize(format="json")
+        # Load the dataset and serialize it
+        dataset = pl.read_parquet(data_path)
         
-        logger.info("Data load successful.")
+        # Log the number of records loaded
+        logger.info(f"Total records loaded: {len(dataset)}")
+
+        # Serialize the dataset to JSON format for further processing
+        dataset = dataset.serialize(format="json")
+        
+        logger.info("Data load and serialization successful.")
         return dataset
     except Exception as error:
+        # Log any errors encountered during loading
         logger.error(f"Error loading dataset: {error}")
         raise Exception("Error With Dataset Loading")
 
@@ -67,6 +75,9 @@ def filter_records_by_word_count_and_date(dataset: str, min_word_length: int) ->
     # Deserialize the dataset
     dataset = pl.DataFrame.deserialize(io.StringIO(dataset), format="json")
 
+    # Log the total number of records before filtering
+    logger.info(f"Total records before filtering: {len(dataset)}")
+
     # Filter records based on the minimum word count and remove the count column
     dataset = (
     dataset.with_columns(
@@ -86,7 +97,11 @@ def filter_records_by_word_count_and_date(dataset: str, min_word_length: int) ->
     )
 )
 
-    logger.info(f"Word count filtering complete. Records meeting criteria: {len(dataset)}")
+    # Log count after date filtering
+    logger.info(f"Records after date filtering: {len(dataset)}")
+    
+    # Serialize and return the filtered dataset
+    logger.info("Word count and date filtering complete.")
     
     # Serialize and return the filtered dataset
     return dataset.serialize(format="json")
@@ -107,6 +122,10 @@ def filter_records_by_language(dataset: str) -> str:
     
     # Deserialize the dataset
     dataset = pl.DataFrame.deserialize(io.StringIO(dataset), format="json")
+
+     # Log the total number of records before language detection
+    logger.info(f"Total records before language filtering: {len(dataset)}")
+
     # Perform language detection with multi-threading
     language_detected = []
     with ThreadPoolExecutor(max_workers=10) as executor:
@@ -126,7 +145,11 @@ def filter_records_by_language(dataset: str) -> str:
         .drop(["language"])
     )
 
-    logger.info("Language filtering complete. Filtered records count: %d", len(dataset))
+    # Log the total number of records after language filtering
+    logger.info(f"Records after language filtering (HI/EN only): {len(dataset)}")
+    
+    # Serialize and return the filtered dataset
+    logger.info("Language filtering complete.")
     
     # Serialize and return the filtered dataset
     return dataset.serialize(format="json")
@@ -151,6 +174,8 @@ def aggregate_filtered_task(dataset_a: str, dataset_b: str) -> None:
     # Deserialize datasets and perform an inner join on 'Complaint ID'
     dataset_a = pl.DataFrame.deserialize(io.StringIO(dataset_a), format="json")
     dataset_b = pl.DataFrame.deserialize(io.StringIO(dataset_b), format="json")
+    logger.info(f"Records in dataset A before joining: {len(dataset_a)}")
+    logger.info(f"Records in dataset B before joining: {len(dataset_b)}")
 
     # Join datasets and select specified columns
     selected_columns = [
@@ -181,9 +206,12 @@ def aggregate_filtered_task(dataset_a: str, dataset_b: str) -> None:
         selected_columns
     )
 
+    # Log record count after joining
+    logger.info(f"Records after joining datasets on 'complaint_id': {len(dataset_joined)}")
+
     # Write the output to the specified parquet file
     dataset_joined.write_parquet(output_path)
-    logger.info("Dataset aggregation complete and saved to file.")
+    logger.info(f"Dataset aggregation complete and saved to file at: {output_path}")
 
 
 def data_cleaning() -> str:
@@ -203,6 +231,9 @@ def data_cleaning() -> str:
     )
     dataset = pl.read_parquet(data_path)
 
+    # Log the initial record count
+    logger.info(f"Total records before cleaning: {len(dataset)}")
+
     # Lowercase complaint narratives
     dataset = dataset.with_columns(pl.col("complaint").str.to_lowercase())
 
@@ -213,24 +244,29 @@ def data_cleaning() -> str:
         )
     )
 
+    logger.info("Removed special characters from complaint narratives.")
+
     # Remove duplicate records based on specific columns
     dataset = dataset.unique(
-        subset=["product", "sub_product", "complaint"],
+        subset=["product", "complaint"],
         maintain_order=True,
     )
 
+
+
     # Drop records with nulls in specified columns
     dataset = dataset.drop_nulls(
-        subset=["product", "sub_product", "department", "complaint"]
+        subset=["product", "department", "complaint"]
     )
 
-    logger.info("Data cleaning complete. Cleaned records count: %d", len(dataset))
+    # Log the final cleaned record count
+    logger.info(f"Data cleaning complete. Cleaned records count: {len(dataset)}")
     
     # Serialize and return the cleaned dataset
     return dataset.serialize(format="json")
 
 
-def remove_abusive_data(dataset: str, abuse_placeholder: str = "yyy") -> str:
+def remove_abusive_data(dataset: str, abuse_placeholder: str = "<abusive_data>") -> str:
     """
     Remove abusive words from 'complaint' column in the dataset,
     replacing them with a specified placeholder. The cleaned dataset is saved to a
@@ -253,6 +289,7 @@ def remove_abusive_data(dataset: str, abuse_placeholder: str = "yyy") -> str:
 
     # Deserialize the dataset
     dataset = pl.DataFrame.deserialize(io.StringIO(dataset), format="json")
+    logger.info(f"Total records before abusive word filtering: {len(dataset)}")
 
     # Set up Bloom Filter for abusive words
     profane_set = set()
@@ -260,6 +297,7 @@ def remove_abusive_data(dataset: str, abuse_placeholder: str = "yyy") -> str:
 
     # Load abusive words
     abusive_words = pl.read_parquet(abusive_words_path)["profanity"].to_list()
+    logger.info(f"Total abusive words loaded: {len(abusive_words)}")
 
     for word in abusive_words:
         profanity_bloom.add(word)
@@ -275,6 +313,7 @@ def remove_abusive_data(dataset: str, abuse_placeholder: str = "yyy") -> str:
             for w in record
         ]
         cleaned_records.append(" ".join(clean_record))
+
 
     # Add the cleaned complaints to the dataset
     dataset = dataset.with_columns(
