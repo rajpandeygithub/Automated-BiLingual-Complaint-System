@@ -196,6 +196,9 @@ graph TB
     B --> C
     I --> J
 ```
+
+## Data Versioning with DVC
+
 ## Tracking and Logging
 
 Our pipeline includes detailed logging to track progress and identify issues about errors during data processing. We use Python's `logging` library to set up a custom logger that captures important information at each stage of the process.
@@ -212,6 +215,8 @@ Our pipeline includes detailed logging to track progress and identify issues abo
 
 
 ## Pipeline Flow Optimization
+- In Filter by Language task, Multi-threading was used to detect the language of the text in parallel. Before multi-threading the time to complete language detection was 3.43 seconds, and after multi-threading the execution time was reduced to 2.28 seconds.
+- In Remove Abuse content task, we have a list of abusive words to remove. So to efficiently remove abusive words we made use of Bloom Filters. This reduced our execution time from 1.25 to 1.65 seconds.
   
 ## Data Bias Detection and Mitigation
 
