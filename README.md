@@ -171,6 +171,9 @@ The preprocessing pipeline performs comprehensive data cleaning, filtering, and 
 ### 9. Success Email Trigger
 - Once all the pipelines have successfully run, a success email is triggered to notify stakeholders of the pipeline completion
 
+### 10. Slack Alerts Integration
+- On every DAG success and failure, we trigger a slack notification a private channel in the MLOps workspace.
+
 ### Output
 - Final preprocessed dataset saved in Parquet format
 - Location: `data/preprocessed_dataset.parquet`
