@@ -162,6 +162,15 @@ The preprocessing pipeline performs comprehensive data cleaning, filtering, and 
 - Joins filtered datasets on complaint ID
 - Selects and maintains relevant columns
 
+### 8. Abusive Content Filtering
+-	Removes words from a set of abusive words
+-	Implements Bloom filter for efficient filtering
+-	Replaces abusive words with placeholder text
+-	Processes text while maintaining sentence structure
+
+### 9. Success Email Trigger
+- Once all the pipelines have successfully run, a success email is triggered to notify stakeholders of the pipeline completion
+
 ### Output
 - Final preprocessed dataset saved in Parquet format
 - Location: `data/preprocessed_dataset.parquet`
@@ -198,6 +207,9 @@ graph TB
 ```
 
 ## Data Versioning with DVC
+- 1. DVC (Data Version Control) to manage and version control our datasets throughout the preprocessing pipeline
+- 2. Raw data is loaded from Google Cloud Storage (GCS), processed and cleaned using our Airflow pipeline, and the preprocessed data is then stored back to 
+- 3. Metadata versions are stored in GCS 
 
 ## Tracking and Logging
 

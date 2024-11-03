@@ -6,3 +6,4 @@ fast-langdetect
 polars
 rbloom
 lingua-language-detector
+dvc
