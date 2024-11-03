@@ -67,8 +67,7 @@ with DAG(
     "Data_Validation_Pipeline",
     default_args=default_args,
     description="DAG for Data Validation",
-    schedule_interval=timedelta(days=1),
-    start_date=datetime(2024, 10, 17),
+    schedule_interval=None
     catchup=False,
 ) as dag:
 
@@ -125,8 +124,7 @@ with DAG(
     "Data_Cleaning_Pipeline",
     default_args=default_args,
     description="DAG for Data Preprocessing",
-    schedule_interval=timedelta(days=1),
-    start_date=datetime(2024, 10, 17),
+    schedule_interval=None
     catchup=False,
 ) as dag:
 
