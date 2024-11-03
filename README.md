@@ -188,7 +188,15 @@ graph TB
     B --> C
     H --> I
 ```
+# Tracking and Logging
 
+Our pipeline includes detailed logging to track progress and identify issues about errors during data processing. We use Python's `logging` library to set up a custom logger that captures important information at each stage of the process.
+
+### Key Features:
+- **Progress Tracking**: Logs are generated at each stage of the pipeline, including data loading, filtering, language detection, aggregation, data cleaning, abusive word filtering, text_quality_checks, validate_and_transform_dates, validate_numeric_fields, validate_text_fields, validate_issues_and_sub_issues, validate_interdependent_constraints, validate_date_constraints, validate_zipcode, validate_enum_values, validate_data_quality, replace_pii_with_placeholders, and send_success_email.
+- **Error Monitoring**: Errors are logged with relevant details, making it easier to locate and fix issues quickly.
+- **Custom Log Path**: All logs are saved in `logs/application_logs/preprocessing_log.txt` for easy access and troubleshooting.
+  
 ## Data Bias Detection and Mitigation
 
 The project routes customer complaints to the correct product and department based solely on complaint narratives, with demographic or personally identifiable information (PII) redacted to ensure privacy and mitigate demographic bias. This approach aligns with responsible ML fairness principles, ensuring that the model is not biased on demographic factors like location, gender, religion, ethnicity etc. 
