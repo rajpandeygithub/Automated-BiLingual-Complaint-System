@@ -224,6 +224,10 @@ Our pipeline includes detailed logging to track progress and identify issues abo
 - **Error Monitoring**: Errors are logged with relevant details, making it easier to locate and fix issues quickly.
 - **Custom Log Path**: All logs are saved in `logs/application_logs/preprocessing_log.txt` for easy access and troubleshooting.
 
+![image](https://github.com/user-attachments/assets/1de54f85-f5c7-4e31-ac97-1e120b5812eb)
+
+
+
 ## Data Schema & Statistics Generation
 
 
