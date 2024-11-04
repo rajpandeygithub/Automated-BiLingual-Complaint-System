@@ -94,12 +94,13 @@ def anonymize_sensitive_data(dataset: str)-> str:
             os.path.dirname(__file__),
             "../../data/preprocessed_dataset.parquet",
         )
+        logger.info(f"Total number of records before anonymizing sensitive data: {len(dataset)}")
 
         # Deserialize the dataset
         preprocessed_dataset = pl.DataFrame.deserialize(io.StringIO(dataset), format="json")
-
-        # Assuming df is your Polars DataFrame
+        
         anonymized_dataset = preprocessed_dataset.with_columns(pl.col('complaint').map_elements(replace_pii_with_placeholders))
+        logger.info(f"Total number of records after anonymizing sensitive data: {len(anonymized_dataset)}")
 
         logger.info("Anonymization of sensitive data completed successfully.")    
         logger.info("Saving anonymized data to file.")
