@@ -23,7 +23,7 @@ from scripts.preprocessing import (
 )
 from scripts.deidentification import anonymize_sensitive_data
 from scripts.data_quality import validate_data_quality
-
+from scripts.statistics_generation import schema_and_statistics_generation
 
 # Default arguments for the DAG
 default_args = {
@@ -149,7 +149,7 @@ with DAG(
         task_id="load_data",
         python_callable=load_data,
     )
-
+ 
     # Task 2: Validate the data
     data_validation_task = PythonOperator(
     task_id="validate_data",
@@ -157,20 +157,28 @@ with DAG(
     op_args=[data_loading_task.output]
     )
 
-    # Task 3, 4: Parallel Data Processing
-    # Task 3: Filter out records based on word count and specified range criteria.
-    # Task 4: Remove un-recognised language
+    # Task 3
+    schema_and_statistics_generation_task = PythonOperator(
+    task_id="schema_and_statistics_generation",
+    python_callable=schema_and_statistics_generation,
+    op_args=[data_validation_task.output]
+    )
+
+
+    # Task 4, 5: Parallel Data Processing
+    # Task 4: Filter out records based on word count and specified range criteria.
+    # Task 5: Remove un-recognised language
    
     filter_parallel_tasks = [
         PythonOperator(
             task_id="remove_records_with_minimum_words_and_outdated_records",
             python_callable=filter_records_by_word_count_and_date,
-            op_args=[data_validation_task.output, MIN_WORD],
+            op_args=[schema_and_statistics_generation_task.output, MIN_WORD],
         ),
         PythonOperator(
             task_id="detect_language",
             python_callable=filter_records_by_language,
-            op_args=[data_validation_task.output],
+            op_args=[schema_and_statistics_generation_task.output],
         ),
     ]
 
@@ -190,7 +198,7 @@ with DAG(
         dag=dag,
     )
 
-    data_loading_task >> data_validation_task >> filter_parallel_tasks >> aggregate_parallel_tasks >> trigger_data_cleaning_dag_task
+    data_loading_task >> data_validation_task >> schema_and_statistics_generation_task >> filter_parallel_tasks >> aggregate_parallel_tasks >> trigger_data_cleaning_dag_task
 
 # Data Cleaning DAG
 with DAG(

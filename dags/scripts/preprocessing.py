@@ -89,12 +89,6 @@ def filter_records_by_word_count_and_date(dataset: str, min_word_length: int) ->
     )
     .filter(pl.col("num_words") > min_word_length)
     .drop("num_words")
-    .with_columns(
-        pl.col("date_received")
-        .cast(pl.Utf8)  # Cast to String type
-        .str.strptime(pl.Date, "%Y-%m-%d", strict=False)
-        .alias("date_received")
-    )
     .filter(
         (pl.col("date_received") >= pl.date(2015, 3, 19)) &
         (pl.col("date_received") <= pl.date(2024, 7, 28))
@@ -197,8 +191,6 @@ def aggregate_filtered_task(dataset_a: str, dataset_b: str) -> None:
         "company",
         "state",
         "zipcode",
-        "tags",
-        "company_response_public",
         "company_response_consumer",
         "consumer_consent_provided",
         "submitted_via",

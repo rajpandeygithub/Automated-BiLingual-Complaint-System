@@ -178,9 +178,13 @@ The preprocessing pipeline performs comprehensive data cleaning, filtering, and 
 
 ### Output
 - Final preprocessed dataset saved in Parquet format
-- Location: `data/preprocessed_dataset.parquet`
+- Location: `data/preprocessed_dataset.parquet` and `bilingualcomplaint-system.MLOps.preprocessed_data`(BigQuery)
 - Includes comprehensive logging of all preprocessing steps
 - Send a pipeline success / failure email
+
+<img width="1458" alt="Screenshot 2024-11-03 at 8 14 30 PM" src="https://github.com/user-attachments/assets/07eed6ff-5853-41f4-8bbb-24d25db45eaf">
+
+
 
 ### Pipeline Orchestration (Airflow DAGs)
 Summarizing entire Airflow Orchestration Graph Below:
@@ -212,14 +216,6 @@ graph TB
     I --> J
 ```
 
-## Data Versioning with DVC
-- 1. DVC (Data Version Control) to manage and version control our datasets throughout the preprocessing pipeline
-- 2. Raw data is loaded from Google Cloud Storage (GCS), processed and cleaned using our Airflow pipeline, and the preprocessed data is then stored back to 
-- 3. Metadata versions are stored in GCS
-     
- 
-  <img width="1440" alt="Screenshot 2024-11-03 at 9 51 52 PM" src="https://github.com/user-attachments/assets/cd978868-aabe-488a-a295-93d838bc520c">
-
 ## Tracking and Logging
 
 Our pipeline includes detailed logging to track progress and identify issues about errors during data processing. We use Python's `logging` library to set up a custom logger that captures important information at each stage of the process.
@@ -231,6 +227,28 @@ Our pipeline includes detailed logging to track progress and identify issues abo
 
 ![image](https://github.com/user-attachments/assets/1de54f85-f5c7-4e31-ac97-1e120b5812eb)
 
+## Data Versioning with DVC
+- 1. DVC (Data Version Control) to manage and version control our datasets throughout the preprocessing pipeline
+- 2. Raw data is loaded from Google Cloud Storage (GCS), processed and cleaned using our Airflow pipeline, and the preprocessed data is then stored back to 
+- 3. Metadata versions are stored in GCS
+     
+ 
+  <img width="1440" alt="Screenshot 2024-11-03 at 9 51 52 PM" src="https://github.com/user-attachments/assets/cd978868-aabe-488a-a295-93d838bc520c">
+
+
+## Pipeline Flow Optimization
+- In Filter by Language task, Multi-threading was used to detect the language of the text in parallel. Before multi-threading the time to complete language detection was 3.43 seconds, and after multi-threading the execution time was reduced to 2.28 seconds.
+- In Remove Abuse content task, we have a list of abusive words to remove. So to efficiently remove abusive words we made use of Bloom Filters. This reduced our execution time from 1.25 to 1.65 seconds.
+
+Below is the Gantt chart illustrating the pipeline flow after optimization:
+
+  ![image](https://github.com/user-attachments/assets/671c9376-fc3b-4485-b175-976e0fc20eb1)
+  
+  ![image](https://github.com/user-attachments/assets/6978a4b2-50b1-48e9-887c-1e6835d97706)
+  
+  ![image](https://github.com/user-attachments/assets/df98e379-5b6f-41b7-b6d1-3e287a48f4ac)
+
+
 
 
 ## Data Schema & Statistics Generation
@@ -238,10 +256,6 @@ Our pipeline includes detailed logging to track progress and identify issues abo
 
 ## Anomaly Detection & Alerts
 
-
-## Pipeline Flow Optimization
-- In Filter by Language task, Multi-threading was used to detect the language of the text in parallel. Before multi-threading the time to complete language detection was 3.43 seconds, and after multi-threading the execution time was reduced to 2.28 seconds.
-- In Remove Abuse content task, we have a list of abusive words to remove. So to efficiently remove abusive words we made use of Bloom Filters. This reduced our execution time from 1.25 to 1.65 seconds.
   
 ## Data Bias Detection and Mitigation
 
