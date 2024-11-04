@@ -1,0 +1,12 @@
+md5: b08f0586a00354383ba49ae9a083a637
+frozen: true
+deps:
+- checksum: '"e531e4ff67e3dcab0992e67571f88ba8"'
+  size: 32661997
+  hash: md5
+  path: https://storage.googleapis.com/mlops-group6-raw-data/dataset.parquet
+outs:
+- md5: e531e4ff67e3dcab0992e67571f88ba8
+  size: 32661997
+  hash: md5
+  path: dataset.parquet
