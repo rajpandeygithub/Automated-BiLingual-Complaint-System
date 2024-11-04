@@ -182,6 +182,10 @@ The preprocessing pipeline performs comprehensive data cleaning, filtering, and 
 - Includes comprehensive logging of all preprocessing steps
 - Send a pipeline success / failure email
 
+<img width="1458" alt="Screenshot 2024-11-03 at 8 14 30 PM" src="https://github.com/user-attachments/assets/07eed6ff-5853-41f4-8bbb-24d25db45eaf">
+
+
+
 ### Pipeline Orchestration (Airflow DAGs)
 Summarizing entire Airflow Orchestration Graph Below:
 
