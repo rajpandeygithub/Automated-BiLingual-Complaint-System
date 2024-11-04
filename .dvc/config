@@ -1,0 +1,4 @@
+[core]
+    remote = gcp-storage
+['remote "gcp-storage"']
+    url = gs://project-dvc-bucket

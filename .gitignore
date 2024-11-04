@@ -1,6 +1,8 @@
 *.DS_Store
 .DS_Store
-data/
-logs/
+data/*
+!data/**/*.dvc
+logs/*
 __pycache__/
 *.py[cod]
+venv/

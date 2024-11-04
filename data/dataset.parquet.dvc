@@ -1,0 +1,13 @@
+md5: 91a7571914fa20b871ddd69e760ccdbb
+frozen: true
+deps:
+- etag: 08d38fbfdbecc089031002
+  size: 32661997
+  version_id: '1730660485023699'
+  hash: md5
+  path: gs://mlops-group6-raw-data/dataset.parquet
+outs:
+- md5: e531e4ff67e3dcab0992e67571f88ba8
+  size: 32661997
+  hash: md5
+  path: dataset.parquet
