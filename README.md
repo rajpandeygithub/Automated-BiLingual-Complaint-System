@@ -237,6 +237,9 @@ Our pipeline includes detailed logging to track progress and identify issues abo
 
 
 ## Pipeline Flow Optimization
+- In Filter by Language task, Multi-threading was used to detect the language of the text in parallel. Before multi-threading the time to complete language detection was 3.43 seconds, and after multi-threading the execution time was reduced to 2.28 seconds.
+- In Remove Abuse content task, we have a list of abusive words to remove. So to efficiently remove abusive words we made use of Bloom Filters. This reduced our execution time from 1.25 to 1.65 seconds.
+
 Below is the Gantt chart illustrating the pipeline flow after optimization:
 
   ![image](https://github.com/user-attachments/assets/671c9376-fc3b-4485-b175-976e0fc20eb1)
@@ -253,10 +256,6 @@ Below is the Gantt chart illustrating the pipeline flow after optimization:
 
 ## Anomaly Detection & Alerts
 
-
-## Pipeline Flow Optimization
-- In Filter by Language task, Multi-threading was used to detect the language of the text in parallel. Before multi-threading the time to complete language detection was 3.43 seconds, and after multi-threading the execution time was reduced to 2.28 seconds.
-- In Remove Abuse content task, we have a list of abusive words to remove. So to efficiently remove abusive words we made use of Bloom Filters. This reduced our execution time from 1.25 to 1.65 seconds.
   
 ## Data Bias Detection and Mitigation
 
