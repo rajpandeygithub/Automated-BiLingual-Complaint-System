@@ -205,6 +205,7 @@ graph TB
         J[Data Cleaning] --> K[Anonymize Sensitive Data]
         K --> L[Remove Abusive Content]
         L --> M[Send Success Email]
+        L --> N[Insert Records to BigQuery]
     end
 
     B --> C
