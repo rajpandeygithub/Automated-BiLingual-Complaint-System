@@ -178,7 +178,7 @@ The preprocessing pipeline performs comprehensive data cleaning, filtering, and 
 
 ### Output
 - Final preprocessed dataset saved in Parquet format
-- Location: `data/preprocessed_dataset.parquet`
+- Location: `data/preprocessed_dataset.parquet` and `bilingualcomplaint-system.MLOps.preprocessed_data`(BigQuery)
 - Includes comprehensive logging of all preprocessing steps
 - Send a pipeline success / failure email
 
