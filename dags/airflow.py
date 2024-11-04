@@ -19,6 +19,7 @@ from scripts.preprocessing import (
     aggregate_filtered_task,
     data_cleaning,
     remove_abusive_data,
+    insert_data_to_bigquery
 )
 from scripts.deidentification import anonymize_sensitive_data
 from scripts.data_quality import validate_data_quality
@@ -230,4 +231,12 @@ with DAG(
         provide_context=True
     )
 
-    data_cleaning_task >> anonymization_task >> remove_abusive_task >> send_email_task
+    # Task 5: Insert data into BigQuery
+    insert_to_bigquery_task = PythonOperator(
+    task_id="insert_to_bigquery_task",
+    python_callable=insert_data_to_bigquery,
+    op_args=[remove_abusive_task.output],  
+    )
+
+
+    data_cleaning_task >> anonymization_task >> remove_abusive_task >> [insert_to_bigquery_task, send_email_task]

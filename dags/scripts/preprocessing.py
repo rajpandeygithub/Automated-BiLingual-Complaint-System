@@ -3,9 +3,13 @@ import re
 import io
 import logging
 import polars as pl
+import pandas as pd
 from fast_langdetect import detect_language
 from bloom_filter2 import BloomFilter
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from google.cloud import bigquery
+from google.oauth2 import service_account
+DRY_RUN = True
 
 # Defining a custom logger
 def get_custom_logger():
@@ -324,3 +328,45 @@ def remove_abusive_data(dataset: str, abuse_placeholder: str = "<abusive_data>")
     
     # Save the processed dataset to output path
     dataset.write_parquet(output_path)
+    return output_path   
+
+def insert_data_to_bigquery(file_path: str):
+
+    if DRY_RUN:
+        return  # Insertion in BigQuery requires Credentials, which will not be uploaded to Github     
+
+    project_id = 'bilingualcomplaint-system'
+    dataset_id = 'MLOps'
+    table_id = 'preprocessed_data'
+    
+
+    script_dir = os.path.dirname(os.path.abspath(__file__))  # Current script directory
+    keys_path = os.path.join(script_dir, "..", "keys", "service-account.json")
+    credentials = service_account.Credentials.from_service_account_file(keys_path)
+    
+    # Initialize BigQuery client with credentials and project ID
+    client = bigquery.Client(credentials=credentials, project=project_id)
+    
+    dataset = pl.read_parquet(file_path)
+    df = dataset.to_pandas()
+
+    # Explicitly set `date_sent_to_company` as a string
+    if "date_sent_to_company" in df.columns:
+        df["date_sent_to_company"] = df["date_sent_to_company"].astype(str)
+    
+    if "abuse_free_complaints" in df.columns:
+        df["complaint"] = df["abuse_free_complaints"]  # Overwrite `complaint` column
+        df = df.drop(columns=["abuse_free_complaints"])  # Drop `abuse_free_complaints` to avoid schema issues  
+    
+    # Set the table reference
+    table_ref = f"{project_id}.{dataset_id}.{table_id}"
+
+    # Configure load job
+    job_config = bigquery.LoadJobConfig(
+        write_disposition=bigquery.WriteDisposition.WRITE_APPEND,  # Options: WRITE_TRUNCATE, WRITE_APPEND, WRITE_EMPTY
+    )
+
+    # Start the job to upload data
+    job = client.load_table_from_dataframe(df, table_ref, job_config=job_config) 
+    # Wait for the job to complete
+    job.result()

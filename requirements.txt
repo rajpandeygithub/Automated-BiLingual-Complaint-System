@@ -8,3 +8,5 @@ rbloom
 lingua-language-detector
 bloom_filter2
 dvc
+google-cloud-bigquery
+google-auth
