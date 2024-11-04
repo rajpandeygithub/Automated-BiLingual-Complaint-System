@@ -171,6 +171,11 @@ The preprocessing pipeline performs comprehensive data cleaning, filtering, and 
 ### 9. Success Email Trigger
 - Once all the pipelines have successfully run, a success email is triggered to notify stakeholders of the pipeline completion
 
+### 10. Slack Alerts Integration
+- On every DAG success and failure, we trigger a slack notification a private channel in the MLOps workspace.
+![image](https://github.com/user-attachments/assets/324c90ac-e6fa-40c5-a61e-8a9e3c138bf6)
+
+
 ### Output
 - Final preprocessed dataset saved in Parquet format
 - Location: `data/preprocessed_dataset.parquet`
@@ -210,7 +215,6 @@ graph TB
 - 1. DVC (Data Version Control) to manage and version control our datasets throughout the preprocessing pipeline
 - 2. Raw data is loaded from Google Cloud Storage (GCS), processed and cleaned using our Airflow pipeline, and the preprocessed data is then stored back to 
 - 3. Metadata versions are stored in GCS 
-
 ## Tracking and Logging
 
 Our pipeline includes detailed logging to track progress and identify issues about errors during data processing. We use Python's `logging` library to set up a custom logger that captures important information at each stage of the process.
@@ -219,6 +223,10 @@ Our pipeline includes detailed logging to track progress and identify issues abo
 - **Progress Tracking**: Logs are generated at each stage of the pipeline, including all functions.
 - **Error Monitoring**: Errors are logged with relevant details, making it easier to locate and fix issues quickly.
 - **Custom Log Path**: All logs are saved in `logs/application_logs/preprocessing_log.txt` for easy access and troubleshooting.
+
+![image](https://github.com/user-attachments/assets/1de54f85-f5c7-4e31-ac97-1e120b5812eb)
+
+
 
 ## Data Schema & Statistics Generation
 
