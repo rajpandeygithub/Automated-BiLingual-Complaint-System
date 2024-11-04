@@ -4,7 +4,7 @@ import io
 import logging
 import polars as pl
 from fast_langdetect import detect_language
-from rbloom import Bloom
+from bloom_filter2 import BloomFilter
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # Defining a custom logger
@@ -293,7 +293,7 @@ def remove_abusive_data(dataset: str, abuse_placeholder: str = "<abusive_data>")
 
     # Set up Bloom Filter for abusive words
     profane_set = set()
-    profanity_bloom = Bloom(200_000, 0.01)
+    profanity_bloom = BloomFilter(max_elements=200_000, error_rate=0.01)
 
     # Load abusive words
     abusive_words = pl.read_parquet(abusive_words_path)["profanity"].to_list()
