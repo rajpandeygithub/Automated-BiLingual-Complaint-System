@@ -1,5 +1,10 @@
+import sys
 import logging
+import requests
 from airflow import DAG
+from airflow.decorators import dag, task
+from airflow.models import TaskInstance
+from airflow.providers.slack.hooks.slack_webhook import SlackWebhookHook
 from airflow.utils.db import provide_session
 from airflow.operators.python import PythonOperator
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
@@ -29,6 +34,73 @@ default_args = {
     "retry_delay": timedelta(minutes=2),
 }
 
+MIN_WORD: int = 5
+SLACK_WEBHOOK = 'https://hooks.slack.com/services/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'
+
+def send_slack_notification(message: str):
+    """Send a message to Slack via the defined webhook URL."""
+    slack_msg = {'text': message}
+    response = requests.post(
+        SLACK_WEBHOOK, json=slack_msg,
+        headers={'Content-Type': 'application/json'}
+    )
+    if response.status_code != 200:
+        raise ValueError(
+            f"Request to Slack returned an error {response.status_code}, "
+            f"the response is: {response.text}"
+        )
+
+def dag_success_alert(context):
+    """Callback for successful DAG run."""
+    dag_id = context.get('dag').dag_id
+    execution_date = context.get('execution_date')
+    log_url = context.get('task_instance').log_url
+
+    # Format execution date and time
+    exec_date_str = execution_date.strftime('%Y-%m-%d')
+    exec_time_str = execution_date.strftime('%H:%M:%S')
+
+    start_date = context.get('dag_run').start_date
+    end_date = context.get('dag_run').end_date
+
+    duration = (end_date - start_date).total_seconds() / 60
+    duration = round(duration, 2)
+
+    message = (
+        f":large_green_circle: DAG Success Alert\n"
+        f"*DAG Name*: {dag_id}\n"
+        f"*Execution Date*: {exec_date_str}\n"
+        f"*Execution Time*: {exec_time_str}\n"
+        f"*Duration*: {duration} minutes\n"
+        f"*Log URL*: {log_url}"
+    )
+    send_slack_notification(message)
+
+def dag_failure_alert(context):
+    """Callback for failed DAG run."""
+    dag_id = context.get('dag').dag_id
+    execution_date = context.get('execution_date')
+    log_url = context.get('task_instance').log_url
+
+    # Format execution date and time
+    exec_date_str = execution_date.strftime('%Y-%m-%d')
+    exec_time_str = execution_date.strftime('%H:%M:%S')
+
+    start_date = context.get('dag_run').start_date
+    end_date = context.get('dag_run').end_date
+
+    duration = (end_date - start_date).total_seconds() / 60
+    duration = round(duration, 2)
+
+    message = (
+        f":red_circle: DAG Failure Alert\n"
+        f"*DAG Name*: {dag_id}\n"
+        f"*Execution Date*: {exec_date_str}\n"
+        f"*Execution Time*: {exec_time_str}\n"
+        f"*Duration*: {duration} minutes\n"
+        f"*Log URL*: {log_url}"
+    )
+    send_slack_notification(message)
 
 # Define the function to clear XComs
 @provide_session
@@ -39,9 +111,6 @@ def clear_xcom(context, session=None):
         XCom.dag_id == dag_id, XCom.execution_date == execution_date
     ).delete()
 
-
-MIN_WORD: int = 5
-
 # Data Preprocessing Pipeline Initialization DAG
 
 with DAG(
@@ -50,6 +119,8 @@ with DAG(
     description="DAG to start Data Preprocessing pipeline",
     schedule_interval=timedelta(days=1),
     start_date=datetime(2024, 10, 17),
+    on_failure_callback=dag_failure_alert,
+    on_success_callback=dag_success_alert,
     catchup=False,
 ) as dag:
     # Task: Run other DAGs
@@ -59,7 +130,6 @@ with DAG(
         trigger_dag_id="Data_Validation_Pipeline",
         dag=dag
     )
-
     trigger_data_validation_dag_task
  
 # Data Validation DAG
@@ -68,6 +138,8 @@ with DAG(
     default_args=default_args,
     description="DAG for Data Validation",
     schedule_interval=None,
+    on_failure_callback=dag_failure_alert,
+    on_success_callback=dag_success_alert,
     catchup=False,
 ) as dag:
 
@@ -125,6 +197,8 @@ with DAG(
     default_args=default_args,
     description="DAG for Data Preprocessing",
     schedule_interval=None,
+    on_failure_callback=dag_failure_alert,
+    on_success_callback=dag_success_alert,
     catchup=False,
 ) as dag:
 

@@ -7,3 +7,4 @@ polars
 rbloom
 lingua-language-detector
 bloom_filter2
+dvc
