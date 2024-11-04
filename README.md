@@ -216,14 +216,6 @@ graph TB
     I --> J
 ```
 
-## Data Versioning with DVC
-- 1. DVC (Data Version Control) to manage and version control our datasets throughout the preprocessing pipeline
-- 2. Raw data is loaded from Google Cloud Storage (GCS), processed and cleaned using our Airflow pipeline, and the preprocessed data is then stored back to 
-- 3. Metadata versions are stored in GCS
-     
- 
-  <img width="1440" alt="Screenshot 2024-11-03 at 9 51 52 PM" src="https://github.com/user-attachments/assets/cd978868-aabe-488a-a295-93d838bc520c">
-
 ## Tracking and Logging
 
 Our pipeline includes detailed logging to track progress and identify issues about errors during data processing. We use Python's `logging` library to set up a custom logger that captures important information at each stage of the process.
@@ -234,6 +226,25 @@ Our pipeline includes detailed logging to track progress and identify issues abo
 - **Custom Log Path**: All logs are saved in `logs/application_logs/preprocessing_log.txt` for easy access and troubleshooting.
 
 ![image](https://github.com/user-attachments/assets/1de54f85-f5c7-4e31-ac97-1e120b5812eb)
+
+## Data Versioning with DVC
+- 1. DVC (Data Version Control) to manage and version control our datasets throughout the preprocessing pipeline
+- 2. Raw data is loaded from Google Cloud Storage (GCS), processed and cleaned using our Airflow pipeline, and the preprocessed data is then stored back to 
+- 3. Metadata versions are stored in GCS
+     
+ 
+  <img width="1440" alt="Screenshot 2024-11-03 at 9 51 52 PM" src="https://github.com/user-attachments/assets/cd978868-aabe-488a-a295-93d838bc520c">
+
+
+## Pipeline Flow Optimization
+Below is the Gantt chart illustrating the pipeline flow after optimization:
+
+  ![image](https://github.com/user-attachments/assets/671c9376-fc3b-4485-b175-976e0fc20eb1)
+  
+  ![image](https://github.com/user-attachments/assets/6978a4b2-50b1-48e9-887c-1e6835d97706)
+  
+  ![image](https://github.com/user-attachments/assets/df98e379-5b6f-41b7-b6d1-3e287a48f4ac)
+
 
 
 
