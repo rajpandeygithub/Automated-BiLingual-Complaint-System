@@ -286,6 +286,9 @@ Incorporated a comprehensive data quality assessment and anomaly detection proce
 - **Schema Inference:** Inferred a schema from the generated statistics, defining the expected data structure, types, and constraints. This schema acts as a reference for validating incoming datasets against established business rules.
   
 - **Anomaly Detection:** Checked for anomalies in the dataset by validating it against the inferred schema. It filters specific columns that we're interested in (e.g., complaint details, department, product) to focus on critical areas, logging any detected issues.
+
+![image](https://github.com/user-attachments/assets/5d01a03e-cedc-4d18-9639-e88dd4f12d98)
+
   
 - **Anomaly Resolution:** To fix the detected anomalies, relaxed the minimum and maximum fraction constraints for values that must come from the domain for the features where anomalies were identified. This adjustment allowed us to accommodate legitimate data variations.
 
@@ -293,7 +296,12 @@ Incorporated a comprehensive data quality assessment and anomaly detection proce
 
 ### 2. Alerts
 
-- **Alerts for Anomalies:** To ensure prompt communication, alerts were generated and sent via email whenever anomalies were detected in the data. This proactive approach allowed us to stay informed and address / fix potential anomalies swiftly,
+- **Alerts for Anomalies:** To ensure prompt communication, alerts were generated and sent via email whenever anomalies were detected in the data. This proactive approach allowed us to stay informed and address / fix potential anomalies swiftly.
+
+![image](https://github.com/user-attachments/assets/b82b8e42-4972-4464-8d64-849fc47d1ba2)
+![image](https://github.com/user-attachments/assets/e0ae02f2-e82b-4f99-be01-c40f4486d2db)
+
+
   
 ## Data Bias Detection and Mitigation
 
