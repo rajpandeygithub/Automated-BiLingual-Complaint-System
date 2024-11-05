@@ -129,7 +129,7 @@ def schema_and_statistics_generation(dataset: str)-> str:
         ])
 
     df = df.drop(['tags', 'company_response_public'])
-    df = df.with_columns(pl.when(pl.col('sub_issue') == 'None').then(None).otherwise(pl.col('sub_issue')).alias('sub_issue'))
+    df = df.with_columns(pl.when(pl.col('sub_issue').is_null()).then(pl.lit('NA')).otherwise(pl.col('sub_issue')).alias('sub_issue'))
 
     # Identify outliers
     identify_complaint_outliers(df)
