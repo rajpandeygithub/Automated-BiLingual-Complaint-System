@@ -256,11 +256,10 @@ Below is the Gantt chart illustrating the pipeline flow after optimization:
 Here's a high-level overview of what are the stepts we do in the context of feeding quality data to the modelling stage.
 
 ### 1. Data Quality Assurance
-Text Validation: Perform several checks on consumer complaint narratives to ensure data quality. The following issues are validated:
+Text Validation: Perform several checks on consumer complaint narratives to ensure data quality, as the quality of data directly impacts the performance of text classification models. The following issues are validated:
 - **Empty Entries:** Checked for any entries that lack text.
 - **Extremely Short or Long Complaints:** Complaints that are too short or excessively long are flagged for review.
 - **Non-ASCII Characters:** Identified any characters that fall outside the standard ASCII range.
-- This step is crucial, as the quality of text data directly impacts the performance of text classification models.
 
 - Interdependent Constraint Validation: Checked for logical consistency between related fields. This step helps maintain the overall quality of the dataset by ensuring that related data points align correctly.
 
