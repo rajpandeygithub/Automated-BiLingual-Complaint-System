@@ -39,6 +39,11 @@ Once the containers are up and running, open your browser and go to:
 ```
 http://localhost:8080/home
 ```
+Login with default username password:
+
+**Username: airflow2**
+
+**Password: airflow2**
 
 #### Step 5: Enable and Run DAGs
 In the Airflow web interface:
@@ -299,7 +304,6 @@ Incorporated a comprehensive data quality assessment and anomaly detection proce
 - **Alerts for Anomalies:** To ensure prompt communication, alerts were generated and sent via email whenever anomalies were detected in the data. This proactive approach allowed us to stay informed and address / fix potential anomalies swiftly.
 
 ![image](https://github.com/user-attachments/assets/b82b8e42-4972-4464-8d64-849fc47d1ba2)
-![image](https://github.com/user-attachments/assets/e0ae02f2-e82b-4f99-be01-c40f4486d2db)
 
 
   
@@ -320,7 +324,11 @@ If significant discrepancies appear across slices:
 
 - Once the ML model is built, fairness constraints through Fairlearn can be applied to optimize for balanced performance across slices, ensuring no slice disproportionately affects routing accuracy. 
 
-- For certain slices, we may apply customized decision thresholds to improve performance for groups with historically lower accuracy. 
+- For certain slices, we may apply customized decision thresholds to improve performance for groups with historically lower accuracy.
+
+## Preprocessing Module Unit Tests
+- Unit tests have been developed to validate the functions in `preprocessing.py`, covering data loading, record filtering, language detection, abusive content removal, and data aggregation processes.
+- These tests ensure correct data transformation and filtering logic is applied to meet preprocessing requirements.
 
 ## License Information
 
