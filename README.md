@@ -96,9 +96,7 @@ For API Access: [Link](https://cfpb.github.io/api/ccdb/api.html)
 | `sub_issue`                 | The sub-issue the consumer identified in the complaint                                                             | String    |
 | `company`                   | Company associated with the complaint                                                         | String    |
 | `state`                     | The state of the mailing address provided by the consumer                                                   | String    |
-| `zipcode`                   | The mailing ZIP code provided by the consumer                                                    | String    |
-| `tags`                      | Complaints are tagged based on submitter details: those involving consumers aged 62+ are tagged “Older American,” while complaints from servicemembers or their families are tagged “Servicemember.” This category includes active duty, National Guard, Reservists, Veterans, and retirees.               | String    |
-| `company_response_public`   | The company's optional, public-facing response to a consumer's complaint. Companies can choose to select a response from a pre-set list of options that will be posted on the public database. For example, "Company believes complaint is the result of an isolated error."                                        | String    |
+| `zipcode`                   | The mailing ZIP code provided by the consumer                                                    | String     |
 | `company_response_consumer` | This is how the company responded. For example, "Closed with explanation"                                                     | String    |
 | `consumer_consent_provided` | Identifies whether the consumer opted in to publish their complaint narrative. The narrative is not published unless the consumer consents and consumers can opt-out at any time                                     | String    |
 | `submitted_via`             | How the complaint was submitted to the CFPB                          | String    |
@@ -202,7 +200,8 @@ graph TB
 
     subgraph "Data Validation Pipeline DAG"
         C[Load Data] --> D[Schema Validation]
-        D --> E[Filter Records]
+        D --> S[Statistic Generation]
+        S --> E[Filter Records]
         E --> |Parallel Process 1| F[Filter by Word Count & Date]
         E --> |Parallel Process 2| G[Filter by Language]
         F --> H[Aggregate Validation Results]
@@ -220,6 +219,15 @@ graph TB
     B --> C
     I --> J
 ```
+
+Summarizing the entire Airflow Orchestration Graph Below Using Dags:
+   ![image](https://github.com/user-attachments/assets/086510ca-59a3-4370-811d-9f99dced6740)
+   
+   ![image](https://github.com/user-attachments/assets/1440363a-e01b-47c1-a83c-87896faced28)
+   
+   ![image](https://github.com/user-attachments/assets/f2c0db2e-e980-4b29-8eee-0e32fd5b4e20)
+
+
 
 ## Tracking and Logging
 
@@ -247,11 +255,19 @@ Our pipeline includes detailed logging to track progress and identify issues abo
 
 Below is the Gantt chart illustrating the pipeline flow after optimization:
 
-  ![image](https://github.com/user-attachments/assets/671c9376-fc3b-4485-b175-976e0fc20eb1)
-  
-  ![image](https://github.com/user-attachments/assets/6978a4b2-50b1-48e9-887c-1e6835d97706)
-  
-  ![image](https://github.com/user-attachments/assets/df98e379-5b6f-41b7-b6d1-3e287a48f4ac)
+   ![image](https://github.com/user-attachments/assets/5c5c8f23-06e6-45e8-a4fe-e2a97dbe34e2)
+   
+   ![image](https://github.com/user-attachments/assets/3f480236-6392-4ef3-ac65-d5022915ae19)
+   
+   ![image](https://github.com/user-attachments/assets/1769d9f2-ef58-40a3-83e9-4f8e037fd68e)
+   
+   ![image](https://github.com/user-attachments/assets/1618e514-367f-4223-b829-55f1c3b4853e)
+   
+   ![image](https://github.com/user-attachments/assets/52757af9-7a15-4146-a083-f273ff67a5ef)
+   
+   ![image](https://github.com/user-attachments/assets/ca715dc8-3836-4d60-92de-e1f1f8a01029)
+
+
 
 
 
@@ -281,6 +297,8 @@ Here's a high-level overview of what are the steps we do in the context of feedi
 - **Temporal Analysis:** Analyzed yearly trends in complaint volumes and categories. This information can be leveraged to create time-based features and understand whether the classification model needs to account for temporal shifts in complaint patterns.
 
 - **Duplicate Detection:** Identified repeated complaints to prevent data leakage and ensure that the classification model does not overfit to duplicated data.
+
+- Finally, we remove `tags` and `company_response_public` columns as they had `99%` null values from TFDV library.
 
 ## Anomaly Detection & Alerts
 
