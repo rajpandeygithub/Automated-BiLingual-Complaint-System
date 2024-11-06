@@ -39,6 +39,11 @@ Once the containers are up and running, open your browser and go to:
 ```
 http://localhost:8080/home
 ```
+Login with default username password:
+
+**Username: airflow2**
+
+**Password: airflow2**
 
 #### Step 5: Enable and Run DAGs
 In the Airflow web interface:
@@ -216,14 +221,6 @@ graph TB
     I --> J
 ```
 
-## Data Versioning with DVC
-- 1. DVC (Data Version Control) to manage and version control our datasets throughout the preprocessing pipeline
-- 2. Raw data is loaded from Google Cloud Storage (GCS), processed and cleaned using our Airflow pipeline, and the preprocessed data is then stored back to 
-- 3. Metadata versions are stored in GCS
-     
- 
-  <img width="1440" alt="Screenshot 2024-11-03 at 9 51 52 PM" src="https://github.com/user-attachments/assets/cd978868-aabe-488a-a295-93d838bc520c">
-
 ## Tracking and Logging
 
 Our pipeline includes detailed logging to track progress and identify issues about errors during data processing. We use Python's `logging` library to set up a custom logger that captures important information at each stage of the process.
@@ -235,17 +232,80 @@ Our pipeline includes detailed logging to track progress and identify issues abo
 
 ![image](https://github.com/user-attachments/assets/1de54f85-f5c7-4e31-ac97-1e120b5812eb)
 
-
-
-## Data Schema & Statistics Generation
-
-
-## Anomaly Detection & Alerts
+## Data Versioning with DVC
+- 1. DVC (Data Version Control) to manage and version control our datasets throughout the preprocessing pipeline
+- 2. Raw data is loaded from Google Cloud Storage (GCS), processed and cleaned using our Airflow pipeline, and the preprocessed data is then stored back to 
+- 3. Metadata versions are stored in GCS
+     
+ 
+  <img width="1440" alt="Screenshot 2024-11-03 at 9 51 52 PM" src="https://github.com/user-attachments/assets/cd978868-aabe-488a-a295-93d838bc520c">
 
 
 ## Pipeline Flow Optimization
 - In Filter by Language task, Multi-threading was used to detect the language of the text in parallel. Before multi-threading the time to complete language detection was 3.43 seconds, and after multi-threading the execution time was reduced to 2.28 seconds.
 - In Remove Abuse content task, we have a list of abusive words to remove. So to efficiently remove abusive words we made use of Bloom Filters. This reduced our execution time from 1.25 to 1.65 seconds.
+
+Below is the Gantt chart illustrating the pipeline flow after optimization:
+
+  ![image](https://github.com/user-attachments/assets/671c9376-fc3b-4485-b175-976e0fc20eb1)
+  
+  ![image](https://github.com/user-attachments/assets/6978a4b2-50b1-48e9-887c-1e6835d97706)
+  
+  ![image](https://github.com/user-attachments/assets/df98e379-5b6f-41b7-b6d1-3e287a48f4ac)
+
+
+
+
+## Data Schema & Statistics Generation: 
+
+Here's a high-level overview of what are the stepts we do in the context of feeding quality data to the modelling stage.
+
+### 1. Data Quality Assurance
+- **Text Validation:** Perform several checks on consumer complaint narratives to ensure data quality, as the quality of data directly impacts the performance of text classification models. The following issues are validated:
+   - Empty Entries: Checked for any entries that lack text.
+   - Extremely Short or Long Complaints: Complaints that are too short or excessively long are flagged for review.
+   - Non-ASCII Characters: Identified any characters that fall outside the standard ASCII range.
+
+- **Interdependent Constraint Validation:** Checked for logical consistency between related fields. This step helps maintain the overall quality of the dataset by ensuring that related data points align correctly.
+
+- **Categorical Data Validation:** Verified that categorical values (some of which serve as output labels) contain valid entries. This ensures that the model is trained on appropriate and meaningful labels.
+  
+### 2. Statistics Generation and Schema Analysis
+
+- **Data Statistics Generation:** Generating comprehensive statistics from the DataFrame containing complaint data using TensorFlow Data Validation (TFDV). These statistics offer insights into the distribution and characteristics of the data, serving as a foundational reference for quality assessment.
+  
+- **Outlier Detection:** Identified unusually long complaints that could skew the classification model or indicate special cases needing separate handling.
+  
+- **Class Distribution Analysis:** Examined the distribution of complaints across different categories (e.g., products, issues). Understanding class imbalance is vital, as it may require techniques like oversampling or undersampling to ensure effective model training.
+
+- **Temporal Analysis:** Analyzed yearly trends in complaint volumes and categories. This information can be leveraged to create time-based features and understand whether the classification model needs to account for temporal shifts in complaint patterns.
+
+- **Duplicate Detection:** Identified repeated complaints to prevent data leakage and ensure that the classification model does not overfit to duplicated data.
+
+## Anomaly Detection & Alerts
+
+Incorporated a comprehensive data quality assessment and anomaly detection process tailored for consumer complaint data ensuring that our data meets predefined quality standards. 
+
+### 1. Anomaly Detection
+
+- **Schema Inference:** Inferred a schema from the generated statistics, defining the expected data structure, types, and constraints. This schema acts as a reference for validating incoming datasets against established business rules.
+  
+- **Anomaly Detection:** Checked for anomalies in the dataset by validating it against the inferred schema. It filters specific columns that we're interested in (e.g., complaint details, department, product) to focus on critical areas, logging any detected issues.
+
+![image](https://github.com/user-attachments/assets/5d01a03e-cedc-4d18-9639-e88dd4f12d98)
+
+  
+- **Anomaly Resolution:** To fix the detected anomalies, relaxed the minimum and maximum fraction constraints for values that must come from the domain for the features where anomalies were identified. This adjustment allowed us to accommodate legitimate data variations.
+
+- **Schema Freezing:** Once the anomalies were fixed, inferred a schema that defined the expected data structure, types, and constraints. We then "froze" this schema and stored it in a file, creating a consistent reference point for validating incoming data when our application is released to the public. Freezing the schema is crucial as it ensures that any data processed in production adheres to the established rules and standards, helping us maintain high data quality and reliability.
+
+### 2. Alerts
+
+- **Alerts for Anomalies:** To ensure prompt communication, alerts were generated and sent via email whenever anomalies were detected in the data. This proactive approach allowed us to stay informed and address / fix potential anomalies swiftly.
+
+![image](https://github.com/user-attachments/assets/b82b8e42-4972-4464-8d64-849fc47d1ba2)
+
+
   
 ## Data Bias Detection and Mitigation
 
