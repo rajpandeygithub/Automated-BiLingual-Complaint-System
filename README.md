@@ -96,9 +96,7 @@ For API Access: [Link](https://cfpb.github.io/api/ccdb/api.html)
 | `sub_issue`                 | The sub-issue the consumer identified in the complaint                                                             | String    |
 | `company`                   | Company associated with the complaint                                                         | String    |
 | `state`                     | The state of the mailing address provided by the consumer                                                   | String    |
-| `zipcode`                   | The mailing ZIP code provided by the consumer                                                    | String    |
-| `tags`                      | Complaints are tagged based on submitter details: those involving consumers aged 62+ are tagged “Older American,” while complaints from servicemembers or their families are tagged “Servicemember.” This category includes active duty, National Guard, Reservists, Veterans, and retirees.               | String    |
-| `company_response_public`   | The company's optional, public-facing response to a consumer's complaint. Companies can choose to select a response from a pre-set list of options that will be posted on the public database. For example, "Company believes complaint is the result of an isolated error."                                        | String    |
+| `zipcode`                   | The mailing ZIP code provided by the consumer                                                    | String     |
 | `company_response_consumer` | This is how the company responded. For example, "Closed with explanation"                                                     | String    |
 | `consumer_consent_provided` | Identifies whether the consumer opted in to publish their complaint narrative. The narrative is not published unless the consumer consents and consumers can opt-out at any time                                     | String    |
 | `submitted_via`             | How the complaint was submitted to the CFPB                          | String    |
@@ -282,6 +280,8 @@ Here's a high-level overview of what are the stepts we do in the context of feed
 - **Temporal Analysis:** Analyzed yearly trends in complaint volumes and categories. This information can be leveraged to create time-based features and understand whether the classification model needs to account for temporal shifts in complaint patterns.
 
 - **Duplicate Detection:** Identified repeated complaints to prevent data leakage and ensure that the classification model does not overfit to duplicated data.
+
+- Finally, we remove `tags` and `company_response_public` columns as they had `99%` null values from TFDV library.
 
 ## Anomaly Detection & Alerts
 
