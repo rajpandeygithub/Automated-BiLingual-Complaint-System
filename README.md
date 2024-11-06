@@ -202,7 +202,8 @@ graph TB
 
     subgraph "Data Validation Pipeline DAG"
         C[Load Data] --> D[Schema Validation]
-        D --> E[Filter Records]
+        D --> S[Statistic Generation]
+        S --> E[Filter Records]
         E --> |Parallel Process 1| F[Filter by Word Count & Date]
         E --> |Parallel Process 2| G[Filter by Language]
         F --> H[Aggregate Validation Results]
