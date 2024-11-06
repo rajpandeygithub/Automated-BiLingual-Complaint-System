@@ -220,6 +220,15 @@ graph TB
     I --> J
 ```
 
+Summarizing the entire Airflow Orchestration Graph Below Using Dags:
+   ![image](https://github.com/user-attachments/assets/086510ca-59a3-4370-811d-9f99dced6740)
+   
+   ![image](https://github.com/user-attachments/assets/1440363a-e01b-47c1-a83c-87896faced28)
+   
+   ![image](https://github.com/user-attachments/assets/f2c0db2e-e980-4b29-8eee-0e32fd5b4e20)
+
+
+
 ## Tracking and Logging
 
 Our pipeline includes detailed logging to track progress and identify issues about errors during data processing. We use Python's `logging` library to set up a custom logger that captures important information at each stage of the process.
@@ -246,18 +255,26 @@ Our pipeline includes detailed logging to track progress and identify issues abo
 
 Below is the Gantt chart illustrating the pipeline flow after optimization:
 
-  ![image](https://github.com/user-attachments/assets/671c9376-fc3b-4485-b175-976e0fc20eb1)
-  
-  ![image](https://github.com/user-attachments/assets/6978a4b2-50b1-48e9-887c-1e6835d97706)
-  
-  ![image](https://github.com/user-attachments/assets/df98e379-5b6f-41b7-b6d1-3e287a48f4ac)
+   ![image](https://github.com/user-attachments/assets/5c5c8f23-06e6-45e8-a4fe-e2a97dbe34e2)
+   
+   ![image](https://github.com/user-attachments/assets/3f480236-6392-4ef3-ac65-d5022915ae19)
+   
+   ![image](https://github.com/user-attachments/assets/1769d9f2-ef58-40a3-83e9-4f8e037fd68e)
+   
+   ![image](https://github.com/user-attachments/assets/1618e514-367f-4223-b829-55f1c3b4853e)
+   
+   ![image](https://github.com/user-attachments/assets/52757af9-7a15-4146-a083-f273ff67a5ef)
+   
+   ![image](https://github.com/user-attachments/assets/ca715dc8-3836-4d60-92de-e1f1f8a01029)
+
+
 
 
 
 
 ## Data Schema & Statistics Generation: 
 
-Here's a high-level overview of what are the stepts we do in the context of feeding quality data to the modelling stage.
+Here's a high-level overview of what are the steps we do in the context of feeding quality data to the modelling stage.
 
 ### 1. Data Quality Assurance
 - **Text Validation:** Perform several checks on consumer complaint narratives to ensure data quality, as the quality of data directly impacts the performance of text classification models. The following issues are validated:
