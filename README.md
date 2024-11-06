@@ -258,7 +258,7 @@ Below is the Gantt chart illustrating the pipeline flow after optimization:
 
 ## Data Schema & Statistics Generation: 
 
-Here's a high-level overview of what are the stepts we do in the context of feeding quality data to the modelling stage.
+Here's a high-level overview of what are the steps we do in the context of feeding quality data to the modelling stage.
 
 ### 1. Data Quality Assurance
 - **Text Validation:** Perform several checks on consumer complaint narratives to ensure data quality, as the quality of data directly impacts the performance of text classification models. The following issues are validated:
