@@ -25,7 +25,8 @@ jobs:
 
       - name: Create Service Account Key File
         run: |
-          echo "${{ secrets.GCP_SA_KEY }}" > pipeline/all_in_one_service_account_key.json
+          echo "${{ secrets.GCP_SA_KEY }}" | jq '.' > pipeline/all_in_one_service_account_key.json
+        shell: bash
 
       - name: Install dependencies
         run: |
