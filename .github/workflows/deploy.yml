@@ -3,7 +3,7 @@ name: Build and Deploy to Cloud Run
 on:
   push:
     branches:
-      - cicd  # Trigger workflow on push to main branch
+      - cicd  # Trigger workflow on push to cicd branch
 
 jobs:
   build-and-deploy:
@@ -36,11 +36,14 @@ jobs:
           docker build -t gcr.io/bilingualcomplaint-system/final-pipeline:${{ github.sha }} .
           docker push gcr.io/bilingualcomplaint-system/final-pipeline:${{ github.sha }}
 
-      - name: Deploy to Cloud Run
+      - name: Create Cloud Run Job
         run: |
-          gcloud run deploy final-pipeline \
+          gcloud beta run jobs create final-pipeline-job \
             --image gcr.io/bilingualcomplaint-system/final-pipeline:${{ github.sha }} \
             --region us-east1 \
-            --platform managed \
-            --allow-unauthenticated \
-            --no-traffic
+            --task-timeout=600 \
+            --max-retries=1
+
+      - name: Execute Cloud Run Job
+        run: |
+          gcloud beta run jobs execute final-pipeline-job --region us-east1
