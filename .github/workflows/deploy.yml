@@ -42,4 +42,5 @@ jobs:
             --image gcr.io/bilingualcomplaint-system/final-pipeline:${{ github.sha }} \
             --region us-east1 \
             --platform managed \
-            --allow-unauthenticated
+            --allow-unauthenticated \
+            --no-traffic
