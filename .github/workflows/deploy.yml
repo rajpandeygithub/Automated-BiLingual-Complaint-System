@@ -3,7 +3,7 @@ name: Build and Deploy to Cloud Run
 on:
   push:
     branches:
-      - cicd  # Trigger workflow on push to cic branch (later change to main)
+      - cicd  # Trigger workflow on push to main branch
 
 jobs:
   build-and-deploy:
@@ -22,7 +22,6 @@ jobs:
         uses: google-github-actions/setup-gcloud@v1
         with:
           project_id: bilingualcomplaint-system
-          install_components: '["gcloud"]'
 
       - name: Create service account key file
         # Generate service account key from secret in GitHub Actions
