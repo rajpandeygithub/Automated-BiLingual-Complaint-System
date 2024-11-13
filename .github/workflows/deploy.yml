@@ -24,7 +24,8 @@ jobs:
           project_id: bilingualcomplaint-system
 
       - name: Create Service Account Key File
-        run: echo "${{ secrets.GCP_SA_KEY }}" > pipeline/all_in_one_service_account_key.json
+        # This step writes the GCP_SA_KEY secret to the correct file location.
+        run: echo "${{ secrets.GCP_SA_KEY }}" > ${{ github.workspace }}/pipeline/all_in_one_service_account_key.json
 
       - name: Install dependencies
         run: |
