@@ -1,16 +1,12 @@
 # Authenticate your Google Cloud account
 import os
+import json  # Added this line
 from google.oauth2 import service_account
 
-# Set the environment variable for Google application credentials
-#os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "pipeline/all_in_one_service_account_key.json"
 
-
-# Load the service account key JSON from environment variable
 service_account_info = json.loads(os.getenv("GCP_SA_KEY"))
-
-# Create credentials from the JSON key
 credentials = service_account.Credentials.from_service_account_info(service_account_info)
+
 
 
 from google.cloud import aiplatform
