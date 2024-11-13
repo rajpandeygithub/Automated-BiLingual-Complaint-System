@@ -34,6 +34,5 @@ jobs:
 
       - name: Run Final Pipeline Script
         env:
-          GOOGLE_APPLICATION_CREDENTIALS: "${{ github.workspace }}/pipeline/all_in_one_service_account_key.json"
-        run: |
-          python pipeline/final_pipeline.py
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+        run: python pipeline/final_pipeline.py
