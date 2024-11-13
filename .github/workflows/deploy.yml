@@ -36,6 +36,11 @@ jobs:
           docker build -t gcr.io/bilingualcomplaint-system/final-pipeline:${{ github.sha }} .
           docker push gcr.io/bilingualcomplaint-system/final-pipeline:${{ github.sha }}
 
+      - name: Install gcloud beta components
+        # Install the gcloud beta components silently
+        run: |
+          gcloud components install beta --quiet
+
       - name: Create Cloud Run Job
         run: |
           gcloud beta run jobs create final-pipeline-job \
