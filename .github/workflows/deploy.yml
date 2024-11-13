@@ -23,12 +23,15 @@ jobs:
         with:
           project_id: bilingualcomplaint-system
 
+      - name: Create Service Account Key File
+        run: echo "${{ secrets.GCP_SA_KEY }}" > pipeline/all_in_one_service_account_key.json
+
       - name: Install dependencies
         run: |
           pip install -r pipeline/pipeline_requirements.txt
 
       - name: Run Final Pipeline Script
         env:
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GCP_SA_KEY }}
+          GOOGLE_APPLICATION_CREDENTIALS: "${{ github.workspace }}/pipeline/all_in_one_service_account_key.json"
         run: |
           python pipeline/final_pipeline.py
