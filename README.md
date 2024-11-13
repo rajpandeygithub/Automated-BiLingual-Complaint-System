@@ -352,4 +352,4 @@ If significant discrepancies appear across slices:
 
 The Consumer Financial Protection Bureau (CFPB) data is open to the public under the OPEN Government Data Act, enabling transparency and broad accessibility. Users should follow privacy guidelines, particularly around any personally identifiable information (PII) within consumer data.
 
-For further details, refer to the [CFPB Data Policy](https://www.consumerfinance.gov/data/).
+For further details, refer to the [CFPB Data Policy](https://www.consumerfinance.gov/data/)
