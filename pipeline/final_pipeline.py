@@ -2,7 +2,7 @@
 import os
 
 # Set the environment variable for Google application credentials
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "all_in_one_service_account_key.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "pipeline/all_in_one_service_account_key.json"
 
 from google.cloud import aiplatform
 
