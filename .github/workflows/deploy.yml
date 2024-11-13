@@ -1,4 +1,4 @@
-name: Build and Deploy to Cloud Run
+name: Run Final Pipeline Script
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - cicd  # Trigger workflow on push to cicd branch
 
 jobs:
-  build-and-deploy:
+  run-script:
     runs-on: ubuntu-latest
 
     steps:
@@ -23,32 +23,12 @@ jobs:
         with:
           project_id: bilingualcomplaint-system
 
-      - name: Configure Docker to use gcloud as a credential helper
-        run: gcloud auth configure-docker
-
-      - name: Create service account key file
-        # Generate service account key from secret in GitHub Actions
-        run: echo "${{ secrets.GCP_SA_KEY }}" > pipeline/all_in_one_service_account_key.json
-
-      - name: Build Docker image
-        # Tag Docker image with GitHub SHA for versioning
+      - name: Install dependencies
         run: |
-          docker build -t gcr.io/bilingualcomplaint-system/final-pipeline:${{ github.sha }} .
-          docker push gcr.io/bilingualcomplaint-system/final-pipeline:${{ github.sha }}
+          pip install -r pipeline/pipeline_requirements.txt
 
-      - name: Install gcloud beta components
-        # Install the gcloud beta components silently
+      - name: Run Final Pipeline Script
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GCP_SA_KEY }}
         run: |
-          gcloud components install beta --quiet
-
-      - name: Create Cloud Run Job
-        run: |
-          gcloud beta run jobs create final-pipeline-job \
-            --image gcr.io/bilingualcomplaint-system/final-pipeline:${{ github.sha }} \
-            --region us-east1 \
-            --task-timeout=600 \
-            --max-retries=1
-
-      - name: Execute Cloud Run Job
-        run: |
-          gcloud beta run jobs execute final-pipeline-job --region us-east1
+          python pipeline/final_pipeline.py
