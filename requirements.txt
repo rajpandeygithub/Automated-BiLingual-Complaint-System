@@ -10,10 +10,3 @@ bloom_filter2
 dvc
 google-cloud-bigquery
 google-auth
-pytorch-lightning
-transformers==4.44.2
-google-cloud-storage==2.18.2
-pandas==1.5.3
-mlflow
-torch
-torchmetrics

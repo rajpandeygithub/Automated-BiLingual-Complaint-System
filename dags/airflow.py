@@ -132,8 +132,8 @@ with DAG(
         trigger_dag_id="Data_Validation_Pipeline",
         dag=dag
     )
+
     trigger_data_validation_dag_task
- 
 
 
 # Data Validation DAG
@@ -151,15 +151,6 @@ with DAG(
     data_loading_task = PythonOperator(
         task_id="load_data",
         python_callable=load_data,
-        on_failure_callback=send_failure_email
-    )
-
-    def failing_task():
-        raise ValueError("Intentional failure for testing the failure email.")
-
-    failing_task_operator = PythonOperator(
-        task_id="failing_task",
-        python_callable=failing_task,
         on_failure_callback=send_failure_email
     )
  
@@ -216,7 +207,7 @@ with DAG(
         on_failure_callback=send_failure_email
     )
 
-    data_loading_task >> failing_task_operator >> data_validation_task >> schema_and_statistics_generation_task >> filter_parallel_tasks >> aggregate_parallel_tasks >> trigger_data_cleaning_dag_task
+    data_loading_task  >> data_validation_task >> schema_and_statistics_generation_task >> filter_parallel_tasks >> aggregate_parallel_tasks >> trigger_data_cleaning_dag_task
 
 # Data Cleaning DAG
 with DAG(
