@@ -1300,6 +1300,7 @@ def test_naive_bayes_model(
 
     # Function to send custom Slack message with Kubeflow component details
     def send_slack_message(component_name, execution_date, execution_time, duration, f1_score=None, precision=None, recall=None):
+
         SLACK_WEBHOOK_URL = os.getenv('SLACK_WEBHOOK_URL')
         if not SLACK_WEBHOOK_URL:
             print("Error: SLACK_WEBHOOK_URL not found in environment variables.")
