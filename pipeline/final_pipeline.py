@@ -73,7 +73,7 @@ def get_data_component(
     SLACK_WEBHOOK_URL = os.getenv('SLACK_WEBHOOK_URL')
     if not SLACK_WEBHOOK_URL:
         print("Error: SLACK_WEBHOOK_URL not found in environment variables.")  # Replace with your Slack webhook URL
-      message = {
+        message = {
           "attachments": [
               {
                   "color": "#36a64f",  # Green color for success
@@ -103,13 +103,12 @@ def get_data_component(
               }
           ]
       }
-
-      try:
-          response = requests.post(SLACK_WEBHOOK_URL, json=message)
-          response.raise_for_status()  # Check for request errors
-          pass
-      except requests.exceptions.RequestException as e:
-          pass
+        try:
+            response = requests.post(SLACK_WEBHOOK_URL, json=message)
+            response.raise_for_status()  # Check for request errors
+            pass
+        except requests.exceptions.RequestException as e:
+            pass
 
   # Function to send success email
   def send_success_email():
