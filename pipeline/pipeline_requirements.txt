@@ -11,5 +11,3 @@ db-dtypes
 google-cloud-storage
 fairlearn
 requests
-smtplib
-email
