@@ -1481,9 +1481,10 @@ def select_best_model(
     # Return the name of the selected model for tracking purposes
     return selected_model
 
+TIMESTAMP = datetime.now().strftime("%Y%m%d%H%M%S")
 
 @pipeline(
-    name="to_be_final_v2",
+    name=f"model_pipeline_{TIMESTAMP}",
     description="Model data pipeline - Training | Testing | Model Selection | Registration | Deployment",
     pipeline_root=_pipeline_artifacts_dir,
 )
