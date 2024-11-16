@@ -396,7 +396,7 @@ The best-performing model is automatically registered and deployed to a Vertex A
 - Pipeline Compilation: The entire machine learning workflow is compiled using Kubeflow and Vertex AI.
 - End-to-End Automation: Submitting the pipeline to Vertex AI automates data preprocessing, model training, evaluation, registration, and deployment, streamlining the entire lifecycle.
 
-### g. Bias Detection
+### h. Bias Detection
 - Implements checks for model bias by analyzing predictions across different subsets of data (e.g., categories, demographics, or product types) to ensure fairness.
 
 ## License Information
