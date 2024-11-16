@@ -396,6 +396,9 @@ The best-performing model is automatically registered and deployed to a Vertex A
 - Pipeline Compilation: The entire machine learning workflow is compiled using Kubeflow and Vertex AI.
 - End-to-End Automation: Submitting the pipeline to Vertex AI automates data preprocessing, model training, evaluation, registration, and deployment, streamlining the entire lifecycle.
 
+### g. Bias Detection
+- Implements checks for model bias by analyzing predictions across different subsets of data (e.g., categories, demographics, or product types) to ensure fairness.
+
 ## License Information
 
 The Consumer Financial Protection Bureau (CFPB) data is open to the public under the OPEN Government Data Act, enabling transparency and broad accessibility. Users should follow privacy guidelines, particularly around any personally identifiable information (PII) within consumer data.
