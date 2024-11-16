@@ -974,71 +974,68 @@ def bias_detection(
     from datetime import datetime
 
     # Function to send custom Slack message with Kubeflow component details
-    def send_slack_message(component_name, execution_date, execution_time, duration, f1_score=None, precision=None, recall=None):
-    # Get the Slack webhook URL from environment variables
-        SLACK_WEBHOOK_URL = os.getenv('SLACK_WEBHOOK_URL')
-        if not SLACK_WEBHOOK_URL:
-            print("Error: SLACK_WEBHOOK_URL not found in environment variables.")
-            message = {
-                "attachments": [
-                    {
-                        "color": "#36a64f",  # Green color for success
-                        "pretext": ":large_green_circle: Kubeflow Bias Component Check Alert",
-                        "fields": [
-                            {
-                                "title": "Component Name",
-                                "value": component_name,
-                                "short": True
-                            },
-                            {
-                                "title": "Execution Date",
-                                "value": execution_date,
-                                "short": True
-                            },
-                            {
-                                "title": "Execution Time",
-                                "value": execution_time,
-                                "short": True
-                            },
-                            {
-                                "title": "Duration",
-                                "value": f"{duration} minutes",
-                                "short": True
-                            }
-                        ]
-                    }
-                ]
-            }
+    def send_slack_message(component_name, execution_date, execution_time, duration, alerts=None, no_bias_message=False, slice_results=None):
+        SLACK_WEBHOOK_URL = 'https://hooks.slack.com/services/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'
+        message = {
+            "attachments": [
+                {
+                    "color": "#36a64f",  # Green color for success
+                    "pretext": ":large_green_circle: Kubeflow Bias Component Check Alert",
+                    "fields": [
+                        {
+                            "title": "Component Name",
+                            "value": component_name,
+                            "short": True
+                        },
+                        {
+                            "title": "Execution Date",
+                            "value": execution_date,
+                            "short": True
+                        },
+                        {
+                            "title": "Execution Time",
+                            "value": execution_time,
+                            "short": True
+                        },
+                        {
+                            "title": "Duration",
+                            "value": f"{duration} minutes",
+                            "short": True
+                        }
+                    ]
+                }
+            ]
+        }
 
-            if alerts:
-                message["attachments"][0]["pretext"] = ":warning: Bias Detected"
-                for alert in alerts:
-                    message["attachments"][0]["fields"].append({
-                        "title": "Bias Alert",
-                        "value": alert,
-                        "short": False
-                    })
-
-            elif no_bias_message:
-                message["attachments"][0]["pretext"] = ":white_check_mark: No Bias Detected"
+        if alerts:
+            message["attachments"][0]["pretext"] = ":warning: Bias Detected"
+            for alert in alerts:
                 message["attachments"][0]["fields"].append({
-                    "title": "Bias Check Status",
-                    "value": "Everything is fine. No bias detected across any slices.",
+                    "title": "Bias Alert",
+                    "value": alert,
                     "short": False
                 })
 
-            if slice_results is not None:
-                message["attachments"][0]["fields"].append({
-                    "title": "Slice Accuracy Results",
-                    "value": slice_results,
-                    "short": False
-                })
+        elif no_bias_message:
+            message["attachments"][0]["pretext"] = ":white_check_mark: No Bias Detected"
+            message["attachments"][0]["fields"].append({
+                "title": "Bias Check Status",
+                "value": "Everything is fine. No bias detected across any slices.",
+                "short": False
+            })
 
-            try:
-                response = requests.post(SLACK_WEBHOOK_URL, json=message)
-                response.raise_for_status()  # Check for request errors
-            except requests.exceptions.RequestException as e:
-                pass
+        if slice_results is not None:
+            message["attachments"][0]["fields"].append({
+                "title": "Slice Accuracy Results",
+                "value": slice_results,
+                "short": False
+            })
+
+        try:
+            response = requests.post(SLACK_WEBHOOK_URL, json=message)
+            response.raise_for_status()  # Check for request errors
+        except requests.exceptions.RequestException as e:
+            pass
 
     try:
         sensitive_features = 'product'  # We are now only checking for the 'product' feature
