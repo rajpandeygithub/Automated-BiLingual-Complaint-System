@@ -348,6 +348,57 @@ If significant discrepancies appear across slices:
 - Unit tests have been developed to validate the functions in `preprocessing.py`, covering data loading, record filtering, language detection, abusive content removal, and data aggregation processes.
 - These tests ensure correct data transformation and filtering logic is applied to meet preprocessing requirements.
 
+## Experimentation
+
+### Vertex AI
+- The entire machine learning pipeline is orchestrated using Vertex AI Pipelines.
+  
+Key components of the pipeline include:
+- Data Ingestion: Fetching data from BigQuery and preprocessing it.
+- Model Training and Testing: Using XGBoost and Naive Bayes models for complaint classification.
+- Model Selection and Registration: Choosing the best-performing model based on evaluation metrics and registering it in Vertex AI for deployment.
+
+## CI-CD
+
+### a. Data Source
+
+Data is fetched from Google Cloud BigQuery, with complaint_english as the primary feature and product as the target label. Preprocessing steps include TF-IDF Vectorization for text data transformation and Label Encoding for converting categorical labels into numerical format.
+
+### b. Model
+
+The pipeline implements two models:
+	•	XGBoost: Optimized for high accuracy and performance.
+	•	Naive Bayes: A lightweight, faster alternative suited for text classification tasks.
+Both models are trained, tested, and compared for robust experimentation.
+
+### c. Model Components
+
+Key components of the pipeline include:
+	1.	TF-IDF Vectorizer: Converts text into meaningful numerical representations.
+	2.	Label Encoder: Encodes target labels for model compatibility.
+	3.	Models:
+	•	XGBoost: Gradient boosting algorithm for structured data.
+	•	Naive Bayes: Probabilistic model for quick predictions.
+
+### d. Model Evaluation
+
+Models are evaluated using F1 Score, Precision, and Recall, ensuring a comprehensive assessment of performance. Evaluation results are logged in BigQuery for reference and comparison, while real-time updates on model evaluation are sent through Slack notifications.
+
+### e. Model Deployment
+
+The best-performing model is automatically registered and deployed to a Vertex AI real-time endpoint, supporting scalable, real-time inference. Vertex AI’s automated traffic splitting manages multiple model versions efficiently. Post-deployment, performance and drift detection are monitored continuously.
+
+### f. Monitoring and Notifications
+- Slack Integration: Sends real-time notifications for each pipeline execution stage, ensuring immediate updates on success or failure.
+- BigQuery Tracking: Logs metrics and metadata, such as training duration, model performance, and record counts, for centralized analysis.
+
+### g. Automation
+- Pipeline Compilation: The entire machine learning workflow is compiled using Kubeflow and Vertex AI.
+- End-to-End Automation: Submitting the pipeline to Vertex AI automates data preprocessing, model training, evaluation, registration, and deployment, streamlining the entire lifecycle.
+
+### h. Bias Detection
+- Implements checks for model bias by analyzing predictions across different subsets of data (e.g., categories, demographics, or product types) to ensure fairness.
+
 ## License Information
 
 The Consumer Financial Protection Bureau (CFPB) data is open to the public under the OPEN Government Data Act, enabling transparency and broad accessibility. Users should follow privacy guidelines, particularly around any personally identifiable information (PII) within consumer data.

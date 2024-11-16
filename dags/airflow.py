@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 from airflow.models.xcom import XCom
 from airflow.utils.trigger_rule import TriggerRule
 from scripts.success_email import send_success_email
+from scripts.failure_email import send_failure_email
 from scripts.preprocessing import (
     load_data,
     filter_records_by_word_count_and_date,
@@ -131,8 +132,10 @@ with DAG(
         trigger_dag_id="Data_Validation_Pipeline",
         dag=dag
     )
+
     trigger_data_validation_dag_task
- 
+
+
 # Data Validation DAG
 with DAG(
     "Data_Validation_Pipeline",
@@ -148,22 +151,24 @@ with DAG(
     data_loading_task = PythonOperator(
         task_id="load_data",
         python_callable=load_data,
+        on_failure_callback=send_failure_email
     )
  
     # Task 2: Validate the data
     data_validation_task = PythonOperator(
     task_id="validate_data",
     python_callable=validate_data_quality,
-    op_args=[data_loading_task.output]
+    op_args=[data_loading_task.output],
+    on_failure_callback=send_failure_email
     )
 
     # Task 3
     schema_and_statistics_generation_task = PythonOperator(
     task_id="schema_and_statistics_generation",
     python_callable=schema_and_statistics_generation,
-    op_args=[data_validation_task.output]
+    op_args=[data_validation_task.output],
+    on_failure_callback=send_failure_email
     )
-
 
     # Task 4, 5: Parallel Data Processing
     # Task 4: Filter out records based on word count and specified range criteria.
@@ -174,11 +179,13 @@ with DAG(
             task_id="remove_records_with_minimum_words_and_outdated_records",
             python_callable=filter_records_by_word_count_and_date,
             op_args=[schema_and_statistics_generation_task.output, MIN_WORD],
+            on_failure_callback=send_failure_email
         ),
         PythonOperator(
             task_id="detect_language",
             python_callable=filter_records_by_language,
             op_args=[schema_and_statistics_generation_task.output],
+            on_failure_callback=send_failure_email
         ),
     ]
 
@@ -188,6 +195,7 @@ with DAG(
         python_callable=aggregate_filtered_task,
         op_args=[filter_parallel_tasks[0].output, filter_parallel_tasks[1].output],
         provide_context=True,
+        on_failure_callback=send_failure_email
     )
 
     # Task 6: Trigger Data Cleaning DAG
@@ -196,9 +204,10 @@ with DAG(
         trigger_rule=TriggerRule.ALL_DONE,
         trigger_dag_id="Data_Cleaning_Pipeline",
         dag=dag,
+        on_failure_callback=send_failure_email
     )
 
-    data_loading_task >> data_validation_task >> schema_and_statistics_generation_task >> filter_parallel_tasks >> aggregate_parallel_tasks >> trigger_data_cleaning_dag_task
+    data_loading_task  >> data_validation_task >> schema_and_statistics_generation_task >> filter_parallel_tasks >> aggregate_parallel_tasks >> trigger_data_cleaning_dag_task
 
 # Data Cleaning DAG
 with DAG(
@@ -216,6 +225,7 @@ with DAG(
         task_id="datacleaning_process",
         python_callable=data_cleaning,
         provide_context=True,
+        on_failure_callback=send_failure_email
     )
 
     # Task 2: Anonymize sensitive data
@@ -223,12 +233,14 @@ with DAG(
         task_id="anonymize_sensitive_data_task",
         python_callable=anonymize_sensitive_data,
         op_args=[data_cleaning_task.output],
+        on_failure_callback=send_failure_email
     )
     # Task 3: Remove Abusive Data
     remove_abusive_task = PythonOperator(
         task_id="remove_abusive_data_task",
         python_callable=remove_abusive_data,
         op_args=[anonymization_task.output],
+        on_failure_callback=send_failure_email
     )
 
 
@@ -236,7 +248,8 @@ with DAG(
     send_email_task = PythonOperator(
         task_id="send_success_email_task",
         python_callable=send_success_email,
-        provide_context=True
+        provide_context=True,
+        on_failure_callback=send_failure_email
     )
 
     # Task 5: Insert data into BigQuery
@@ -244,6 +257,7 @@ with DAG(
     task_id="insert_to_bigquery_task",
     python_callable=insert_data_to_bigquery,
     op_args=[remove_abusive_task.output],  
+    on_failure_callback=send_failure_email
     )
 
 

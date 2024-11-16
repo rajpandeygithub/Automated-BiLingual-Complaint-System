@@ -264,7 +264,7 @@ def data_cleaning() -> str:
 
 def remove_abusive_data(dataset: str, abuse_placeholder: str = "<abusive_data>") -> str:
     """
-    Remove abusive words from 'complaint' column in the dataset,
+    Remove abusive words from both 'complaint' and 'complaint_hindi' columns in the dataset,
     replacing them with a specified placeholder. The cleaned dataset is saved to a
     predefined output path.
     Args:
@@ -274,53 +274,72 @@ def remove_abusive_data(dataset: str, abuse_placeholder: str = "<abusive_data>")
         str: Serialized dataset with abusive words removed.
     """
     logger = get_custom_logger()
-    logger.info("Starting abusive data filtering.")
+    logger.info("Starting abusive data filtering for English and Hindi complaints.")
     
     # Define paths for input and output
     output_path = os.path.join(
         os.path.dirname(__file__),
         "../../data/preprocessed_dataset.parquet",
     )
-    abusive_words_path = "https://storage.googleapis.com/mlops-group6-raw-data/profanity_bank_dataset.parquet"
+    abusive_words_path_eng = "https://storage.googleapis.com/mlops-group6-raw-data/profanity_bank_dataset.parquet"
+    abusive_words_path_hindi = "https://storage.googleapis.com/mlops-group6-raw-data/hindi_abuse_words.parquet"
 
     # Deserialize the dataset
     dataset = pl.DataFrame.deserialize(io.StringIO(dataset), format="json")
     logger.info(f"Total records before abusive word filtering: {len(dataset)}")
 
-    # Set up Bloom Filter for abusive words
-    profane_set = set()
-    profanity_bloom = BloomFilter(max_elements=200_000, error_rate=0.01)
+    # Set up Bloom Filters for English and Hindi abusive words
+    profane_set_eng = set()
+    profanity_bloom_eng = BloomFilter(max_elements=200_000, error_rate=0.01)
 
-    # Load abusive words
-    abusive_words = pl.read_parquet(abusive_words_path)["profanity"].to_list()
-    logger.info(f"Total abusive words loaded: {len(abusive_words)}")
+    profane_set_hindi = set()
+    profanity_bloom_hindi = BloomFilter(max_elements=200_000, error_rate=0.01)
 
-    for word in abusive_words:
-        profanity_bloom.add(word)
-        profane_set.add(word)
+    # Load abusive words for English and Hindi
+    abusive_words_eng = pl.read_parquet(abusive_words_path_eng)["profanity"].to_list()
+    abusive_words_hindi = pl.read_parquet(abusive_words_path_hindi)["words"].to_list()
+    logger.info(f"Total abusive words loaded: {len(abusive_words_eng) + len(abusive_words_hindi)}")
 
-    # Tokenize and clean complaints
-    tokenized_complaints = dataset.with_columns(pl.col("complaint").str.split(" "))[ "complaint" ].to_list()
+    for word in abusive_words_eng:
+        profanity_bloom_eng.add(word)
+        profane_set_eng.add(word)
 
-    cleaned_records = []
-    for record in tokenized_complaints:
-        clean_record = [
-            w if w not in profanity_bloom or w not in profane_set else abuse_placeholder
+    for word in abusive_words_hindi:
+        profanity_bloom_hindi.add(word)
+        profane_set_hindi.add(word)
+
+    # Tokenize and clean English complaints
+    tokenized_complaints_eng = dataset.with_columns(pl.col("complaint").str.split(" "))[ "complaint" ].to_list()
+    cleaned_records_eng = [
+        " ".join([
+            w if w not in profanity_bloom_eng or w not in profane_set_eng else abuse_placeholder
             for w in record
-        ]
-        cleaned_records.append(" ".join(clean_record))
+        ])
+        for record in tokenized_complaints_eng
+    ]
 
+    # Tokenize and clean Hindi complaints
+    tokenized_complaints_hindi = dataset.with_columns(pl.col("complaint_hindi").str.split(" "))[ "complaint_hindi" ].to_list()
+    cleaned_records_hindi = [
+        " ".join([
+            w if w not in profanity_bloom_hindi or w not in profane_set_hindi else abuse_placeholder
+            for w in record
+        ])
+        for record in tokenized_complaints_hindi
+    ]
 
-    # Add the cleaned complaints to the dataset
-    dataset = dataset.with_columns(
-        pl.Series(name="abuse_free_complaints", values=cleaned_records)
-    )
+    # Add the cleaned English and Hindi complaints to the dataset
+    dataset = dataset.with_columns([
+        pl.Series(name="abuse_free_complaint", values=cleaned_records_eng),
+        pl.Series(name="abuse_free_complaint_hindi", values=cleaned_records_hindi)
+    ])
 
-    logger.info("Abusive data filtering complete. Saving results to file.")
+    logger.info("Abusive data filtering complete for both languages. Saving results to file.")
     
     # Save the processed dataset to output path
     dataset.write_parquet(output_path)
-    return output_path   
+    return output_path
+   
 
 def insert_data_to_bigquery(file_path: str):
 
@@ -341,16 +360,14 @@ def insert_data_to_bigquery(file_path: str):
     
     dataset = pl.read_parquet(file_path)
     df = dataset.to_pandas()
+    df = df[:500] 
+    
+    df.rename(columns={'complaint_id': 'entity_id', 
+                   'date_received': 'feature_timestamp'}, inplace=True)
+    
+    df['feature_timestamp'] = pd.to_datetime(df['feature_timestamp'])
+    
 
-    # Explicitly set `date_sent_to_company` as a string
-    if "date_sent_to_company" in df.columns:
-        df["date_sent_to_company"] = df["date_sent_to_company"].astype(str)
-    
-    if "abuse_free_complaints" in df.columns:
-        df["complaint"] = df["abuse_free_complaints"]  # Overwrite `complaint` column
-        df = df.drop(columns=["abuse_free_complaints"])  # Drop `abuse_free_complaints` to avoid schema issues  
-    
-    # Set the table reference
     table_ref = f"{project_id}.{dataset_id}.{table_id}"
 
     # Configure load job
