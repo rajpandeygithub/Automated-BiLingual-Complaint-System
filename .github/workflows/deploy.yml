@@ -3,7 +3,7 @@ name: Run Final Pipeline Script
 on:
   push:
     branches:
-      - cicd  # Trigger workflow on push to the 'cicd' branch
+      - Dev  # Trigger workflow on push to the 'Dev' branch
 
 jobs:
   run-script:
