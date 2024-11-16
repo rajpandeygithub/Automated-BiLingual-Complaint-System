@@ -9,7 +9,7 @@ service_account_info = json.loads(os.getenv("GCP_SA_KEY"))
 credentials = service_account.Credentials.from_service_account_info(service_account_info)
 
 from google.cloud import aiplatform
-
+import os
 import kfp
 import json
 from datetime import datetime
@@ -66,6 +66,7 @@ def get_data_component(
   from email.mime.text import MIMEText
   import requests
   from datetime import datetime
+  import os
 
   # Track the start time of the component execution
   start_time = datetime.now()
@@ -613,6 +614,7 @@ def model_registration(
     model: Output[Model]
 ):
     from google.cloud import aiplatform
+    import os
 
     # Initialize Vertex AI SDK
     aiplatform.init(project=project_id, location=location)
@@ -671,6 +673,7 @@ def model_deployment(
     from email.mime.multipart import MIMEMultipart
     from email.mime.text import MIMEText
     import smtplib
+    import os
 
     # Function to send success email
     def send_success_email():
@@ -1296,6 +1299,7 @@ def test_naive_bayes_model(
     # from google.cloud import bigquery
     import requests
     import time
+    import os
     import google.cloud.aiplatform as aiplatform
 
     # Function to send custom Slack message with Kubeflow component details
@@ -1460,6 +1464,7 @@ def select_best_model(
     Compare the F1 scores of XGBoost and Naive Bayes models and select the best model.
     """
     import shutil
+    import os
 
     # Log the F1 scores for debugging
     print(f"XGBoost F1 Score: {xgboost_f1}")
