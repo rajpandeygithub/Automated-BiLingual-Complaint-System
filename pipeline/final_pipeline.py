@@ -1306,26 +1306,26 @@ def test_naive_bayes_model(
     import os
     import google.cloud.aiplatform as aiplatform
 
-    # Function to send custom Slack message with Kubeflow component details
-    def send_slack_message(component_name, execution_date, execution_time, duration, f1_score=None, precision=None, recall=None):
-    # Get the Slack webhook URL from environment variables
-        SLACK_WEBHOOK_URL = os.getenv('SLACK_WEBHOOK_URL')
-        if not SLACK_WEBHOOK_URL:
-            print("Error: SLACK_WEBHOOK_URL not found in environment variables.")
-            message = {
-                "attachments": [
-                    {
-                        "color": "#36a64f",  # Green color for success
-                        "pretext": ":large_green_circle: Kubeflow Component Success Alert",
-                        "fields": [
-                            {"title": "Component Name", "value": component_name, "short": True},
-                            {"title": "Execution Date", "value": execution_date, "short": True},
-                            {"title": "Execution Time", "value": execution_time, "short": True},
-                            {"title": "Duration", "value": f"{duration} minutes", "short": True}
-                        ]
-                    }
-                ]
-            }
+    # # Function to send custom Slack message with Kubeflow component details
+    # def send_slack_message(component_name, execution_date, execution_time, duration, f1_score=None, precision=None, recall=None):
+    # # Get the Slack webhook URL from environment variables
+    #     SLACK_WEBHOOK_URL = os.getenv('SLACK_WEBHOOK_URL')
+    #     if not SLACK_WEBHOOK_URL:
+    #         print("Error: SLACK_WEBHOOK_URL not found in environment variables.")
+    #         message = {
+    #             "attachments": [
+    #                 {
+    #                     "color": "#36a64f",  # Green color for success
+    #                     "pretext": ":large_green_circle: Kubeflow Component Success Alert",
+    #                     "fields": [
+    #                         {"title": "Component Name", "value": component_name, "short": True},
+    #                         {"title": "Execution Date", "value": execution_date, "short": True},
+    #                         {"title": "Execution Time", "value": execution_time, "short": True},
+    #                         {"title": "Duration", "value": f"{duration} minutes", "short": True}
+    #                     ]
+    #                 }
+    #             ]
+    #         }
 
             if f1_score is not None:
                 message["attachments"][0]["fields"].append({"title": "Validation F1 Score", "value": f"{f1_score:.4f}", "short": True})
@@ -1398,25 +1398,25 @@ def test_naive_bayes_model(
         duration = (end_time - start_time).total_seconds() / 60  # Duration in minutes
 
         # Send the Slack message with execution details and metrics
-        send_slack_message(
-            component_name="Model Testing Component Testing (Naive Bayes Model Testing)",
-            execution_date=end_time.strftime('%Y-%m-%d'),
-            execution_time=end_time.strftime('%H:%M:%S'),
-            duration=round(duration, 2),
-            f1_score=f1,
-            precision=precision,
-            recall=recall
-        )
+        # send_slack_message(
+        #     component_name="Model Testing Component Testing (Naive Bayes Model Testing)",
+        #     execution_date=end_time.strftime('%Y-%m-%d'),
+        #     execution_time=end_time.strftime('%H:%M:%S'),
+        #     duration=round(duration, 2),
+        #     f1_score=f1,
+        #     precision=precision,
+        #     recall=recall
+        # )
 
     except Exception as e:
         error_message = str(e)
         print(f"Error during model testing: {error_message}")
-        send_slack_message(
-            component_name="Model Testing Component Failed (Naive Bayes Model Testing)",
-            execution_date=datetime.now().strftime('%Y-%m-%d'),
-            execution_time=datetime.now().strftime('%H:%M:%S'),
-            duration=0  # If failed, duration is 0
-        )
+        # send_slack_message(
+        #     component_name="Model Testing Component Failed (Naive Bayes Model Testing)",
+        #     execution_date=datetime.now().strftime('%Y-%m-%d'),
+        #     execution_time=datetime.now().strftime('%H:%M:%S'),
+        #     duration=0  # If failed, duration is 0
+        # )
         raise e
 
     # # BigQuery Insertion
