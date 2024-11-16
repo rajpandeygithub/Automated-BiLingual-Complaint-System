@@ -519,7 +519,11 @@ def test_xgboost_model(
       y_pred = label_encoder.inverse_transform(y_pred_encoded)
 
 
-      aiplatform.init(project="bilingualcomplaint-system", location="us-east1", experiment='Bilingial-Complaint-Experiment-Tracking')
+      aiplatform.init(
+          project="bilingualcomplaint-system", 
+          location="us-east1",
+          experiment='bilingial-complaint-experiment-tracking'
+          )
       run = aiplatform.start_run("run-{}".format(int(time.time())))
 
       # Calculate metrics
@@ -1373,7 +1377,10 @@ def test_naive_bayes_model(
         y_pred = label_encoder.inverse_transform(y_pred_encoded)
 
 
-        aiplatform.init(project="bilingualcomplaint-system", location="us-east1", experiment='Bilingial-Complaint-Experiment-Tracking')
+        aiplatform.init(
+            project="bilingualcomplaint-system", 
+            location="us-east1", 
+            experiment='bilingial-complaint-experiment-tracking')
         run = aiplatform.start_run("run-{}".format(int(time.time())))
 
         # Calculate metrics
