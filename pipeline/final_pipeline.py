@@ -59,6 +59,7 @@ def get_data_component(
     testset_size: float = 0.2,
     limit:int=200):
 
+  import os
   from google.cloud import bigquery
   from sklearn.model_selection import train_test_split
   import smtplib
@@ -666,6 +667,7 @@ def model_deployment(
     deployed_model_display_name: str,
     endpoint: Output[Artifact]
 ):
+    import os
     import time
     from google.cloud import aiplatform, bigquery
     import requests
@@ -1301,6 +1303,7 @@ def test_naive_bayes_model(
     # from google.cloud import bigquery
     import requests
     import time
+    import os
     import google.cloud.aiplatform as aiplatform
 
     # Function to send custom Slack message with Kubeflow component details
@@ -1465,6 +1468,7 @@ def select_best_model(
     Compare the F1 scores of XGBoost and Naive Bayes models and select the best model.
     """
     import shutil
+    import os
 
     # Log the F1 scores for debugging
     print(f"XGBoost F1 Score: {xgboost_f1}")
@@ -1584,7 +1588,7 @@ def model_data_pipeline(
         endpoint_display_name=endpoint_display_name,
         deployed_model_display_name=deployed_model_display_name
     )
-
+import os
 from kfp import compiler
 from google.cloud import aiplatform
 from datetime import datetime
