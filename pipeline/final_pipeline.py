@@ -10,7 +10,7 @@ credentials = service_account.Credentials.from_service_account_info(service_acco
 from google.cloud import aiplatform
 
 
-import kfp
+import kfp 
 import json
 from datetime import datetime
 from kfp import compiler, dsl
