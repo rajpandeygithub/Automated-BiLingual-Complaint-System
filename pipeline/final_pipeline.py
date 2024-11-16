@@ -418,70 +418,69 @@ def test_xgboost_model(
     from datetime import datetime
     import google.cloud.aiplatform as aiplatform
 
-
     # Function to send custom Slack message with Kubeflow component details
-    def send_slack_message(component_name, execution_date, execution_time, duration, f1_score=None, precision=None, recall=None):
-    # Get the Slack webhook URL from environment variables
-        SLACK_WEBHOOK_URL = os.getenv('SLACK_WEBHOOK_URL')
-        if not SLACK_WEBHOOK_URL:
-            print("Error: SLACK_WEBHOOK_URL not found in environment variables.")
-            message = {
-                "attachments": [
-                    {
-                        "color": "#36a64f",  # Green color for success
-                        "pretext": ":large_green_circle: Kubeflow Component Success Alert",
-                        "fields": [
-                            {
-                                "title": "Component Name",
-                                "value": component_name,
-                                "short": True
-                            },
-                            {
-                                "title": "Execution Date",
-                                "value": execution_date,
-                                "short": True
-                            },
-                            {
-                                "title": "Execution Time",
-                                "value": execution_time,
-                                "short": True
-                            },
-                            {
-                                "title": "Duration",
-                                "value": f"{duration} minutes",
-                                "short": True
-                            }
-                        ]
-                    }
-                ]
-            }
+    # def send_slack_message(component_name, execution_date, execution_time, duration, f1_score=None, precision=None, recall=None):
+    # # Get the Slack webhook URL from environment variables
+    #     SLACK_WEBHOOK_URL = os.getenv('SLACK_WEBHOOK_URL')
+    #     if not SLACK_WEBHOOK_URL:
+    #         print("Error: SLACK_WEBHOOK_URL not found in environment variables.")
+    #         message = {
+    #             "attachments": [
+    #                 {
+    #                     "color": "#36a64f",  # Green color for success
+    #                     "pretext": ":large_green_circle: Kubeflow Component Success Alert",
+    #                     "fields": [
+    #                         {
+    #                             "title": "Component Name",
+    #                             "value": component_name,
+    #                             "short": True
+    #                         },
+    #                         {
+    #                             "title": "Execution Date",
+    #                             "value": execution_date,
+    #                             "short": True
+    #                         },
+    #                         {
+    #                             "title": "Execution Time",
+    #                             "value": execution_time,
+    #                             "short": True
+    #                         },
+    #                         {
+    #                             "title": "Duration",
+    #                             "value": f"{duration} minutes",
+    #                             "short": True
+    #                         }
+    #                     ]
+    #                 }
+    #             ]
+    #         }
 
-            if f1_score is not None:
-                message["attachments"][0]["fields"].append({
-                    "title": "Validation F1 Score",
-                    "value": f"{f1_score:.4f}",
-                    "short": True
-                })
+    #         if f1_score is not None:
+    #             message["attachments"][0]["fields"].append({
+    #                 "title": "Validation F1 Score",
+    #                 "value": f"{f1_score:.4f}",
+    #                 "short": True
+    #             })
 
-            if precision is not None:
-                message["attachments"][0]["fields"].append({
-                    "title": "Validation Precision",
-                    "value": f"{precision:.4f}",
-                    "short": True
-                })
+    #         if precision is not None:
+    #             message["attachments"][0]["fields"].append({
+    #                 "title": "Validation Precision",
+    #                 "value": f"{precision:.4f}",
+    #                 "short": True
+    #             })
 
-            if recall is not None:
-                message["attachments"][0]["fields"].append({
-                    "title": "Validation Recall",
-                    "value": f"{recall:.4f}",
-                    "short": True
-                })
+    #         if recall is not None:
+    #             message["attachments"][0]["fields"].append({
+    #                 "title": "Validation Recall",
+    #                 "value": f"{recall:.4f}",
+    #                 "short": True
+    #             })
 
-            try:
-                response = requests.post(SLACK_WEBHOOK_URL, json=message)
-                response.raise_for_status()  # Check for request errors
-            except requests.exceptions.RequestException as e:
-                pass
+    #         try:
+    #             response = requests.post(SLACK_WEBHOOK_URL, json=message)
+    #             response.raise_for_status()  # Check for request errors
+    #         except requests.exceptions.RequestException as e:
+    #             pass
 
     try:
       # Track the start time of the component execution
@@ -544,25 +543,25 @@ def test_xgboost_model(
       duration = (end_time - start_time).total_seconds() / 60  # Duration in minutes
 
       # Send the Slack message with execution details and metrics
-      send_slack_message(
-          component_name="Model Testing Component",
-          execution_date=end_time.strftime('%Y-%m-%d'),
-          execution_time=end_time.strftime('%H:%M:%S'),
-          duration=round(duration, 2),
-          f1_score=f1,
-          precision=precision,
-          recall=recall
-      )
+    #   send_slack_message(
+    #       component_name="Model Testing Component",
+    #       execution_date=end_time.strftime('%Y-%m-%d'),
+    #       execution_time=end_time.strftime('%H:%M:%S'),
+    #       duration=round(duration, 2),
+    #       f1_score=f1,
+    #       precision=precision,
+    #       recall=recall
+    #   )
 
     except Exception as e:
       error_message = str(e)
       print(f"Error during model testing: {error_message}")
-      send_slack_message(
-          component_name="Model Testing Component Failed",
-          execution_date=datetime.now().strftime('%Y-%m-%d'),
-          execution_time=datetime.now().strftime('%H:%M:%S'),
-          duration= 0  # If failed, duration is 0
-      )
+    #   send_slack_message(
+    #       component_name="Model Testing Component Failed",
+    #       execution_date=datetime.now().strftime('%Y-%m-%d'),
+    #       execution_time=datetime.now().strftime('%H:%M:%S'),
+    #       duration= 0  # If failed, duration is 0
+    #   )
       raise e
 
 
@@ -1306,9 +1305,9 @@ def test_naive_bayes_model(
     import os
     import google.cloud.aiplatform as aiplatform
 
-    # # Function to send custom Slack message with Kubeflow component details
+    # Function to send custom Slack message with Kubeflow component details
     # def send_slack_message(component_name, execution_date, execution_time, duration, f1_score=None, precision=None, recall=None):
-    # # Get the Slack webhook URL from environment variables
+    #     # Get the Slack webhook URL from environment variables
     #     SLACK_WEBHOOK_URL = os.getenv('SLACK_WEBHOOK_URL')
     #     if not SLACK_WEBHOOK_URL:
     #         print("Error: SLACK_WEBHOOK_URL not found in environment variables.")
@@ -1327,18 +1326,18 @@ def test_naive_bayes_model(
     #             ]
     #         }
 
-            if f1_score is not None:
-                message["attachments"][0]["fields"].append({"title": "Validation F1 Score", "value": f"{f1_score:.4f}", "short": True})
-            if precision is not None:
-                message["attachments"][0]["fields"].append({"title": "Validation Precision", "value": f"{precision:.4f}", "short": True})
-            if recall is not None:
-                message["attachments"][0]["fields"].append({"title": "Validation Recall", "value": f"{recall:.4f}", "short": True})
+    #         if f1_score is not None:
+    #             message["attachments"][0]["fields"].append({"title": "Validation F1 Score", "value": f"{f1_score:.4f}", "short": True})
+    #         if precision is not None:
+    #             message["attachments"][0]["fields"].append({"title": "Validation Precision", "value": f"{precision:.4f}", "short": True})
+    #         if recall is not None:
+    #             message["attachments"][0]["fields"].append({"title": "Validation Recall", "value": f"{recall:.4f}", "short": True})
 
-            try:
-                response = requests.post(SLACK_WEBHOOK_URL, json=message)
-                response.raise_for_status()  # Check for request errors
-            except requests.exceptions.RequestException as e:
-                print(f"Error sending Slack message: {e}")
+    #         try:
+    #             response = requests.post(SLACK_WEBHOOK_URL, json=message)
+    #             response.raise_for_status()  # Check for request errors
+    #         except requests.exceptions.RequestException as e:
+    #             print(f"Error sending Slack message: {e}")
 
     try:
         # Track the start time of the component execution
