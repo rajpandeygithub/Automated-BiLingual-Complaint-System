@@ -1,0 +1,15 @@
+google-cloud-aiplatform
+model_registry
+google-auth
+google-cloud-bigquery
+kfp
+pandas
+numpy
+scikit-learn
+xgboost
+db-dtypes
+google-cloud-storage
+fairlearn
+requests
+smtplib
+email
