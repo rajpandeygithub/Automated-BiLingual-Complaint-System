@@ -1484,7 +1484,7 @@ def select_best_model(
     return selected_model
 
 @pipeline(
-    name="to_be_final_v2",
+    name="BiLingual-Complaint-System",
     description="Model data pipeline - Training | Testing | Model Selection | Registration | Deployment",
     pipeline_root=_pipeline_artifacts_dir,
 )
