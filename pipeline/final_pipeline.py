@@ -1482,9 +1482,9 @@ def select_best_model(
 
     # Return the name of the selected model for tracking purposes
     return selected_model
-
+TIMESTAMP = datetime.now().strftime("%Y%m%d%H%M%S")
 @pipeline(
-    name="BiLingual-Complaint-System",
+    name=f"mlops_{TIMESTAMP}",
     description="Model data pipeline - Training | Testing | Model Selection | Registration | Deployment",
     pipeline_root=_pipeline_artifacts_dir,
 )
