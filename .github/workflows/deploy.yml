@@ -36,6 +36,6 @@ jobs:
       - name: Run Final Pipeline Script
         env:
           GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}  # Google Cloud credentials
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}        # Slack Webhook URL
+          SLACK_URL: ${{ secrets.SLACK_URL }}        # Slack Webhook URL
         run: |
           python pipeline/final_pipeline.py
