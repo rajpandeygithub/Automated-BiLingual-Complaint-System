@@ -73,9 +73,9 @@ def get_data_component(
 
   # Function to send custom Slack message with Kubeflow component details
   def send_slack_message(component_name, execution_date, execution_time, duration):
-      SLACK_WEBHOOK_URL = os.getenv('SLACK_WEBHOOK_URL')
-      if not SLACK_WEBHOOK_URL:
-          print("Error: SLACK_WEBHOOK_URL not found in environment variables.")  # Replace with your Slack webhook URL
+      SLACK_URL = os.getenv('SLACK_URL')
+      if not SLACK_URL:
+          print("Error: SLACK_URL not found in environment variables.")  # Replace with your Slack webhook URL
       message = {
           "attachments": [
               {
@@ -108,7 +108,7 @@ def get_data_component(
       }
 
       try:
-          response = requests.post(SLACK_WEBHOOK_URL, json=message)
+          response = requests.post(SLACK_URL, json=message)
           response.raise_for_status()  # Check for request errors
           pass
       except requests.exceptions.RequestException as e:
@@ -288,9 +288,9 @@ def train_xgboost_model(
 
     # Function to send custom Slack message with Kubeflow component details
     def send_slack_message(component_name, execution_date, execution_time, duration):
-        SLACK_WEBHOOK_URL = os.getenv('SLACK_WEBHOOK_URL')
-        if not SLACK_WEBHOOK_URL:
-            print("Error: SLACK_WEBHOOK_URL not found in environment variables.") # Replace with your Slack webhook URL
+        SLACK_URL = os.getenv('SLACK_URL')
+        if not SLACK_URL:
+            print("Error: SLACK_URL not found in environment variables.") # Replace with your Slack webhook URL
         message = {
             "attachments": [
                 {
@@ -323,7 +323,7 @@ def train_xgboost_model(
         }
 
         try:
-            response = requests.post(SLACK_WEBHOOK_URL, json=message)
+            response = requests.post(SLACK_URL, json=message)
             response.raise_for_status()  # Check for request errors
             pass
         except requests.exceptions.RequestException as e:
@@ -420,9 +420,9 @@ def test_xgboost_model(
 
     # Function to send custom Slack message with Kubeflow component details
     def send_slack_message(component_name, execution_date, execution_time, duration, f1_score=None, precision=None, recall=None):
-        SLACK_WEBHOOK_URL = os.getenv('SLACK_WEBHOOK_URL')
-        if not SLACK_WEBHOOK_URL:
-            print("Error: SLACK_WEBHOOK_URL not found in environment variables.")
+        SLACK_URL = os.getenv('SLACK_URL')
+        if not SLACK_URL:
+            print("Error: SLACK_URL not found in environment variables.")
         message = {
             "attachments": [
                 {
@@ -476,7 +476,7 @@ def test_xgboost_model(
             })
 
         try:
-            response = requests.post(SLACK_WEBHOOK_URL, json=message)
+            response = requests.post(SLACK_URL, json=message)
             response.raise_for_status()  # Check for request errors
         except requests.exceptions.RequestException as e:
           pass
@@ -765,9 +765,9 @@ def model_deployment(
 
     # Function to send custom Slack message with Kubeflow component details
     def send_slack_message(component_name, execution_date, execution_time, duration, endpoint_name):
-        SLACK_WEBHOOK_URL = os.getenv('SLACK_WEBHOOK_URL')
-        if not SLACK_WEBHOOK_URL:
-            print("Error: SLACK_WEBHOOK_URL not found in environment variables.")
+        SLACK_URL = os.getenv('SLACK_URL')
+        if not SLACK_URL:
+            print("Error: SLACK_URL not found in environment variables.")
         message = {
             "attachments": [
                 {
@@ -805,7 +805,7 @@ def model_deployment(
         }
 
         try:
-            response = requests.post(SLACK_WEBHOOK_URL, json=message)
+            response = requests.post(SLACK_URL, json=message)
             response.raise_for_status()  # Check for request errors
         except requests.exceptions.RequestException as e:
             pass
@@ -971,9 +971,9 @@ def bias_detection(
 
     # Function to send custom Slack message with Kubeflow component details
     def send_slack_message(component_name, execution_date, execution_time, duration, alerts=None, no_bias_message=False, slice_results=None):
-        SLACK_WEBHOOK_URL = os.getenv('SLACK_WEBHOOK_URL')
-        if not SLACK_WEBHOOK_URL:
-            print("Error: SLACK_WEBHOOK_URL not found in environment variables.")
+        SLACK_URL = os.getenv('SLACK_URL')
+        if not SLACK_URL:
+            print("Error: SLACK_URL not found in environment variables.")
         message = {
             "attachments": [
                 {
@@ -1030,7 +1030,7 @@ def bias_detection(
             })
 
         try:
-            response = requests.post(SLACK_WEBHOOK_URL, json=message)
+            response = requests.post(SLACK_URL, json=message)
             response.raise_for_status()  # Check for request errors
         except requests.exceptions.RequestException as e:
             pass
@@ -1177,9 +1177,9 @@ def train_naive_bayes_model(
 
     # Function to send custom Slack message with Kubeflow component details
     def send_slack_message(component_name, execution_date, execution_time, duration):
-        SLACK_WEBHOOK_URL = os.getenv('SLACK_WEBHOOK_URL')
-        if not SLACK_WEBHOOK_URL:
-            print("Error: SLACK_WEBHOOK_URL not found in environment variables.")
+        SLACK_URL = os.getenv('SLACK_URL')
+        if not SLACK_URL:
+            print("Error: SLACK_URL not found in environment variables.")
         message = {
             "attachments": [
                 {
@@ -1212,7 +1212,7 @@ def train_naive_bayes_model(
         }
 
         try:
-            response = requests.post(SLACK_WEBHOOK_URL, json=message)
+            response = requests.post(SLACK_URL, json=message)
             response.raise_for_status()  # Check for request errors
             pass
         except requests.exceptions.RequestException as e:
@@ -1305,9 +1305,9 @@ def test_naive_bayes_model(
     # Function to send custom Slack message with Kubeflow component details
     def send_slack_message(component_name, execution_date, execution_time, duration, f1_score=None, precision=None, recall=None):
 
-        SLACK_WEBHOOK_URL = os.getenv('SLACK_WEBHOOK_URL')
-        if not SLACK_WEBHOOK_URL:
-            print("Error: SLACK_WEBHOOK_URL not found in environment variables.")
+        SLACK_URL = os.getenv('SLACK_URL')
+        if not SLACK_URL:
+            print("Error: SLACK_URL not found in environment variables.")
         message = {
             "attachments": [
                 {
@@ -1331,7 +1331,7 @@ def test_naive_bayes_model(
             message["attachments"][0]["fields"].append({"title": "Validation Recall", "value": f"{recall:.4f}", "short": True})
 
         try:
-            response = requests.post(SLACK_WEBHOOK_URL, json=message)
+            response = requests.post(SLACK_URL, json=message)
             response.raise_for_status()  # Check for request errors
         except requests.exceptions.RequestException as e:
             print(f"Error sending Slack message: {e}")
