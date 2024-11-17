@@ -73,7 +73,7 @@ def get_data_component(
 
   # Function to send custom Slack message with Kubeflow component details
   def send_slack_message(component_name, execution_date, execution_time, duration):
-      SLACK_URL = os.getenv('SLACK_URL')
+      SLACK_URL = os.getenv("SLACK_URL")
       if not SLACK_URL:
           print("Error: SLACK_URL not found in environment variables.")  # Replace with your Slack webhook URL
       message = {
@@ -288,7 +288,7 @@ def train_xgboost_model(
 
     # Function to send custom Slack message with Kubeflow component details
     def send_slack_message(component_name, execution_date, execution_time, duration):
-        SLACK_URL = os.getenv('SLACK_URL')
+        SLACK_URL = os.getenv("SLACK_URL")
         if not SLACK_URL:
             print("Error: SLACK_URL not found in environment variables.") # Replace with your Slack webhook URL
         message = {
@@ -420,7 +420,7 @@ def test_xgboost_model(
 
     # Function to send custom Slack message with Kubeflow component details
     def send_slack_message(component_name, execution_date, execution_time, duration, f1_score=None, precision=None, recall=None):
-        SLACK_URL = os.getenv('SLACK_URL')
+        SLACK_URL = os.getenv("SLACK_URL")
         if not SLACK_URL:
             print("Error: SLACK_URL not found in environment variables.")
         message = {
@@ -765,7 +765,7 @@ def model_deployment(
 
     # Function to send custom Slack message with Kubeflow component details
     def send_slack_message(component_name, execution_date, execution_time, duration, endpoint_name):
-        SLACK_URL = os.getenv('SLACK_URL')
+        SLACK_URL = os.getenv("SLACK_URL")
         if not SLACK_URL:
             print("Error: SLACK_URL not found in environment variables.")
         message = {
@@ -971,7 +971,7 @@ def bias_detection(
 
     # Function to send custom Slack message with Kubeflow component details
     def send_slack_message(component_name, execution_date, execution_time, duration, alerts=None, no_bias_message=False, slice_results=None):
-        SLACK_URL = os.getenv('SLACK_URL')
+        SLACK_URL = os.getenv("SLACK_URL")
         if not SLACK_URL:
             print("Error: SLACK_URL not found in environment variables.")
         message = {
@@ -1177,7 +1177,7 @@ def train_naive_bayes_model(
 
     # Function to send custom Slack message with Kubeflow component details
     def send_slack_message(component_name, execution_date, execution_time, duration):
-        SLACK_URL = os.getenv('SLACK_URL')
+        SLACK_URL = os.getenv("SLACK_URL")
         if not SLACK_URL:
             print("Error: SLACK_URL not found in environment variables.")
         message = {
@@ -1305,7 +1305,7 @@ def test_naive_bayes_model(
     # Function to send custom Slack message with Kubeflow component details
     def send_slack_message(component_name, execution_date, execution_time, duration, f1_score=None, precision=None, recall=None):
 
-        SLACK_URL = os.getenv('SLACK_URL')
+        SLACK_URL = os.getenv("SLACK_URL")
         if not SLACK_URL:
             print("Error: SLACK_URL not found in environment variables.")
         message = {
