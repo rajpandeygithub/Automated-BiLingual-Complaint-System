@@ -671,6 +671,7 @@ def model_registration(
 packages_to_install=["google-cloud-aiplatform"]
 )
 def model_deployment(
+slack_url: str,
 model: Input[Model],
 project_id: str,
 location: str,
@@ -686,6 +687,13 @@ endpoint: Output[Artifact]
     from email.mime.text import MIMEText
     import smtplib
     import os
+
+
+    if not slack_url:
+        print("SLACK_URL is not provided.")
+        return
+
+    print(f"SLACK_URL received: {slack_url}")
 
     # Function to send success email
     def send_success_email():
@@ -777,9 +785,6 @@ endpoint: Output[Artifact]
 
     # Function to send custom Slack message with Kubeflow component details
     def send_slack_message(component_name, execution_date, execution_time, duration, endpoint_name):
-        SLACK_URL = os.getenv("SLACK_URL")
-        if not SLACK_URL:
-            print("Error: SLACK_URL not found in environment variables.")
         message = {
             "attachments": [
                 {
@@ -965,6 +970,7 @@ endpoint: Output[Artifact]
     ]
 )
 def bias_detection(
+    slack_url: str,
     train_data: Input[Dataset],
     model_input: Input[Model],
     vectorizer_input: Input[Artifact],
@@ -981,11 +987,15 @@ def bias_detection(
     import requests
     from datetime import datetime
 
+
+    if not slack_url:
+        print("SLACK_URL is not provided.")
+        return
+
+    print(f"SLACK_URL received: {slack_url}")
+
     # Function to send custom Slack message with Kubeflow component details
     def send_slack_message(component_name, execution_date, execution_time, duration, alerts=None, no_bias_message=False, slice_results=None):
-        SLACK_URL = os.getenv("SLACK_URL")
-        if not SLACK_URL:
-            print("Error: SLACK_URL not found in environment variables.")
         message = {
             "attachments": [
                 {
@@ -1168,6 +1178,7 @@ def bias_detection(
     ]
 )
 def train_naive_bayes_model(
+    slack_url: str,
     train_data: Input[Dataset],
     feature_name: str,
     label_name: str,
@@ -1184,14 +1195,17 @@ def train_naive_bayes_model(
     import requests
     from datetime import datetime
 
+    if not slack_url:
+        print("SLACK_URL is not provided.")
+        return
+
+    print(f"SLACK_URL received: {slack_url}")
+
     # Track the start time of the component execution
     start_time = datetime.now()
 
     # Function to send custom Slack message with Kubeflow component details
     def send_slack_message(component_name, execution_date, execution_time, duration):
-        SLACK_URL = os.getenv("SLACK_URL")
-        if not SLACK_URL:
-            print("Error: SLACK_URL not found in environment variables.")
         message = {
             "attachments": [
                 {
@@ -1297,6 +1311,7 @@ def train_naive_bayes_model(
     ]
 )
 def test_naive_bayes_model(
+    slack_url: str,
     val_data: Input[Dataset],
     model_input: Input[Model],
     vectorizer_input: Input[Artifact],
@@ -1314,12 +1329,14 @@ def test_naive_bayes_model(
     import os
     import google.cloud.aiplatform as aiplatform
 
+    if not slack_url:
+        print("SLACK_URL is not provided.")
+        return
+
+    print(f"SLACK_URL received: {slack_url}")
+
     # Function to send custom Slack message with Kubeflow component details
     def send_slack_message(component_name, execution_date, execution_time, duration, f1_score=None, precision=None, recall=None):
-
-        SLACK_URL = os.getenv("SLACK_URL")
-        if not SLACK_URL:
-            print("Error: SLACK_URL not found in environment variables.")
         message = {
             "attachments": [
                 {
@@ -1533,6 +1550,7 @@ def model_data_pipeline(
     )
 
     train_naive_bayes_task = train_naive_bayes_model(
+        slack_url=slack_url,
         train_data=get_data_component_task.outputs['train_data'],
         feature_name=feature_name,
         label_name=label_name
@@ -1550,6 +1568,7 @@ def model_data_pipeline(
     )
 
     test_naive_bayes_task = test_naive_bayes_model(
+        slack_url=slack_url,
         val_data=get_data_component_task.outputs['val_data'],
         model_input=train_naive_bayes_task.outputs["model"],
         vectorizer_input=train_naive_bayes_task.outputs["vectorizer_output"],
@@ -1560,6 +1579,7 @@ def model_data_pipeline(
 
     # Select the best model based on F1 score
     select_best_model_task = select_best_model(
+        slack_url=slack_url,
         xgboost_f1=test_xgboost_task.output,
         naive_bayes_f1=test_naive_bayes_task.output,
         xgboost_model=train_xgboost_task.outputs["model"],
@@ -1570,6 +1590,7 @@ def model_data_pipeline(
 
     # Detect Bias
     bias_detection_task = bias_detection(
+        slack_url=slack_url,
         train_data=get_data_component_task.outputs['train_data'],
         model_input=select_best_model_task.outputs["best_model"],
         vectorizer_input=train_xgboost_task.outputs["vectorizer_output"],
@@ -1583,6 +1604,7 @@ def model_data_pipeline(
 
     # Register the selected model
     model_registration_task = model_registration(
+        slack_url=slack_url,
         model_output=select_best_model_task.outputs["best_model"],
         project_id=PROJECT_ID,
         location=LOCATION,
@@ -1592,6 +1614,7 @@ def model_data_pipeline(
     model_registration_task.after(bias_detection_task)
     # Deploy the registered model
     model_deployment_task = model_deployment(
+        slack_url=slack_url,
         model=model_registration_task.outputs["model"],
         project_id=PROJECT_ID,
         location=LOCATION,
