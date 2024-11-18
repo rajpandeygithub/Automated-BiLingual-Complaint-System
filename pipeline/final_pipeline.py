@@ -1533,7 +1533,6 @@ def model_data_pipeline(
     )
 
     train_naive_bayes_task = train_naive_bayes_model(
-        slack_url=slack_url,
         train_data=get_data_component_task.outputs['train_data'],
         feature_name=feature_name,
         label_name=label_name
@@ -1541,6 +1540,7 @@ def model_data_pipeline(
 
     # Test models
     test_xgboost_task = test_xgboost_model(
+        slack_url=slack_url,
         val_data=get_data_component_task.outputs['val_data'],
         model_input=train_xgboost_task.outputs["model"],
         vectorizer_input=train_xgboost_task.outputs["vectorizer_output"],
