@@ -30,7 +30,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r pipeline/pipeline_requirements.txt --slack_url $SLACK_URL #added --slack_url $SLACK_URL to pass this as an argument
+          pip install -r pipeline/pipeline_requirements.txt
 
       # Step 5: Run the final pipeline script
       - name: Run Final Pipeline Script
@@ -38,4 +38,4 @@ jobs:
           GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}  # Google Cloud credentials
           SLACK_URL: ${{ secrets.SLACK_URL }}        # Slack Webhook URL
         run: |
-          python pipeline/final_pipeline.py
+          python pipeline/final_pipeline.py  --slack_url $SLACK_URL #added --slack_url $SLACK_URL to pass this as an argument
