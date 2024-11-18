@@ -1603,7 +1603,6 @@ def model_data_pipeline(
 
     # Register the selected model
     model_registration_task = model_registration(
-        slack_url=slack_url,
         model_output=select_best_model_task.outputs["best_model"],
         project_id=PROJECT_ID,
         location=LOCATION,
@@ -1613,7 +1612,6 @@ def model_data_pipeline(
     model_registration_task.after(bias_detection_task)
     # Deploy the registered model
     model_deployment_task = model_deployment(
-        slack_url=slack_url,
         model=model_registration_task.outputs["model"],
         project_id=PROJECT_ID,
         location=LOCATION,
