@@ -60,58 +60,58 @@ def get_data_component(
     limit:int=200):
 
     if not slack_url:
-            print("SLACK_URL is not provided.")
-            return
+        print("SLACK_URL is not provided.")
+        return
+
+    print(f"SLACK_URL received: {slack_url}")
     
-        print(f"SLACK_URL received: {slack_url}")
-    
-        from google.cloud import bigquery
-        from sklearn.model_selection import train_test_split
-        import requests
-        from datetime import datetime
-    
-        # Track the start time of the component execution
-        start_time = datetime.now()
-    
-        # Function to send custom Slack message with Kubeflow component details
-        def send_slack_message(component_name, execution_date, execution_time, duration):
-            message = {
-                "attachments": [
-                    {
-                        "color": "#36a64f",  # Green color for success
-                        "pretext": ":large_green_circle: Kubeflow Component Success Alert",
-                        "fields": [
-                            {
-                                "title": "Component Name",
-                                "value": component_name,
-                                "short": True
-                            },
-                            {
-                                "title": "Execution Date",
-                                "value": execution_date,
-                                "short": True
-                            },
-                            {
-                                "title": "Execution Time",
-                                "value": execution_time,
-                                "short": True
-                            },
-                            {
-                                "title": "Duration",
-                                "value": f"{duration} minutes",
-                                "short": True
-                            }
-                        ]
-                    }
-                ]
-            }
-    
-            try:
-                response = requests.post(slack_url, json=message)  # Use slack_url parameter
-                response.raise_for_status()  # Check for request errors
-                print("Slack message sent successfully.")
-            except requests.exceptions.RequestException as e:
-                print(f"Error sending Slack message: {e}")
+    from google.cloud import bigquery
+    from sklearn.model_selection import train_test_split
+    import requests
+    from datetime import datetime
+
+    # Track the start time of the component execution
+    start_time = datetime.now()
+
+    # Function to send custom Slack message with Kubeflow component details
+    def send_slack_message(component_name, execution_date, execution_time, duration):
+        message = {
+            "attachments": [
+                {
+                    "color": "#36a64f",  # Green color for success
+                    "pretext": ":large_green_circle: Kubeflow Component Success Alert",
+                    "fields": [
+                        {
+                            "title": "Component Name",
+                            "value": component_name,
+                            "short": True
+                        },
+                        {
+                            "title": "Execution Date",
+                            "value": execution_date,
+                            "short": True
+                        },
+                        {
+                            "title": "Execution Time",
+                            "value": execution_time,
+                            "short": True
+                        },
+                        {
+                            "title": "Duration",
+                            "value": f"{duration} minutes",
+                            "short": True
+                        }
+                    ]
+                }
+            ]
+        }
+
+        try:
+            response = requests.post(slack_url, json=message)  # Use slack_url parameter
+            response.raise_for_status()  # Check for request errors
+            print("Slack message sent successfully.")
+        except requests.exceptions.RequestException as e:
+            print(f"Error sending Slack message: {e}")
 
   # Function to send success email
     def send_success_email():
