@@ -131,6 +131,7 @@ def get_data_component(
         subject = '[Kubeflow Pipeline] - Started'
         body = f'''Hi team,
 
+
         Model training in the Kubeflow pipeline has started!
 
         Details:
@@ -139,6 +140,8 @@ def get_data_component(
 
         Please monitor the pipeline for further updates.
         '''
+
+        server = None
 
         try:
             # Set up the SMTP server
@@ -161,7 +164,8 @@ def get_data_component(
         except Exception as e:
             pass
         finally:
-            server.quit()
+            if server:
+                server.quit()
 
     # Function to send failure email
     def send_failure_email(error_message):
