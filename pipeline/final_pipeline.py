@@ -1579,7 +1579,6 @@ def model_data_pipeline(
 
     # Select the best model based on F1 score
     select_best_model_task = select_best_model(
-        slack_url=slack_url,
         xgboost_f1=test_xgboost_task.output,
         naive_bayes_f1=test_naive_bayes_task.output,
         xgboost_model=train_xgboost_task.outputs["model"],
