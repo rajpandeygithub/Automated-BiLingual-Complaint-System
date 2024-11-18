@@ -270,6 +270,7 @@ def get_data_component(
     ]
 )
 def train_xgboost_model(
+    slack_url: str,
     train_data: Input[Dataset],
     feature_name: str,
     label_name: str,
@@ -286,14 +287,19 @@ def train_xgboost_model(
     import requests
     from datetime import datetime
 
+
+    if not slack_url:
+        print("SLACK_URL is not provided.")
+        return
+
+    print(f"SLACK_URL received: {slack_url}")
+
+    # Track the start time of the component execution
     # Track the start time of the component execution
     start_time = datetime.now()
 
     # Function to send custom Slack message with Kubeflow component details
     def send_slack_message(component_name, execution_date, execution_time, duration):
-        SLACK_URL = os.getenv("SLACK_URL")
-        if not SLACK_URL:
-            print("Error: SLACK_URL not found in environment variables.") # Replace with your Slack webhook URL
         message = {
             "attachments": [
                 {
@@ -326,11 +332,11 @@ def train_xgboost_model(
         }
 
         try:
-            response = requests.post(SLACK_URL, json=message)
+            response = requests.post(slack_url, json=message)  # Use slack_url parameter
             response.raise_for_status()  # Check for request errors
-            pass
+            print("Slack message sent successfully.")
         except requests.exceptions.RequestException as e:
-            pass
+            print(f"Error sending Slack message: {e}")
     try:
       # Load dataset from the train_data input artifact
       data = pd.read_pickle(train_data.path)
@@ -402,6 +408,7 @@ def train_xgboost_model(
         ]
 )
 def test_xgboost_model(
+    slack_url: str,
     val_data: Input[Dataset],
     model_input: Input[Model],
     vectorizer_input: Input[Artifact],
@@ -420,12 +427,14 @@ def test_xgboost_model(
     from datetime import datetime
     import google.cloud.aiplatform as aiplatform
 
+    if not slack_url:
+        print("SLACK_URL is not provided.")
+        return
+
+    print(f"SLACK_URL received: {slack_url}")
 
     # Function to send custom Slack message with Kubeflow component details
     def send_slack_message(component_name, execution_date, execution_time, duration, f1_score=None, precision=None, recall=None):
-        SLACK_URL = os.getenv("SLACK_URL")
-        if not SLACK_URL:
-            print("Error: SLACK_URL not found in environment variables.")
         message = {
             "attachments": [
                 {
@@ -479,7 +488,7 @@ def test_xgboost_model(
             })
 
         try:
-            response = requests.post(SLACK_URL, json=message)
+            response = requests.post(slack_url, json=message)
             response.raise_for_status()  # Check for request errors
         except requests.exceptions.RequestException as e:
           pass
@@ -1517,12 +1526,14 @@ def model_data_pipeline(
 
     # Train models
     train_xgboost_task = train_xgboost_model(
+        slack_url=slack_url,
         train_data=get_data_component_task.outputs['train_data'],
         feature_name=feature_name,
         label_name=label_name
     )
 
     train_naive_bayes_task = train_naive_bayes_model(
+        slack_url=slack_url,
         train_data=get_data_component_task.outputs['train_data'],
         feature_name=feature_name,
         label_name=label_name
