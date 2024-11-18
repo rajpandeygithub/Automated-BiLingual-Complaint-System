@@ -48,7 +48,6 @@ aiplatform.init(
         ]
     )
 def get_data_component(
-    SLACK_URL: str,  # Add SLACK_URL as a parameter
     project_id: str,
     location: str,
     start_year: int, end_year: int,
