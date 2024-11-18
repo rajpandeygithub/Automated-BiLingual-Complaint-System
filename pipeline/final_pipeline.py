@@ -1,5 +1,4 @@
 # Authenticate your Google Cloud account
-# Authenticate your Google Cloud account
 import os
 import json  # Added this line
 from google.oauth2 import service_account
@@ -49,6 +48,7 @@ aiplatform.init(
         ]
     )
 def get_data_component(
+    SLACK_URL: str,  # Add SLACK_URL as a parameter
     project_id: str,
     location: str,
     start_year: int, end_year: int,
@@ -59,197 +59,197 @@ def get_data_component(
     testset_size: float = 0.2,
     limit:int=200):
 
-  from google.cloud import bigquery
-  from sklearn.model_selection import train_test_split
-  import smtplib
-  from email.mime.multipart import MIMEMultipart
-  from email.mime.text import MIMEText
-  import requests
-  from datetime import datetime
-  import os
+    from google.cloud import bigquery
+    from sklearn.model_selection import train_test_split
+    import smtplib
+    from email.mime.multipart import MIMEMultipart
+    from email.mime.text import MIMEText
+    import requests
+    from datetime import datetime
+    import os
 
   # Track the start time of the component execution
-  start_time = datetime.now()
+    start_time = datetime.now()
 
   # Function to send custom Slack message with Kubeflow component details
-  def send_slack_message(component_name, execution_date, execution_time, duration):
-      SLACK_URL = os.getenv("SLACK_URL")
-      if not SLACK_URL:
-          print("Error: SLACK_URL not found in environment variables.")  # Replace with your Slack webhook URL
-      message = {
-          "attachments": [
-              {
-                  "color": "#36a64f",  # Green color for success
-                  "pretext": ":large_green_circle: Kubeflow Component Success Alert",
-                  "fields": [
-                      {
-                          "title": "Component Name",
-                          "value": component_name,
-                          "short": True
-                      },
-                      {
-                          "title": "Execution Date",
-                          "value": execution_date,
-                          "short": True
-                      },
-                      {
-                          "title": "Execution Time",
-                          "value": execution_time,
-                          "short": True
-                      },
-                      {
-                          "title": "Duration",
-                          "value": f"{duration} minutes",
-                          "short": True
-                      }
-                  ]
-              }
-          ]
-      }
+    def send_slack_message(component_name, execution_date, execution_time, duration):
+        SLACK_URL = os.getenv("SLACK_URL")
+        if not SLACK_URL:
+            print("Error: SLACK_URL not found in environment variables.")  # Replace with your Slack webhook URL
+        message = {
+            "attachments": [
+                {
+                    "color": "#36a64f",  # Green color for success
+                    "pretext": ":large_green_circle: Kubeflow Component Success Alert",
+                    "fields": [
+                        {
+                            "title": "Component Name",
+                            "value": component_name,
+                            "short": True
+                        },
+                        {
+                            "title": "Execution Date",
+                            "value": execution_date,
+                            "short": True
+                        },
+                        {
+                            "title": "Execution Time",
+                            "value": execution_time,
+                            "short": True
+                        },
+                        {
+                            "title": "Duration",
+                            "value": f"{duration} minutes",
+                            "short": True
+                        }
+                    ]
+                }
+            ]
+        }
 
-      try:
-          response = requests.post(SLACK_URL, json=message)
-          response.raise_for_status()  # Check for request errors
-          pass
-      except requests.exceptions.RequestException as e:
-          pass
+        try:
+            response = requests.post(SLACK_URL, json=message)
+            response.raise_for_status()  # Check for request errors
+            pass
+        except requests.exceptions.RequestException as e:
+            pass
 
   # Function to send success email
-  def send_success_email():
-      sender_email = "sucessemailtrigger@gmail.com"
-      password = "jomnpxbfunwjgitb"
-      receiver_emails = ["hegde.anir@northeastern.edu",
-                         "nenavath.r@northeastern.edu",
-                         "pandey.raj@northeastern.edu",
-                         "khatri.say@northeastern.edu",
-                         "singh.arc@northeastern.edu",
-                         "goparaju.v@northeastern.edu"]
+    def send_success_email():
+        sender_email = "sucessemailtrigger@gmail.com"
+        password = "jomnpxbfunwjgitb"
+        receiver_emails = ["hegde.anir@northeastern.edu",
+                            "nenavath.r@northeastern.edu",
+                            "pandey.raj@northeastern.edu",
+                            "khatri.say@northeastern.edu",
+                            "singh.arc@northeastern.edu",
+                            "goparaju.v@northeastern.edu"]
 
-      # Current time for logging purposes
-      current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        # Current time for logging purposes
+        current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-      # Create the email content
-      subject = '[Kubeflow Pipeline] - Started'
-      body = f'''Hi team,
+        # Create the email content
+        subject = '[Kubeflow Pipeline] - Started'
+        body = f'''Hi team,
 
-      Model training in the Kubeflow pipeline has started!
+        Model training in the Kubeflow pipeline has started!
 
-      Details:
-      - Start Time: {current_time}
-      - Dataset: {start_year}-{end_year}
+        Details:
+        - Start Time: {current_time}
+        - Dataset: {start_year}-{end_year}
 
-      Please monitor the pipeline for further updates.
-      '''
+        Please monitor the pipeline for further updates.
+        '''
 
-      try:
-          # Set up the SMTP server
-          server = smtplib.SMTP('smtp.gmail.com', 587)
-          server.starttls()  # Secure the connection
-          server.login(sender_email, password)
+        try:
+            # Set up the SMTP server
+            server = smtplib.SMTP('smtp.gmail.com', 587)
+            server.starttls()  # Secure the connection
+            server.login(sender_email, password)
 
-          # Send email to each receiver
-          for receiver_email in receiver_emails:
-              # Create a fresh message for each recipient
-              message = MIMEMultipart()
-              message['From'] = sender_email
-              message['To'] = receiver_email
-              message['Subject'] = subject
-              message.attach(MIMEText(body, 'plain'))
+            # Send email to each receiver
+            for receiver_email in receiver_emails:
+                # Create a fresh message for each recipient
+                message = MIMEMultipart()
+                message['From'] = sender_email
+                message['To'] = receiver_email
+                message['Subject'] = subject
+                message.attach(MIMEText(body, 'plain'))
 
-              # Send the email
-              server.sendmail(sender_email, receiver_email, message.as_string())
+                # Send the email
+                server.sendmail(sender_email, receiver_email, message.as_string())
 
-      except Exception as e:
-          pass
-      finally:
-          server.quit()
+        except Exception as e:
+            pass
+        finally:
+            server.quit()
 
-  # Function to send failure email
-  def send_failure_email(error_message):
-      sender_email = "sucessemailtrigger@gmail.com"
-      password = "jomnpxbfunwjgitb"
-      receiver_emails = ["hegde.anir@northeastern.edu",
-                         "nenavath.r@northeastern.edu",
-                         "pandey.raj@northeastern.edu",
-                         "khatri.say@northeastern.edu",
-                         "singh.arc@northeastern.edu",
-                         "goparaju.v@northeastern.edu"]
+    # Function to send failure email
+    def send_failure_email(error_message):
+        sender_email = "sucessemailtrigger@gmail.com"
+        password = "jomnpxbfunwjgitb"
+        receiver_emails = ["hegde.anir@northeastern.edu",
+                            "nenavath.r@northeastern.edu",
+                            "pandey.raj@northeastern.edu",
+                            "khatri.say@northeastern.edu",
+                            "singh.arc@northeastern.edu",
+                            "goparaju.v@northeastern.edu"]
 
-      # Create the email content
-      subject = '[Kubeflow Pipeline]'
-      body = f'Hi team,\nModel training has failed!.\nError Details: {error_message}'
+        # Create the email content
+        subject = '[Kubeflow Pipeline]'
+        body = f'Hi team,\nModel training has failed!.\nError Details: {error_message}'
 
-      try:
-          # Set up the SMTP server
-          server = smtplib.SMTP('smtp.gmail.com', 587)
-          server.starttls()  # Secure the connection
-          server.login(sender_email, password)
+        try:
+            # Set up the SMTP server
+            server = smtplib.SMTP('smtp.gmail.com', 587)
+            server.starttls()  # Secure the connection
+            server.login(sender_email, password)
 
-          # Send email to each receiver
-          for receiver_email in receiver_emails:
-              # Create a fresh message for each recipient
-              message = MIMEMultipart()
-              message['From'] = sender_email
-              message['To'] = receiver_email
-              message['Subject'] = subject
-              message.attach(MIMEText(body, 'plain'))
+            # Send email to each receiver
+            for receiver_email in receiver_emails:
+                # Create a fresh message for each recipient
+                message = MIMEMultipart()
+                message['From'] = sender_email
+                message['To'] = receiver_email
+                message['Subject'] = subject
+                message.attach(MIMEText(body, 'plain'))
 
-              # Send the email
-              server.sendmail(sender_email, receiver_email, message.as_string())
+                # Send the email
+                server.sendmail(sender_email, receiver_email, message.as_string())
 
-      except Exception as e:
-          pass
-      finally:
-          server.quit()
-  try:
-    bqclient = bigquery.Client(project=project_id, location=location)
+        except Exception as e:
+            pass
+        finally:
+            server.quit()
+    try:
+        bqclient = bigquery.Client(project=project_id, location=location)
 
-    QUERY = f'''select * from `bilingualcomplaint-system.MLOps`.get_dataset_by_complaint_year_interval({start_year}, {end_year}) limit {limit}'''
-    query_job = bqclient.query(QUERY)  # API request
-    rows = query_job.result()  # Waits for query to finish
-    data = rows.to_dataframe()
-    # Selecting the necessary features and labels
-    data_features = data[[feature_name, label_name]]
+        QUERY = f'''select * from `bilingualcomplaint-system.MLOps`.get_dataset_by_complaint_year_interval({start_year}, {end_year}) limit {limit}'''
+        query_job = bqclient.query(QUERY)  # API request
+        rows = query_job.result()  # Waits for query to finish
+        data = rows.to_dataframe()
+        # Selecting the necessary features and labels
+        data_features = data[[feature_name, label_name]]
 
-    # Initial split
-    train, val = train_test_split(data_features, test_size=testset_size, random_state=42)
+        # Initial split
+        train, val = train_test_split(data_features, test_size=testset_size, random_state=42)
 
-    # Identify labels in training set
-    train_labels = set(train[label_name])
+        # Identify labels in training set
+        train_labels = set(train[label_name])
 
-    # Filter validation set to remove rows with labels not in training set
-    val = val[val[label_name].isin(train_labels)]
+        # Filter validation set to remove rows with labels not in training set
+        val = val[val[label_name].isin(train_labels)]
 
-    # Reset indices and save
-    train.reset_index(drop=True, inplace=True)
-    val.reset_index(drop=True, inplace=True)
-    train.to_pickle(train_data.path)
-    val.to_pickle(val_data.path)
+        # Reset indices and save
+        train.reset_index(drop=True, inplace=True)
+        val.reset_index(drop=True, inplace=True)
+        train.to_pickle(train_data.path)
+        val.to_pickle(val_data.path)
 
-    # Track the end time and calculate duration
-    end_time = datetime.now()
-    duration = (end_time - start_time).total_seconds() / 60  # Duration in minutes
+        # Track the end time and calculate duration
+        end_time = datetime.now()
+        duration = (end_time - start_time).total_seconds() / 60  # Duration in minutes
 
-    # Send success email once the data is processed
-    send_success_email()
-    # Send the Slack message with execution details
-    send_slack_message(
-        component_name="Getting Data Component",
-        execution_date=end_time.strftime('%Y-%m-%d'),
-        execution_time=end_time.strftime('%H:%M:%S'),
-        duration=round(duration, 2)  # Round duration to 2 decimal places
-    )
+        # Send success email once the data is processed
+        send_success_email()
+        # Send the Slack message with execution details
+        send_slack_message(
+            component_name="Getting Data Component",
+            execution_date=end_time.strftime('%Y-%m-%d'),
+            execution_time=end_time.strftime('%H:%M:%S'),
+            duration=round(duration, 2)  # Round duration to 2 decimal places
+        )
 
-  except Exception as e:
-      # Send failure email if there's an error
-      error_message = str(e)
-      send_failure_email(error_message)
-      send_slack_message(
-          component_name="Model Training Component Failed",
-          execution_date=datetime.now().strftime('%Y-%m-%d'),
-          execution_time=datetime.now().strftime('%H:%M:%S'),
-          duration=0  # If failed, duration is 0
-      )
+    except Exception as e:
+        # Send failure email if there's an error
+        error_message = str(e)
+        send_failure_email(error_message)
+        send_slack_message(
+            component_name="Model Training Component Failed",
+            execution_date=datetime.now().strftime('%Y-%m-%d'),
+            execution_time=datetime.now().strftime('%H:%M:%S'),
+            duration=0  # If failed, duration is 0
+        )
 
 
 #---------------------------------------------------------------------------------------------------------------------------------------
@@ -656,15 +656,15 @@ def model_registration(
 
 
 @component(
-    packages_to_install=["google-cloud-aiplatform"]
+packages_to_install=["google-cloud-aiplatform"]
 )
 def model_deployment(
-    model: Input[Model],
-    project_id: str,
-    location: str,
-    endpoint_display_name: str,
-    deployed_model_display_name: str,
-    endpoint: Output[Artifact]
+model: Input[Model],
+project_id: str,
+location: str,
+endpoint_display_name: str,
+deployed_model_display_name: str,
+endpoint: Output[Artifact]
 ):
     import time
     from google.cloud import aiplatform, bigquery
@@ -680,11 +680,11 @@ def model_deployment(
         sender_email = "sucessemailtrigger@gmail.com"
         password = "jomnpxbfunwjgitb"
         receiver_emails = ["hegde.anir@northeastern.edu",
-                          "nenavath.r@northeastern.edu",
-                          "pandey.raj@northeastern.edu",
-                          "khatri.say@northeastern.edu",
-                          "singh.arc@northeastern.edu",
-                          "goparaju.v@northeastern.edu"]
+                            "nenavath.r@northeastern.edu",
+                            "pandey.raj@northeastern.edu",
+                            "khatri.say@northeastern.edu",
+                            "singh.arc@northeastern.edu",
+                            "goparaju.v@northeastern.edu"]
 
 
         # Current time for logging purposes
@@ -730,11 +730,11 @@ def model_deployment(
         sender_email = "sucessemailtrigger@gmail.com"
         password = "jomnpxbfunwjgitb"
         receiver_emails = ["hegde.anir@northeastern.edu",
-                          "nenavath.r@northeastern.edu",
-                          "pandey.raj@northeastern.edu",
-                          "khatri.say@northeastern.edu",
-                          "singh.arc@northeastern.edu",
-                          "goparaju.v@northeastern.edu"]
+                            "nenavath.r@northeastern.edu",
+                            "pandey.raj@northeastern.edu",
+                            "khatri.say@northeastern.edu",
+                            "singh.arc@northeastern.edu",
+                            "goparaju.v@northeastern.edu"]
 
         # Create the email content
         subject = '[Kubeflow Pipeline]'
@@ -810,82 +810,82 @@ def model_deployment(
         except requests.exceptions.RequestException as e:
             pass
 
-    # Track the start time of the component execution
-    start_time = datetime.now()
-    # Delay to allow for model registration completion
-    time.sleep(35)
+        # Track the start time of the component execution
+        start_time = datetime.now()
+        # Delay to allow for model registration completion
+        time.sleep(35)
 
-    try:
-      # Delay to allow for model registration completion
-      time.sleep(30)  # Wait for 30 seconds
+        try:
+            # Delay to allow for model registration completion
+            time.sleep(30)  # Wait for 30 seconds
 
-      # Initialize Vertex AI SDK
-      aiplatform.init(project=project_id, location=location)
+            # Initialize Vertex AI SDK
+            aiplatform.init(project=project_id, location=location)
 
-      # Retrieve the model using its resource name (model.uri should be in the format projects/PROJECT_ID/locations/LOCATION/models/MODEL_ID)
-      deployed_model = aiplatform.Model(model.uri)
+            # Retrieve the model using its resource name (model.uri should be in the format projects/PROJECT_ID/locations/LOCATION/models/MODEL_ID)
+            deployed_model = aiplatform.Model(model.uri)
 
-      # Create or get an existing endpoint
-      endpoints = aiplatform.Endpoint.list(
-          filter=f'display_name="{endpoint_display_name}"',
-          order_by='create_time desc',
-          project=project_id,
-          location=location
-      )
-      if endpoints:
-          endpoint_obj = endpoints[0]
-      else:
-          endpoint_obj = aiplatform.Endpoint.create(display_name=endpoint_display_name)
+            # Create or get an existing endpoint
+            endpoints = aiplatform.Endpoint.list(
+                filter=f'display_name="{endpoint_display_name}"',
+                order_by='create_time desc',
+                project=project_id,
+                location=location
+            )
+            if endpoints:
+                endpoint_obj = endpoints[0]
+            else:
+                endpoint_obj = aiplatform.Endpoint.create(display_name=endpoint_display_name)
 
-      # Deploy the model to the endpoint with 100% traffic
-      deployed_model_resource = endpoint_obj.deploy(
-          model=deployed_model,
-          deployed_model_display_name=deployed_model_display_name,
-          machine_type="n1-standard-4",
-          traffic_split={"0": 100},  # Assign 100% traffic to the new deployment
-      )
+            # Deploy the model to the endpoint with 100% traffic
+            deployed_model_resource = endpoint_obj.deploy(
+                model=deployed_model,
+                deployed_model_display_name=deployed_model_display_name,
+                machine_type="n1-standard-4",
+                traffic_split={"0": 100},  # Assign 100% traffic to the new deployment
+            )
 
-      # Ensure that deployed_model_resource is not None before accessing its ID
-      if deployed_model_resource is not None and hasattr(deployed_model_resource, "id"):
-          # Retrieve the current traffic allocation and set traffic of old versions to 0%
-          traffic_split = {deployed_model_resource.id: 100}  # New model gets 100% traffic
-          for deployed_model_id in endpoint_obj.traffic_split.keys():
-              if deployed_model_id != deployed_model_resource.id:
-                  traffic_split[deployed_model_id] = 0  # Set old versions to 0% traffic
+            # Ensure that deployed_model_resource is not None before accessing its ID
+            if deployed_model_resource is not None and hasattr(deployed_model_resource, "id"):
+                # Retrieve the current traffic allocation and set traffic of old versions to 0%
+                traffic_split = {deployed_model_resource.id: 100}  # New model gets 100% traffic
+                for deployed_model_id in endpoint_obj.traffic_split.keys():
+                    if deployed_model_id != deployed_model_resource.id:
+                        traffic_split[deployed_model_id] = 0  # Set old versions to 0% traffic
 
-          # Update the endpoint's traffic split
-          endpoint_obj.update(traffic_split=traffic_split)
-      else:
-          print("Warning: Deployed model resource is None or lacks an ID attribute.")
+                # Update the endpoint's traffic split
+                endpoint_obj.update(traffic_split=traffic_split)
+            else:
+                print("Warning: Deployed model resource is None or lacks an ID attribute.")
 
-      # Output the endpoint resource name
-      endpoint.uri = endpoint_obj.resource_name
+            # Output the endpoint resource name
+            endpoint.uri = endpoint_obj.resource_name
 
-      # Track the end time and calculate duration
-      end_time = datetime.now()
-      duration = (end_time - start_time).total_seconds() / 60  # Duration in minutes
+            # Track the end time and calculate duration
+            end_time = datetime.now()
+            duration = (end_time - start_time).total_seconds() / 60  # Duration in minutes
 
-      send_success_email()
-      # Send Slack and success email notifications
-      send_slack_message(
-          component_name="Model Deployment Component",
-          execution_date=end_time.strftime('%Y-%m-%d'),
-          execution_time=end_time.strftime('%H:%M:%S'),
-          duration=round(duration, 2),
-          endpoint_name=endpoint_display_name
-      )
+            send_success_email()
+            # Send Slack and success email notifications
+            send_slack_message(
+                component_name="Model Deployment Component",
+                execution_date=end_time.strftime('%Y-%m-%d'),
+                execution_time=end_time.strftime('%H:%M:%S'),
+                duration=round(duration, 2),
+                endpoint_name=endpoint_display_name
+            )
 
-    except Exception as e:
-      # Send failure Slack message and email in case of an error
-      error_message = str(e)
-      send_failure_email(error_message)
-      send_slack_message(
-          component_name="Model Deployment Component Failed",
-          execution_date=datetime.now().strftime('%Y-%m-%d'),
-          execution_time=datetime.now().strftime('%H:%M:%S'),
-          duration=0,  # If failed, duration is 0
-          endpoint_name=endpoint_display_name
-      )
+        except Exception as e:
+            # Send failure Slack message and email in case of an error
+            error_message = str(e)
+            send_failure_email(error_message)
+            send_slack_message(
+                component_name="Model Deployment Component Failed",
+                execution_date=datetime.now().strftime('%Y-%m-%d'),
+                execution_time=datetime.now().strftime('%H:%M:%S'),
+                duration=0,  # If failed, duration is 0
+                endpoint_name=endpoint_display_name
+            )
 
 
 
@@ -1035,109 +1035,109 @@ def bias_detection(
         except requests.exceptions.RequestException as e:
             pass
 
-    try:
-        sensitive_features = 'product'  # We are now only checking for the 'product' feature
-        bias_threshold = 0.99  # Example threshold for bias detection
-        # Track the start time of the component execution
-        start_time = datetime.now()
+        try:
+            sensitive_features = 'product'  # We are now only checking for the 'product' feature
+            bias_threshold = 0.99  # Example threshold for bias detection
+            # Track the start time of the component execution
+            start_time = datetime.now()
 
-        # Load the trained model
-        model_path = os.path.join(model_input.path, "model.bst")
-        xgb_model = xgb.XGBClassifier()
-        xgb_model.load_model(model_path)
+            # Load the trained model
+            model_path = os.path.join(model_input.path, "model.bst")
+            xgb_model = xgb.XGBClassifier()
+            xgb_model.load_model(model_path)
 
-        # Load the TF-IDF vectorizer
-        vectorizer_path = f"{vectorizer_input.path}.pkl"
-        with open(vectorizer_path, 'rb') as f:
-            tfidf_vectorizer = pickle.load(f)
+            # Load the TF-IDF vectorizer
+            vectorizer_path = f"{vectorizer_input.path}.pkl"
+            with open(vectorizer_path, 'rb') as f:
+                tfidf_vectorizer = pickle.load(f)
 
-        # Load the LabelEncoder
-        label_encoder_path = f"{label_encoder_input.path}.pkl"
-        with open(label_encoder_path, 'rb') as f:
-            label_encoder = pickle.load(f)
+            # Load the LabelEncoder
+            label_encoder_path = f"{label_encoder_input.path}.pkl"
+            with open(label_encoder_path, 'rb') as f:
+                label_encoder = pickle.load(f)
 
-        # Load the dataset from train_data input artifact
-        data = pd.read_pickle(train_data.path)
-        X = data[feature_name].fillna("")  # Extract the features
-        y = data[label_name].fillna("")   # Extract the label
+            # Load the dataset from train_data input artifact
+            data = pd.read_pickle(train_data.path)
+            X = data[feature_name].fillna("")  # Extract the features
+            y = data[label_name].fillna("")   # Extract the label
 
-        # Transform validation data with vectorizer
-        X_tfidf = tfidf_vectorizer.transform(X)
+            # Transform validation data with vectorizer
+            X_tfidf = tfidf_vectorizer.transform(X)
 
-        # Make predictions using the loaded model
-        y_pred_encoded = xgb_model.predict(X_tfidf)
+            # Make predictions using the loaded model
+            y_pred_encoded = xgb_model.predict(X_tfidf)
 
-        # Decode predictions back to the original label format
-        y_pred = label_encoder.inverse_transform(y_pred_encoded)
+            # Decode predictions back to the original label format
+            y_pred = label_encoder.inverse_transform(y_pred_encoded)
 
-        # Bias detection using Fairlearn's MetricFrame
-        metric_frame = MetricFrame(
-            metrics=accuracy_score,
-            y_true=y,
-            y_pred=y_pred,
-            sensitive_features=data[sensitive_features]  # We are checking for the 'product' feature
-        )
+            # Bias detection using Fairlearn's MetricFrame
+            metric_frame = MetricFrame(
+                metrics=accuracy_score,
+                y_true=y,
+                y_pred=y_pred,
+                sensitive_features=data[sensitive_features]  # We are checking for the 'product' feature
+            )
 
-        # Calculate slice-specific metrics
-        slice_metrics = metric_frame.by_group
-        valid_slices = slice_metrics.dropna()
+            # Calculate slice-specific metrics
+            slice_metrics = metric_frame.by_group
+            valid_slices = slice_metrics.dropna()
 
-        # Convert the slice metrics into a readable format for Slack
-        slice_results = valid_slices.reset_index()
-        slice_results.columns = ['Product', 'Accuracy']  # Ensuring column names are correct for Slack
-        slice_results_str = slice_results.to_string(index=False)
+            # Convert the slice metrics into a readable format for Slack
+            slice_results = valid_slices.reset_index()
+            slice_results.columns = ['Product', 'Accuracy']  # Ensuring column names are correct for Slack
+            slice_results_str = slice_results.to_string(index=False)
 
-        # Function to check for bias and trigger an alert if threshold is crossed
-        def check_for_bias(slice_metrics, threshold):
-            alert_flag = False
-            alerts = []
+            # Function to check for bias and trigger an alert if threshold is crossed
+            def check_for_bias(slice_metrics, threshold):
+                alert_flag = False
+                alerts = []
 
-            for slice_name, accuracy in slice_metrics.items():
-                if accuracy < threshold:
-                    alert_flag = True
-                    alerts.append(f"Bias Alert: Accuracy for slice '{slice_name}' is below threshold: {accuracy:.2f}. We are removing these classes for mitigation.")
+                for slice_name, accuracy in slice_metrics.items():
+                    if accuracy < threshold:
+                        alert_flag = True
+                        alerts.append(f"Bias Alert: Accuracy for slice '{slice_name}' is below threshold: {accuracy:.2f}. We are removing these classes for mitigation.")
 
-            if alert_flag:
-                return alerts
+                if alert_flag:
+                    return alerts
+                else:
+                    return None
+
+            # Check for bias and trigger alerts
+            bias_alerts = check_for_bias(valid_slices, bias_threshold)
+
+            # Track the end time and calculate duration
+            end_time = datetime.now()
+            duration = (end_time - start_time).total_seconds() / 60  # Duration in minutes
+
+            # Send Slack message with execution details and bias alerts if any
+            if bias_alerts:
+                send_slack_message(
+                    component_name="Bias Detection Component",
+                    execution_date=end_time.strftime('%Y-%m-%d'),
+                    execution_time=end_time.strftime('%H:%M:%S'),
+                    duration=round(duration, 2),
+                    alerts=bias_alerts,
+                    slice_results=slice_results_str  # Include the slice results in the Slack message
+                )
             else:
-                return None
+                send_slack_message(
+                    component_name="Bias Detection Component",
+                    execution_date=end_time.strftime('%Y-%m-%d'),
+                    execution_time=end_time.strftime('%H:%M:%S'),
+                    duration=round(duration, 2),
+                    no_bias_message=True
+                )
 
-        # Check for bias and trigger alerts
-        bias_alerts = check_for_bias(valid_slices, bias_threshold)
-
-        # Track the end time and calculate duration
-        end_time = datetime.now()
-        duration = (end_time - start_time).total_seconds() / 60  # Duration in minutes
-
-        # Send Slack message with execution details and bias alerts if any
-        if bias_alerts:
+        except Exception as e:
+            error_message = str(e)
+            print(f"Error during bias detection: {error_message}")
             send_slack_message(
-                component_name="Bias Detection Component",
-                execution_date=end_time.strftime('%Y-%m-%d'),
-                execution_time=end_time.strftime('%H:%M:%S'),
-                duration=round(duration, 2),
-                alerts=bias_alerts,
-                slice_results=slice_results_str  # Include the slice results in the Slack message
+                component_name="Bias Detection Component Failed",
+                execution_date=datetime.now().strftime('%Y-%m-%d'),
+                execution_time=datetime.now().strftime('%H:%M:%S'),
+                duration=0  # If failed, duration is 0
             )
-        else:
-            send_slack_message(
-                component_name="Bias Detection Component",
-                execution_date=end_time.strftime('%Y-%m-%d'),
-                execution_time=end_time.strftime('%H:%M:%S'),
-                duration=round(duration, 2),
-                no_bias_message=True
-            )
-
-    except Exception as e:
-        error_message = str(e)
-        print(f"Error during bias detection: {error_message}")
-        send_slack_message(
-            component_name="Bias Detection Component Failed",
-            execution_date=datetime.now().strftime('%Y-%m-%d'),
-            execution_time=datetime.now().strftime('%H:%M:%S'),
-            duration=0  # If failed, duration is 0
-        )
-        raise e
+            raise e
 
 
 
