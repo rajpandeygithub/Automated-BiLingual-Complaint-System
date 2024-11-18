@@ -30,7 +30,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r pipeline/pipeline_requirements.txt
+          pip install -r pipeline/pipeline_requirements.txt --slack_url $SLACK_URL #added --slack_url $SLACK_URL to pass this as an argument
 
       # Step 5: Run the final pipeline script
       - name: Run Final Pipeline Script
