@@ -48,6 +48,7 @@ aiplatform.init(
         ]
     )
 def get_data_component(
+    slack_url: str,
     project_id: str,
     location: str,
     start_year: int, end_year: int,
@@ -58,60 +59,59 @@ def get_data_component(
     testset_size: float = 0.2,
     limit:int=200):
 
-    from google.cloud import bigquery
-    from sklearn.model_selection import train_test_split
-    import smtplib
-    from email.mime.multipart import MIMEMultipart
-    from email.mime.text import MIMEText
-    import requests
-    from datetime import datetime
-    import os
-
-  # Track the start time of the component execution
-    start_time = datetime.now()
-
-  # Function to send custom Slack message with Kubeflow component details
-    def send_slack_message(component_name, execution_date, execution_time, duration):
-        SLACK_URL = os.getenv("SLACK_URL")
-        if not SLACK_URL:
-            print("Error: SLACK_URL not found in environment variables.")  # Replace with your Slack webhook URL
-        message = {
-            "attachments": [
-                {
-                    "color": "#36a64f",  # Green color for success
-                    "pretext": ":large_green_circle: Kubeflow Component Success Alert",
-                    "fields": [
-                        {
-                            "title": "Component Name",
-                            "value": component_name,
-                            "short": True
-                        },
-                        {
-                            "title": "Execution Date",
-                            "value": execution_date,
-                            "short": True
-                        },
-                        {
-                            "title": "Execution Time",
-                            "value": execution_time,
-                            "short": True
-                        },
-                        {
-                            "title": "Duration",
-                            "value": f"{duration} minutes",
-                            "short": True
-                        }
-                    ]
-                }
-            ]
-        }
-
-        try:
-            response = requests.post(SLACK_URL, json=message)
-            response.raise_for_status()  # Check for request errors
-            pass
-        except requests.exceptions.RequestException as e:
-            pass
+    if not slack_url:
+            print("SLACK_URL is not provided.")
+            return
+    
+        print(f"SLACK_URL received: {slack_url}")
+    
+        from google.cloud import bigquery
+        from sklearn.model_selection import train_test_split
+        import requests
+        from datetime import datetime
+    
+        # Track the start time of the component execution
+        start_time = datetime.now()
+    
+        # Function to send custom Slack message with Kubeflow component details
+        def send_slack_message(component_name, execution_date, execution_time, duration):
+            message = {
+                "attachments": [
+                    {
+                        "color": "#36a64f",  # Green color for success
+                        "pretext": ":large_green_circle: Kubeflow Component Success Alert",
+                        "fields": [
+                            {
+                                "title": "Component Name",
+                                "value": component_name,
+                                "short": True
+                            },
+                            {
+                                "title": "Execution Date",
+                                "value": execution_date,
+                                "short": True
+                            },
+                            {
+                                "title": "Execution Time",
+                                "value": execution_time,
+                                "short": True
+                            },
+                            {
+                                "title": "Duration",
+                                "value": f"{duration} minutes",
+                                "short": True
+                            }
+                        ]
+                    }
+                ]
+            }
+    
+            try:
+                response = requests.post(slack_url, json=message)  # Use slack_url parameter
+                response.raise_for_status()  # Check for request errors
+                print("Slack message sent successfully.")
+            except requests.exceptions.RequestException as e:
+                print(f"Error sending Slack message: {e}")
 
   # Function to send success email
     def send_success_email():
@@ -1488,6 +1488,7 @@ TIMESTAMP = datetime.now().strftime("%Y%m%d%H%M%S")
     pipeline_root=_pipeline_artifacts_dir,
 )
 def model_data_pipeline(
+    slack_url: str,
     start_year: int = 2018,
     end_year: int = 2020,
     limit: int = 100,
@@ -1499,6 +1500,7 @@ def model_data_pipeline(
 ):
     # Fetch data
     get_data_component_task = get_data_component(
+        slack_url=slack_url,
         project_id=PROJECT_ID,
         location=LOCATION,
         start_year=start_year,
@@ -1585,6 +1587,15 @@ def model_data_pipeline(
 from kfp import compiler
 from google.cloud import aiplatform
 from datetime import datetime
+import argparse
+
+# Parse command-line arguments
+parser = argparse.ArgumentParser()
+parser.add_argument("--slack_url", required=True, help="Slack Webhook URL")  # Lowercase/snake_case
+args = parser.parse_args()
+
+# Extract the slack_url argument
+slack_url = args.slack_url  # Assign to a lowercase variable
 
 # Compile the pipeline
 compiler.Compiler().compile(
@@ -1603,6 +1614,7 @@ job = aiplatform.PipelineJob(
     enable_caching=True,
     pipeline_root=_pipeline_artifacts_dir,  # Make sure this path is set correctly
     parameter_values={
+        "slack_url": slack_url,
         "start_year": 2017,
         "end_year": 2020,
         "limit": 200,
