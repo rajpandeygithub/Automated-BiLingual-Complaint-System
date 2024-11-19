@@ -671,7 +671,6 @@ def model_registration(
 packages_to_install=["google-cloud-aiplatform"]
 )
 def model_deployment(
-slack_url: str,
 model: Input[Model],
 project_id: str,
 location: str,
