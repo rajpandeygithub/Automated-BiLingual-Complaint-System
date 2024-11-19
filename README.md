@@ -358,11 +358,17 @@ Key components of the pipeline include:
 - Model Training and Testing: Using XGBoost and Naive Bayes models for complaint classification.
 - Model Selection and Registration: Choosing the best-performing model based on evaluation metrics and registering it in Vertex AI for deployment.
 
+  
+<img width="1434" alt="Screenshot 2024-11-19 at 3 13 25 PM" src="https://github.com/user-attachments/assets/0ae443c7-0312-431f-b770-1e482694a8b5">![image](https://github.com/user-attachments/assets/ccff2c4e-0198-463d-8bc0-fd1129d4f1c9)
+
+
 ## CI-CD
 
 ### a. Data Source
 
 Data is fetched from Google Cloud BigQuery, with complaint_english as the primary feature and product as the target label. Preprocessing steps include TF-IDF Vectorization for text data transformation and Label Encoding for converting categorical labels into numerical format.
+
+<img width="1429" alt="Screenshot 2024-11-19 at 5 33 13 PM" src="https://github.com/user-attachments/assets/4f6b7e25-6ae2-4934-ac3f-d66d28a3ad7c">
 
 ### b. Model
 
@@ -398,6 +404,20 @@ The best-performing model is automatically registered and deployed to a Vertex A
 
 ### h. Bias Detection
 - Implements checks for model bias by analyzing predictions across different subsets of data (e.g., categories, demographics, or product types) to ensure fairness.
+
+### Model Pipeline:
+
+<img width="858" alt="Screenshot 2024-11-19 at 3 11 40 PM" src="https://github.com/user-attachments/assets/339f1755-4f73-468d-8f1e-f1866ffeda7c">
+
+### Model Registry:
+
+<img width="1186" alt="Screenshot 2024-11-19 at 3 26 34 PM" src="https://github.com/user-attachments/assets/ae26de45-f962-42a2-8edf-fb5ec387c803">
+
+### Cloud Run function:
+
+<img width="1139" alt="Screenshot 2024-11-19 at 3 28 42 PM" src="https://github.com/user-attachments/assets/9159a298-ac26-4dfc-ab08-8cf59f23f4f7">
+
+
 
 ## License Information
 
