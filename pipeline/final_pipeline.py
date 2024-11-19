@@ -821,7 +821,7 @@ endpoint: Output[Artifact]
         }
 
         try:
-            response = requests.post(SLACK_URL, json=message)
+            response = requests.post(slack_url, json=message)
             response.raise_for_status()  # Check for request errors
         except requests.exceptions.RequestException as e:
             pass
@@ -1051,7 +1051,7 @@ def bias_detection(
             })
 
         try:
-            response = requests.post(SLACK_URL, json=message)
+            response = requests.post(slack_url, json=message)
             response.raise_for_status()  # Check for request errors
         except requests.exceptions.RequestException as e:
             pass
@@ -1237,7 +1237,7 @@ def train_naive_bayes_model(
         }
 
         try:
-            response = requests.post(SLACK_URL, json=message)
+            response = requests.post(slack_url, json=message)
             response.raise_for_status()  # Check for request errors
             pass
         except requests.exceptions.RequestException as e:
@@ -1359,7 +1359,7 @@ def test_naive_bayes_model(
             message["attachments"][0]["fields"].append({"title": "Validation Recall", "value": f"{recall:.4f}", "short": True})
 
         try:
-            response = requests.post(SLACK_URL, json=message)
+            response = requests.post(slack_url, json=message)
             response.raise_for_status()  # Check for request errors
         except requests.exceptions.RequestException as e:
             print(f"Error sending Slack message: {e}")
