@@ -783,7 +783,7 @@ endpoint: Output[Artifact]
                 server.sendmail(sender_email, receiver_email, message.as_string())
 
         except Exception as e:
-            pass
+            print(f"Failed to send email: {e}")
         finally:
             server.quit()
 
@@ -825,88 +825,88 @@ endpoint: Output[Artifact]
             ]
         }
 
-        try:
-            response = requests.post(slack_url, json=message)
-            response.raise_for_status()  # Check for request errors
-        except requests.exceptions.RequestException as e:
-            pass
+    try:
+        response = requests.post(slack_url, json=message)
+        response.raise_for_status()  # Check for request errors
+    except requests.exceptions.RequestException as e:
+        pass
 
-        # Track the start time of the component execution
-        start_time = datetime.now()
+    # Track the start time of the component execution
+    start_time = datetime.now()
+    # Delay to allow for model registration completion
+    time.sleep(35)
+
+    try:
         # Delay to allow for model registration completion
-        time.sleep(35)
+        time.sleep(30)  # Wait for 30 seconds
 
-        try:
-            # Delay to allow for model registration completion
-            time.sleep(30)  # Wait for 30 seconds
+        # Initialize Vertex AI SDK
+        aiplatform.init(project=project_id, location=location)
 
-            # Initialize Vertex AI SDK
-            aiplatform.init(project=project_id, location=location)
+        # Retrieve the model using its resource name (model.uri should be in the format projects/PROJECT_ID/locations/LOCATION/models/MODEL_ID)
+        deployed_model = aiplatform.Model(model.uri)
 
-            # Retrieve the model using its resource name (model.uri should be in the format projects/PROJECT_ID/locations/LOCATION/models/MODEL_ID)
-            deployed_model = aiplatform.Model(model.uri)
+        # Create or get an existing endpoint
+        endpoints = aiplatform.Endpoint.list(
+            filter=f'display_name="{endpoint_display_name}"',
+            order_by='create_time desc',
+            project=project_id,
+            location=location
+        )
+        if endpoints:
+            endpoint_obj = endpoints[0]
+        else:
+            endpoint_obj = aiplatform.Endpoint.create(display_name=endpoint_display_name)
 
-            # Create or get an existing endpoint
-            endpoints = aiplatform.Endpoint.list(
-                filter=f'display_name="{endpoint_display_name}"',
-                order_by='create_time desc',
-                project=project_id,
-                location=location
-            )
-            if endpoints:
-                endpoint_obj = endpoints[0]
-            else:
-                endpoint_obj = aiplatform.Endpoint.create(display_name=endpoint_display_name)
+        # Deploy the model to the endpoint with 100% traffic
+        deployed_model_resource = endpoint_obj.deploy(
+            model=deployed_model,
+            deployed_model_display_name=deployed_model_display_name,
+            machine_type="n1-standard-4",
+            traffic_split={"0": 100},  # Assign 100% traffic to the new deployment
+        )
 
-            # Deploy the model to the endpoint with 100% traffic
-            deployed_model_resource = endpoint_obj.deploy(
-                model=deployed_model,
-                deployed_model_display_name=deployed_model_display_name,
-                machine_type="n1-standard-4",
-                traffic_split={"0": 100},  # Assign 100% traffic to the new deployment
-            )
+        # Ensure that deployed_model_resource is not None before accessing its ID
+        if deployed_model_resource is not None and hasattr(deployed_model_resource, "id"):
+            # Retrieve the current traffic allocation and set traffic of old versions to 0%
+            traffic_split = {deployed_model_resource.id: 100}  # New model gets 100% traffic
+            for deployed_model_id in endpoint_obj.traffic_split.keys():
+                if deployed_model_id != deployed_model_resource.id:
+                    traffic_split[deployed_model_id] = 0  # Set old versions to 0% traffic
 
-            # Ensure that deployed_model_resource is not None before accessing its ID
-            if deployed_model_resource is not None and hasattr(deployed_model_resource, "id"):
-                # Retrieve the current traffic allocation and set traffic of old versions to 0%
-                traffic_split = {deployed_model_resource.id: 100}  # New model gets 100% traffic
-                for deployed_model_id in endpoint_obj.traffic_split.keys():
-                    if deployed_model_id != deployed_model_resource.id:
-                        traffic_split[deployed_model_id] = 0  # Set old versions to 0% traffic
+            # Update the endpoint's traffic split
+            endpoint_obj.update(traffic_split=traffic_split)
+        else:
+            print("Warning: Deployed model resource is None or lacks an ID attribute.")
 
-                # Update the endpoint's traffic split
-                endpoint_obj.update(traffic_split=traffic_split)
-            else:
-                print("Warning: Deployed model resource is None or lacks an ID attribute.")
+        # Output the endpoint resource name
+        endpoint.uri = endpoint_obj.resource_name
 
-            # Output the endpoint resource name
-            endpoint.uri = endpoint_obj.resource_name
+        # Track the end time and calculate duration
+        end_time = datetime.now()
+        duration = (end_time - start_time).total_seconds() / 60  # Duration in minutes
 
-            # Track the end time and calculate duration
-            end_time = datetime.now()
-            duration = (end_time - start_time).total_seconds() / 60  # Duration in minutes
+        send_success_email()
+        # Send Slack and success email notifications
+        send_slack_message(
+            component_name="Model Deployment Component",
+            execution_date=end_time.strftime('%Y-%m-%d'),
+            execution_time=end_time.strftime('%H:%M:%S'),
+            duration=round(duration, 2),
+            endpoint_name=endpoint_display_name
+        )
 
-            send_success_email()
-            # Send Slack and success email notifications
-            send_slack_message(
-                component_name="Model Deployment Component",
-                execution_date=end_time.strftime('%Y-%m-%d'),
-                execution_time=end_time.strftime('%H:%M:%S'),
-                duration=round(duration, 2),
-                endpoint_name=endpoint_display_name
-            )
-
-        except Exception as e:
-            # Send failure Slack message and email in case of an error
-            error_message = str(e)
-            send_failure_email(error_message)
-            send_slack_message(
-                component_name="Model Deployment Component Failed",
-                execution_date=datetime.now().strftime('%Y-%m-%d'),
-                execution_time=datetime.now().strftime('%H:%M:%S'),
-                duration=0,  # If failed, duration is 0
-                endpoint_name=endpoint_display_name
-            )
+    except Exception as e:
+        # Send failure Slack message and email in case of an error
+        error_message = str(e)
+        send_failure_email(error_message)
+        send_slack_message(
+            component_name="Model Deployment Component Failed",
+            execution_date=datetime.now().strftime('%Y-%m-%d'),
+            execution_time=datetime.now().strftime('%H:%M:%S'),
+            duration=0,  # If failed, duration is 0
+            endpoint_name=endpoint_display_name
+        )
 
 
 
