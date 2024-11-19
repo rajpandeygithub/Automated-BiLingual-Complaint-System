@@ -825,11 +825,11 @@ endpoint: Output[Artifact]
             ]
         }
 
-    try:
-        response = requests.post(slack_url, json=message)
-        response.raise_for_status()  # Check for request errors
-    except requests.exceptions.RequestException as e:
-        pass
+        try:
+            response = requests.post(slack_url, json=message)
+            response.raise_for_status()  # Check for request errors
+        except requests.exceptions.RequestException as e:
+            pass
 
     # Track the start time of the component execution
     start_time = datetime.now()
