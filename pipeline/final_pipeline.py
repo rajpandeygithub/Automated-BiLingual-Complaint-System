@@ -671,6 +671,7 @@ def model_registration(
 packages_to_install=["google-cloud-aiplatform"]
 )
 def model_deployment(
+slack_url: str,
 model: Input[Model],
 project_id: str,
 location: str,
@@ -1611,6 +1612,7 @@ def model_data_pipeline(
     model_registration_task.after(bias_detection_task)
     # Deploy the registered model
     model_deployment_task = model_deployment(
+        slack_url=slack_url,
         model=model_registration_task.outputs["model"],
         project_id=PROJECT_ID,
         location=LOCATION,
