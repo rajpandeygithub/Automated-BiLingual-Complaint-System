@@ -69,6 +69,10 @@ def get_data_component(
     from sklearn.model_selection import train_test_split
     import requests
     from datetime import datetime
+    import smtplib
+    from email.mime.text import MIMEText
+    from email.mime.multipart import MIMEMultipart
+
 
     # Track the start time of the component execution
     start_time = datetime.now()
@@ -162,7 +166,7 @@ def get_data_component(
                 server.sendmail(sender_email, receiver_email, message.as_string())
 
         except Exception as e:
-            pass
+            print(f"Failed to send email: {e}")
         finally:
             if server:
                 server.quit()
