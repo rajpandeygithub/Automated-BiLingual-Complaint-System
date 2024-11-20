@@ -8,7 +8,8 @@ from preprocessing import DataValidationPipeline, DataTransformationPipeline
 
 validation_checks = {
     'min_words': 5,
-    'max_words': 300
+    'max_words': 300,
+    'allowed_languages': ["HI", "EN"]
 }
 validation_pipeline = DataValidationPipeline(validation_checks)
 preprocessing_pipeline = DataTransformationPipeline()

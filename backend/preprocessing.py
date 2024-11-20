@@ -27,14 +27,11 @@ class DataTransformationPipeline:
     def __init__(self, min_word_length: int = 5):
         pass
     def process(self, text: str):
-        words  = text.split('')
-        if len(words) < min_word_length:
-            return None
         return text.lower()
 
 
 if __name__ == '__main__':
-    pipeline = PreprocessingPieline()
+    pipeline = DataTransformationPipeline()
     text = 'hello, world! This is a test complaint. Please clean me'
     text = pipeline.process(text)
     print(text)
