@@ -4,8 +4,8 @@ on:
   push:
     branches:
       - Dev
-    # paths:
-    #   - 'backend/**'
+    paths:
+      - 'backend/**'
 
 env:
   PROJECT_ID: bilingualcomplaint-system
