@@ -4,7 +4,7 @@ class PreprocessingPieline:
     def __init__(self, min_word_length: int = 5):
         pass
     def process(self, text: str):
-        return text
+        return text.lower()
 
 
 if __name__ == '__main__':
