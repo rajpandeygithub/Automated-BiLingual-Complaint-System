@@ -1,10 +1,26 @@
 import os
+import sys
 import uvicorn
-from typing import Optional
+import logging
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
+from custom_exceptions import ValidationException
 from object_models import Complaint, PredictionResponse, ErrorResponse
 from preprocessing import DataValidationPipeline, DataTransformationPipeline
+
+log_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+# Configure the root logger
+logging.basicConfig(
+    level=logging.INFO,  # Set the logging level
+    format=log_format,   # Set the log format
+    handlers=[
+        logging.StreamHandler(sys.stdout),  # Output logs to stdout
+        logging.FileHandler("app.log")      # Output logs to a file
+    ]
+)
+
+logger = logging.getLogger("my_fastapi_app")
 
 validation_checks = {
     'min_words': 5,
@@ -20,27 +36,23 @@ app = FastAPI(
     version="0.1",
 )
 
-class CustomException(HTTPException):
-    def __init__(self, 
-                 status_code: int,
-                 error_code: int, error_message: str, 
-                 details: Optional[str] = None):
-        self.error_code = error_code
-        self.error_message = error_message
-        self.details = details
-        super().__init__(status_code=status_code, detail=error_message)
+@app.on_event("startup")
+async def startup_event():
+    logger.info("Application startup")
 
-@app.exception_handler(CustomException)
-async def custom_exception_handler(request: Request, exc: CustomException):
-    error_response = ErrorResponse(
-        error_code=exc.error_code,
-        error_message=exc.error_message,
-        details=exc.details
-    )
+@app.on_event("shutdown")
+async def shutdown_event():
+    logger.info("Application shutdown")
+
+@app.exception_handler(ValidationException)
+async def validation_exception_handler(request: Request, exc: ValidationException):
     return JSONResponse(
-        status_code=exc.status_code, 
-        content=error_response.dict()
-        )
+        status_code=400,
+        content=ErrorResponse(
+            error_code=exc.error_code,
+            error_message=exc.error_message,
+        ).dict()
+    )
 
 @app.get("/ping")
 def ping():
@@ -49,35 +61,39 @@ def ping():
         "status": "active"
     }
 
-@app.post("/predict")
-async def submit_complaint(complaint: Complaint, response_model=PredictionResponse):
-
+@app.post("/predict", 
+          response_model=PredictionResponse,
+          responses={
+              400: {"model": ErrorResponse, "description": "Validation Error"},
+              }
+          )
+async def submit_complaint(
+    complaint: Complaint):
+    logger.info("Prediction Service Accessed")
     try:
         is_valid = validation_pipeline.is_valid(text=complaint.complaint_text)
-    except Exception as e:
-        raise CustomException(
-            status_code=400,
-            error_code=1001,
-            error_message="Prediction failed due to invalid input",
-            details=str(e)
-        )
-    
-    if not is_valid:
-        return CustomException(
-            status_code=400,
-            error_code=1001,
-            error_message="Prediction failed due to invalid input",
-            details=str(e)
-        )
-    
-    processed_text = preprocessing_pipeline.process(text=complaint.complaint_text)
-    predicted_product = "student loan" 
-    predicted_departmet = "loan services"
+        if not is_valid:
+            logger.info("Complaint Recieved failed validation checks")
+            raise ValidationException(
+                error_code=1001,
+                error_message="Complaint Recieved failed validation checks"
+            )
+        
+        processed_text = preprocessing_pipeline.process(text=complaint.complaint_text)
+        predicted_product = "student loan" 
+        predicted_departmet = "loan services"
 
-    return PredictionResponse(
-        product=predicted_product, 
-        department=predicted_departmet,
-        processed_text=processed_text
+        return PredictionResponse(
+            product=predicted_product, 
+            department=predicted_departmet,
+            processed_text=processed_text
+            )
+    except ValidationException as ve:
+        raise ve
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail="An unexpected error occurred in prediction route."
         )
 
 if __name__ == "__main__":
