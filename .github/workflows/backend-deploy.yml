@@ -39,8 +39,8 @@ jobs:
 
       - name: Build and Push Docker Image
         run: |-
-          docker build -t "${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_NAME }}/${{env.SERVICE_NAME}}:latest" ./
-          docker push "${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_NAME }}/${{env.SERVICE_NAME}}:latest"
+          docker build -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_NAME }}/${{env.SERVICE_NAME}}:latest -f backend/Dockerfile backend
+          docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_NAME }}/${{env.SERVICE_NAME}}:latest
 
       - name: Deploy to Cloud Run
         id: deploy
