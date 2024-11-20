@@ -53,9 +53,17 @@ def ping():
 async def submit_complaint(complaint: Complaint, response_model=PredictionResponse):
 
     try:
-        validation_pipeline.is_valid(text=complaint.complaint_text)
+        is_valid = validation_pipeline.is_valid(text=complaint.complaint_text)
     except Exception as e:
         raise CustomException(
+            status_code=400,
+            error_code=1001,
+            error_message="Prediction failed due to invalid input",
+            details=str(e)
+        )
+    
+    if not is_valid:
+        return CustomException(
             status_code=400,
             error_code=1001,
             error_message="Prediction failed due to invalid input",
