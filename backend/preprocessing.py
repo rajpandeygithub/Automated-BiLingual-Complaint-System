@@ -9,6 +9,6 @@ class PreprocessingPieline:
 
 if __name__ == '__main__':
     pipeline = PreprocessingPieline()
-    text = 'hello, world! This is a test complaint. Please clean me.'
+    text = 'hello, world! This is a test complaint. Please clean me'
     text = pipeline.process(text)
     print(text)
