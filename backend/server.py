@@ -1,5 +1,5 @@
-import re
 import os
+import re
 import uvicorn
 from fastapi import FastAPI
 from pydantic import BaseModel
@@ -39,3 +39,7 @@ async def submit_complaint(complaint: Complaint, response_model=PredictionRespon
         department=predicted_departmet,
         processed_text=processed_text
         )
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 8080))
+    uvicorn.run(app, host="0.0.0.0", port=port)
