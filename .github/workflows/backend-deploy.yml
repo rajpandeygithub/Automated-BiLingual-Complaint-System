@@ -25,17 +25,17 @@ jobs:
 
       - name: Google Auth
         id: auth
-        uses: 'google-github-actions/auth@v2'
+        uses: google-github-actions/auth@v2
         with:
-          credentials_json: '${{ secrets.BACKEND_DEPLOY_CLOUD_RUN }}'
+          credentials_json: ${{ secrets.BACKEND_DEPLOY_CLOUD_RUN }}
       
       - name: Docker Auth
         id: docker-auth
-        uses: 'docker/login-action@v3'
+        uses: docker/login-action@v3
         with:
-          username: 'oauth2accesstoken'
-          password: '${{ steps.auth.outputs.access_token }}'
-          registry: '${{ env.REGION }}-docker.pkg.dev'
+          username: _json_key
+          password: ${{ secrets.BACKEND_DEPLOY_CLOUD_RUN }}
+          registry: ${{ env.REGION }}-docker.pkg.dev
 
       - name: Build and Push Docker Image
         run: |-
