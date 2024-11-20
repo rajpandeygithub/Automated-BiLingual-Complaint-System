@@ -33,9 +33,9 @@ jobs:
           pip install -r pipeline/pipeline_requirements.txt
 
       # Step 5: Run the final pipeline script
-      - name: Run Final Pipeline Script
-        env:
-          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}  # Google Cloud credentials
-          SLACK_URL: ${{ secrets.SLACK_URL }}        # Slack Webhook URL
-        run: |
-          python pipeline/final_pipeline.py --slack_url $SLACK_URL
+      # - name: Run Final Pipeline Script
+      #   env:
+      #     GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}  # Google Cloud credentials
+      #     SLACK_URL: ${{ secrets.SLACK_URL }}        # Slack Webhook URL
+      #   run: |
+      #     python pipeline/final_pipeline.py --slack_url $SLACK_URL
