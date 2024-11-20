@@ -32,8 +32,8 @@ def ping():
 @app.post("/predict")
 async def submit_complaint(complaint: Complaint, response_model=PredictionResponse):
     processed_text = preprocessing_pipeline.process(text=complaint.complaint_text)
-    predicted_product = "A" 
-    predicted_departmet = "B"
+    predicted_product = "student loan" 
+    predicted_departmet = "loan services"
     return PredictionResponse(
         product=predicted_product, 
         department=predicted_departmet,
