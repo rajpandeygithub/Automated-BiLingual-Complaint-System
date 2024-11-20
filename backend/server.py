@@ -2,6 +2,7 @@ import os
 import sys
 import uvicorn
 import logging
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from custom_exceptions import ValidationException
@@ -22,6 +23,14 @@ logging.basicConfig(
 
 logger = logging.getLogger("my_fastapi_app")
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup logic
+    logger.info("Application startup")
+    yield
+    # Shutdown logic
+    logger.info("Application shutdown")
+
 validation_checks = {
     'min_words': 5,
     'max_words': 300,
@@ -34,15 +43,8 @@ app = FastAPI(
     title="MLOps - Bilingual Complaint Classification System",
     description="Backend API Server to handle complaints from banking domain",
     version="0.1",
+    lifespan=lifespan
 )
-
-@app.on_event("startup")
-async def startup_event():
-    logger.info("Application startup")
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    logger.info("Application shutdown")
 
 @app.exception_handler(ValidationException)
 async def validation_exception_handler(request: Request, exc: ValidationException):
@@ -78,8 +80,10 @@ async def submit_complaint(
                 error_code=1001,
                 error_message="Complaint Recieved failed validation checks"
             )
-        
-        processed_text = preprocessing_pipeline.process(text=complaint.complaint_text)
+        complaint_language = validation_pipeline.get_recognised_language()
+        processed_text = preprocessing_pipeline.process_text(
+            text=complaint.complaint_text, language=complaint_language
+            )
         predicted_product = "student loan" 
         predicted_departmet = "loan services"
 
