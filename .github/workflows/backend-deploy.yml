@@ -27,7 +27,7 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ env.PROJECT_ID }}
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          service_account_key: ${{ secrets.BACKEND_DEPLOY_CLOUD_RUN }}
           export_default_credentials: true
       
       - name: Docker Auth
