@@ -5,3 +5,4 @@ fast-langdetect==0.2.2
 polars==1.14.0
 nltk==3.9.1
 rapidfuzz==3.10.1
+bloom-filter2==2.0.0

@@ -6,11 +6,22 @@ import logging
 from typing import Dict, List
 from nltk.corpus import stopwords
 from rapidfuzz import process, fuzz
+from bloom_filter2 import BloomFilter
 from fast_langdetect import detect_language
 
 nltk.download("stopwords")
 abusive_words_path_eng = "https://storage.googleapis.com/mlops-group6-raw-data/profanity_bank_dataset.parquet"
-abuse_words = pl.read_parquet(abusive_words_path_eng)["profanity"].to_list()
+abusive_words_path_hindi = "https://storage.googleapis.com/mlops-group6-raw-data/hindi_abuse_words.parquet"
+
+abuse_words_english = pl.read_parquet(abusive_words_path_eng)["profanity"].to_list()
+abusive_words_hindi = pl.read_parquet(abusive_words_path_hindi)["words"].to_list()
+
+profane_set_hindi = set()
+profanity_bloom_hindi = BloomFilter(max_elements=500, error_rate=0.1)
+
+for word in abusive_words_hindi:
+    profanity_bloom_hindi.add(word)
+    profane_set_hindi.add(word)
 
 log_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
@@ -102,10 +113,12 @@ class DataValidationPipeline:
 class DataTransformationPipeline:
     def __init__(
         self,
-        abuse_words: List[str] = abuse_words,
+        abuse_words_english: List[str] = abuse_words_english,
+        abuse_bloomfilter_hindi: BloomFilter = profanity_bloom_hindi,
         pii_patterns: Dict[str, str] = PATTERNS,
     ):
-        self._eng_abusive_words = abuse_words
+        self._eng_abusive_words = abuse_words_english
+        self._hin_abusive_bf = abuse_bloomfilter_hindi
         self._abuse_placeholder = "<abusive_data>"
         self._eng_stopwords = stopwords.words("english")
         self._abusive_word_threshold = 90
@@ -157,9 +170,22 @@ class DataTransformationPipeline:
             pattern, self._abuse_placeholder, text, flags=re.IGNORECASE
         )
         return redacted_text
+    
+    def _remove_hindi_abusive_words(self, text: str) -> str:
+        redacted_words = [w for w in text.split(" ") if w in self._hin_abusive_bf]
+        logger.info(f'Hindi Bad words: {redacted_words}')
+        if len(redacted_words) > 0:
+            pattern = r"\b(" + "|".join(map(re.escape, redacted_words)) + r")\b"
+            text = re.sub(
+                pattern, self._abuse_placeholder, text
+            )
+        return text
 
     def _process_hindi(self, text: str) -> str:
-        return text
+        # Remove Abusive words
+        text = self._remove_hindi_abusive_words(text)
+        # Remove any tailing spaces
+        return text.strip()
 
     def _process_english(self, text: str) -> str:
         # Remove special characters
