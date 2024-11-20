@@ -1,0 +1,44 @@
+name: Deploy Backend to Google Cloud Run
+
+on:
+  push:
+    branches:
+      - Dev
+    paths:
+      - 'backend/**'
+
+env:
+  PROJECT_ID: bilingualcomplaint-system
+  REGION: us-east1
+  ARTIFACT_REGISTRY_NAME: backend-server
+
+jobs:
+  build-and-deploy:
+    name: Build and Deploy Backend Docker Image
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the repository code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
+      
+      - name: Build and Push Docker Image
+        run: |
+          cd backend
+          docker build -t ${REGION}-docker.pkg.dev/${PROJECT_ID}/${ARTIFACT_REGISTRY_NAME}/backend:latest .
+          docker push ${REGION}-docker.pkg.dev/${PROJECT_ID}/${ARTIFACT_REGISTRY_NAME}/backend:latest
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy backend-service \
+            --image ${REGION}-docker.pkg.dev/${PROJECT_ID}/${ARTIFACT_REGISTRY_NAME}/backend:latest \
+            --region ${REGION} \
+            --platform managed \
+            --allow-unauthenticated
