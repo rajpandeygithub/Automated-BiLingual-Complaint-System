@@ -14,14 +14,15 @@ log_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 # Configure the root logger
 logging.basicConfig(
     level=logging.INFO,  # Set the logging level
-    format=log_format,   # Set the log format
+    format=log_format,  # Set the log format
     handlers=[
         logging.StreamHandler(sys.stdout),  # Output logs to stdout
-        logging.FileHandler("app.log")      # Output logs to a file
-    ]
+        logging.FileHandler("app.log"),  # Output logs to a file
+    ],
 )
 
 logger = logging.getLogger("my_fastapi_app")
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -31,10 +32,11 @@ async def lifespan(app: FastAPI):
     # Shutdown logic
     logger.info("Application shutdown")
 
+
 validation_checks = {
-    'min_words': 5,
-    'max_words': 300,
-    'allowed_languages': ["HI", "EN"]
+    "min_words": 5,
+    "max_words": 300,
+    "allowed_languages": ["HI", "EN"],
 }
 validation_pipeline = DataValidationPipeline(validation_checks)
 preprocessing_pipeline = DataTransformationPipeline()
@@ -43,8 +45,9 @@ app = FastAPI(
     title="MLOps - Bilingual Complaint Classification System",
     description="Backend API Server to handle complaints from banking domain",
     version="0.1",
-    lifespan=lifespan
+    lifespan=lifespan,
 )
+
 
 @app.exception_handler(ValidationException)
 async def validation_exception_handler(request: Request, exc: ValidationException):
@@ -53,24 +56,23 @@ async def validation_exception_handler(request: Request, exc: ValidationExceptio
         content=ErrorResponse(
             error_code=exc.error_code,
             error_message=exc.error_message,
-        ).dict()
+        ).dict(),
     )
+
 
 @app.get("/ping")
 def ping():
-    return {
-        "service-name": "bilingual-complaints-system-api",
-        "status": "active"
-    }
+    return {"service-name": "bilingual-complaints-system-api", "status": "active"}
 
-@app.post("/predict", 
-          response_model=PredictionResponse,
-          responses={
-              400: {"model": ErrorResponse, "description": "Validation Error"},
-              }
-          )
-async def submit_complaint(
-    complaint: Complaint):
+
+@app.post(
+    "/predict",
+    response_model=PredictionResponse,
+    responses={
+        400: {"model": ErrorResponse, "description": "Validation Error"},
+    },
+)
+async def submit_complaint(complaint: Complaint):
     logger.info("Prediction Service Accessed")
     try:
         is_valid = validation_pipeline.is_valid(text=complaint.complaint_text)
@@ -78,27 +80,27 @@ async def submit_complaint(
             logger.info("Complaint Recieved failed validation checks")
             raise ValidationException(
                 error_code=1001,
-                error_message="Complaint Recieved failed validation checks"
+                error_message="Complaint Recieved failed validation checks",
             )
         complaint_language = validation_pipeline.get_recognised_language()
         processed_text = preprocessing_pipeline.process_text(
             text=complaint.complaint_text, language=complaint_language
-            )
-        predicted_product = "student loan" 
+        )
+        predicted_product = "student loan"
         predicted_departmet = "loan services"
 
         return PredictionResponse(
-            product=predicted_product, 
+            product=predicted_product,
             department=predicted_departmet,
-            processed_text=processed_text
-            )
+            processed_text=processed_text,
+        )
     except ValidationException as ve:
         raise ve
     except Exception as e:
         raise HTTPException(
-            status_code=500,
-            detail="An unexpected error occurred in prediction route."
+            status_code=500, detail="An unexpected error occurred in prediction route."
         )
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))

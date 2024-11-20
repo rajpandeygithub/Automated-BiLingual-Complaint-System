@@ -9,26 +9,33 @@ from bloom_filter2 import BloomFilter
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from google.cloud import bigquery
 from google.oauth2 import service_account
+
 DRY_RUN = True
+
 
 # Defining a custom logger
 def get_custom_logger():
     # Customer logs are stored in the below path
-    log_path = os.path.join(os.path.dirname(__file__), "../../logs/application_logs/preprocessing_log.txt")
+    log_path = os.path.join(
+        os.path.dirname(__file__), "../../logs/application_logs/preprocessing_log.txt"
+    )
     custom_logger = logging.getLogger("preprocessing_logger")
     custom_logger.setLevel(logging.INFO)
-    
+
     # Avoid default logs by setting propagate to False
     custom_logger.propagate = False
 
     # Set up a file handler for the custom logger
     if not custom_logger.handlers:
         file_handler = logging.FileHandler(log_path, mode="a")
-        formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(funcName)s - %(message)s")
+        formatter = logging.Formatter(
+            "%(asctime)s - %(levelname)s - %(funcName)s - %(message)s"
+        )
         file_handler.setFormatter(formatter)
         custom_logger.addHandler(file_handler)
-    
+
     return custom_logger
+
 
 def load_data() -> str:
     """
@@ -40,20 +47,20 @@ def load_data() -> str:
     """
     logger = get_custom_logger()  # Get the custom logger instance
     logger.info("Starting data load process.")
-    #data_path = os.path.join(os.path.dirname(__file__), "../../data/dataset.parquet")
+    # data_path = os.path.join(os.path.dirname(__file__), "../../data/dataset.parquet")
 
     # File is hosted on Google Cloud Storage (GCS), reading data from GCP
-    data_path ="https://storage.googleapis.com/mlops-group6-raw-data/dataset.parquet"
+    data_path = "https://storage.googleapis.com/mlops-group6-raw-data/dataset.parquet"
     try:
         # Load the dataset and serialize it
         dataset = pl.read_parquet(data_path)
-        
+
         # Log the number of records loaded
         logger.info(f"Total records loaded: {len(dataset)}")
 
         # Serialize the dataset to JSON format for further processing
         dataset = dataset.serialize(format="json")
-        
+
         logger.info("Data load and serialization successful.")
         return dataset
     except Exception as error:
@@ -74,8 +81,10 @@ def filter_records_by_word_count_and_date(dataset: str, min_word_length: int) ->
              have fewer words than the specified minimum.
     """
     logger = get_custom_logger()
-    logger.info(f"Filtering records by word count, minimum words required: {min_word_length}")
-    
+    logger.info(
+        f"Filtering records by word count, minimum words required: {min_word_length}"
+    )
+
     # Deserialize the dataset
     dataset = pl.DataFrame.deserialize(io.StringIO(dataset), format="json")
 
@@ -84,23 +93,21 @@ def filter_records_by_word_count_and_date(dataset: str, min_word_length: int) ->
 
     # Filter records based on the minimum word count and remove the count column
     dataset = (
-    dataset.with_columns(
-        num_words=pl.col("complaint").str.split(" ").list.len()
+        dataset.with_columns(num_words=pl.col("complaint").str.split(" ").list.len())
+        .filter(pl.col("num_words") > min_word_length)
+        .drop("num_words")
+        .filter(
+            (pl.col("date_received") >= pl.date(2015, 3, 19))
+            & (pl.col("date_received") <= pl.date(2024, 7, 28))
+        )
     )
-    .filter(pl.col("num_words") > min_word_length)
-    .drop("num_words")
-    .filter(
-        (pl.col("date_received") >= pl.date(2015, 3, 19)) &
-        (pl.col("date_received") <= pl.date(2024, 7, 28))
-    )
-)
 
     # Log count after date filtering
     logger.info(f"Records after date filtering: {len(dataset)}")
-    
+
     # Serialize and return the filtered dataset
     logger.info("Word count and date filtering complete.")
-    
+
     # Serialize and return the filtered dataset
     return dataset.serialize(format="json")
 
@@ -117,19 +124,19 @@ def filter_records_by_language(dataset: str) -> str:
     """
     logger = get_custom_logger()
     logger.info("Starting language filtering for 'HI' and 'EN' languages.")
-    
+
     # Deserialize the dataset
     dataset = pl.DataFrame.deserialize(io.StringIO(dataset), format="json")
 
-     # Log the total number of records before language detection
+    # Log the total number of records before language detection
     logger.info(f"Total records before language filtering: {len(dataset)}")
 
     # Perform language detection with multi-threading
     language_detected = []
     with ThreadPoolExecutor(max_workers=10) as executor:
         future_to_sentence = {
-            executor.submit(detect_language, re.sub(r'\n', '', sentence)): sentence
-            for sentence in dataset['complaint'].to_list()
+            executor.submit(detect_language, re.sub(r"\n", "", sentence)): sentence
+            for sentence in dataset["complaint"].to_list()
         }
 
         # Collect results as they complete
@@ -145,10 +152,10 @@ def filter_records_by_language(dataset: str) -> str:
 
     # Log the total number of records after language filtering
     logger.info(f"Records after language filtering (HI/EN only): {len(dataset)}")
-    
+
     # Serialize and return the filtered dataset
     logger.info("Language filtering complete.")
-    
+
     # Serialize and return the filtered dataset
     return dataset.serialize(format="json")
 
@@ -163,7 +170,7 @@ def aggregate_filtered_task(dataset_a: str, dataset_b: str) -> None:
     """
     logger = get_custom_logger()
     logger.info("Starting dataset aggregation.")
-    
+
     output_path = os.path.join(
         os.path.dirname(__file__),
         "../../data/preprocessed_dataset.parquet",
@@ -203,7 +210,9 @@ def aggregate_filtered_task(dataset_a: str, dataset_b: str) -> None:
     )
 
     # Log record count after joining
-    logger.info(f"Records after joining datasets on 'complaint_id': {len(dataset_joined)}")
+    logger.info(
+        f"Records after joining datasets on 'complaint_id': {len(dataset_joined)}"
+    )
 
     # Write the output to the specified parquet file
     dataset_joined.write_parquet(output_path)
@@ -219,7 +228,7 @@ def data_cleaning() -> str:
     """
     logger = get_custom_logger()
     logger.info("Starting data cleaning.")
-    
+
     # Define the data path and read the dataset
     data_path = os.path.join(
         os.path.dirname(__file__),
@@ -248,16 +257,12 @@ def data_cleaning() -> str:
         maintain_order=True,
     )
 
-
-
     # Drop records with nulls in specified columns
-    dataset = dataset.drop_nulls(
-        subset=["product", "department", "complaint"]
-    )
+    dataset = dataset.drop_nulls(subset=["product", "department", "complaint"])
 
     # Log the final cleaned record count
     logger.info(f"Data cleaning complete. Cleaned records count: {len(dataset)}")
-    
+
     # Serialize and return the cleaned dataset
     return dataset.serialize(format="json")
 
@@ -275,14 +280,16 @@ def remove_abusive_data(dataset: str, abuse_placeholder: str = "<abusive_data>")
     """
     logger = get_custom_logger()
     logger.info("Starting abusive data filtering for English and Hindi complaints.")
-    
+
     # Define paths for input and output
     output_path = os.path.join(
         os.path.dirname(__file__),
         "../../data/preprocessed_dataset.parquet",
     )
     abusive_words_path_eng = "https://storage.googleapis.com/mlops-group6-raw-data/profanity_bank_dataset.parquet"
-    abusive_words_path_hindi = "https://storage.googleapis.com/mlops-group6-raw-data/hindi_abuse_words.parquet"
+    abusive_words_path_hindi = (
+        "https://storage.googleapis.com/mlops-group6-raw-data/hindi_abuse_words.parquet"
+    )
 
     # Deserialize the dataset
     dataset = pl.DataFrame.deserialize(io.StringIO(dataset), format="json")
@@ -298,7 +305,9 @@ def remove_abusive_data(dataset: str, abuse_placeholder: str = "<abusive_data>")
     # Load abusive words for English and Hindi
     abusive_words_eng = pl.read_parquet(abusive_words_path_eng)["profanity"].to_list()
     abusive_words_hindi = pl.read_parquet(abusive_words_path_hindi)["words"].to_list()
-    logger.info(f"Total abusive words loaded: {len(abusive_words_eng) + len(abusive_words_hindi)}")
+    logger.info(
+        f"Total abusive words loaded: {len(abusive_words_eng) + len(abusive_words_hindi)}"
+    )
 
     for word in abusive_words_eng:
         profanity_bloom_eng.add(word)
@@ -309,64 +318,84 @@ def remove_abusive_data(dataset: str, abuse_placeholder: str = "<abusive_data>")
         profane_set_hindi.add(word)
 
     # Tokenize and clean English complaints
-    tokenized_complaints_eng = dataset.with_columns(pl.col("complaint").str.split(" "))[ "complaint" ].to_list()
+    tokenized_complaints_eng = dataset.with_columns(pl.col("complaint").str.split(" "))[
+        "complaint"
+    ].to_list()
     cleaned_records_eng = [
-        " ".join([
-            w if w not in profanity_bloom_eng or w not in profane_set_eng else abuse_placeholder
-            for w in record
-        ])
+        " ".join(
+            [
+                (
+                    w
+                    if w not in profanity_bloom_eng or w not in profane_set_eng
+                    else abuse_placeholder
+                )
+                for w in record
+            ]
+        )
         for record in tokenized_complaints_eng
     ]
 
     # Tokenize and clean Hindi complaints
-    tokenized_complaints_hindi = dataset.with_columns(pl.col("complaint_hindi").str.split(" "))[ "complaint_hindi" ].to_list()
+    tokenized_complaints_hindi = dataset.with_columns(
+        pl.col("complaint_hindi").str.split(" ")
+    )["complaint_hindi"].to_list()
     cleaned_records_hindi = [
-        " ".join([
-            w if w not in profanity_bloom_hindi or w not in profane_set_hindi else abuse_placeholder
-            for w in record
-        ])
+        " ".join(
+            [
+                (
+                    w
+                    if w not in profanity_bloom_hindi or w not in profane_set_hindi
+                    else abuse_placeholder
+                )
+                for w in record
+            ]
+        )
         for record in tokenized_complaints_hindi
     ]
 
     # Add the cleaned English and Hindi complaints to the dataset
-    dataset = dataset.with_columns([
-        pl.Series(name="abuse_free_complaint", values=cleaned_records_eng),
-        pl.Series(name="abuse_free_complaint_hindi", values=cleaned_records_hindi)
-    ])
+    dataset = dataset.with_columns(
+        [
+            pl.Series(name="abuse_free_complaint", values=cleaned_records_eng),
+            pl.Series(name="abuse_free_complaint_hindi", values=cleaned_records_hindi),
+        ]
+    )
 
-    logger.info("Abusive data filtering complete for both languages. Saving results to file.")
-    
+    logger.info(
+        "Abusive data filtering complete for both languages. Saving results to file."
+    )
+
     # Save the processed dataset to output path
     dataset.write_parquet(output_path)
     return output_path
-   
+
 
 def insert_data_to_bigquery(file_path: str):
 
     if DRY_RUN:
-        return  # Insertion in BigQuery requires Credentials, which will not be uploaded to Github     
+        return  # Insertion in BigQuery requires Credentials, which will not be uploaded to Github
 
-    project_id = 'bilingualcomplaint-system'
-    dataset_id = 'MLOps'
-    table_id = 'preprocessed_data'
-    
+    project_id = "bilingualcomplaint-system"
+    dataset_id = "MLOps"
+    table_id = "preprocessed_data"
 
     script_dir = os.path.dirname(os.path.abspath(__file__))  # Current script directory
     keys_path = os.path.join(script_dir, "..", "keys", "service-account.json")
     credentials = service_account.Credentials.from_service_account_file(keys_path)
-    
+
     # Initialize BigQuery client with credentials and project ID
     client = bigquery.Client(credentials=credentials, project=project_id)
-    
+
     dataset = pl.read_parquet(file_path)
     df = dataset.to_pandas()
-    df = df[:500] 
-    
-    df.rename(columns={'complaint_id': 'entity_id', 
-                   'date_received': 'feature_timestamp'}, inplace=True)
-    
-    df['feature_timestamp'] = pd.to_datetime(df['feature_timestamp'])
-    
+    df = df[:500]
+
+    df.rename(
+        columns={"complaint_id": "entity_id", "date_received": "feature_timestamp"},
+        inplace=True,
+    )
+
+    df["feature_timestamp"] = pd.to_datetime(df["feature_timestamp"])
 
     table_ref = f"{project_id}.{dataset_id}.{table_id}"
 
@@ -376,6 +405,6 @@ def insert_data_to_bigquery(file_path: str):
     )
 
     # Start the job to upload data
-    job = client.load_table_from_dataframe(df, table_ref, job_config=job_config) 
+    job = client.load_table_from_dataframe(df, table_ref, job_config=job_config)
     # Wait for the job to complete
     job.result()
