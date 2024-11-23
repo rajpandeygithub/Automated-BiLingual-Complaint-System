@@ -1,6 +1,4 @@
 pandas
-datetime
-timedelta
 langdetect
 fast-langdetect
 polars
