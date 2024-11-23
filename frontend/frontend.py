@@ -13,7 +13,7 @@ def main():
         height=150,
     )
 
-    # this is submit button
+    # submit button
     if st.button("Submit"):
         if complaint_text.strip():
             try:
