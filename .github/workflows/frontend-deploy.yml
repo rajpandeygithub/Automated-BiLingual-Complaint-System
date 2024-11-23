@@ -54,6 +54,14 @@ jobs:
           region: ${{ env.REGION }}
           image: "${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_NAME }}/${{ env.SERVICE_NAME }}:latest"
 
-      # Step 6: Show Output
+      # Step 6: Allow Unauthenticated Access
+      - name: Allow Unauthenticated Access
+        run: |
+          gcloud run services add-iam-policy-binding ${{ env.SERVICE_NAME }} \
+            --region=${{ env.REGION }} \
+            --member="allUsers" \
+            --role="roles/run.invoker"
+
+      # Step 7: Show Output
       - name: Show Output
         run: echo ${{ steps.deploy.outputs.url }}
