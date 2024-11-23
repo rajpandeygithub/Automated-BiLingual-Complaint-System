@@ -13,8 +13,8 @@ RUN pip install --no-cache-dir -r frontend_requirements.txt
 # Copy the application code into the container
 COPY . .
 
-# Expose port 8080 to the outside world (required by Cloud Run)
+# Expose port 8080 (required by Cloud Run)
 EXPOSE 8080
 
-# Command to run the Streamlit application
-CMD ["streamlit", "run", "frontend.py", "--server.port=$PORT", "--server.address=0.0.0.0"]
+# Command to run the Streamlit application with the expanded PORT variable
+CMD ["sh", "-c", "streamlit run frontend.py --server.port=$PORT --server.address=0.0.0.0"]
