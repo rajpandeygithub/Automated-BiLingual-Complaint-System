@@ -164,12 +164,13 @@ class DataTransformationPipeline:
             )
             if similar_word:
                 redacted_words.append(w)
-
-        pattern = r"\b(" + "|".join(map(re.escape, redacted_words)) + r")\b"
-        redacted_text = re.sub(
-            pattern, self._abuse_placeholder, text, flags=re.IGNORECASE
-        )
-        return redacted_text
+        
+        if len(redacted_words) > 0:
+            pattern = r"\b(" + "|".join(map(re.escape, redacted_words)) + r")\b"
+            text = re.sub(
+                pattern, self._abuse_placeholder, text, flags=re.IGNORECASE
+            )
+        return text
     
     def _remove_hindi_abusive_words(self, text: str) -> str:
         redacted_words = [w for w in text.split(" ") if w in self._hin_abusive_bf]
