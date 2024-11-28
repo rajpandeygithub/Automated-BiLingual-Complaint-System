@@ -52,7 +52,7 @@ def main():
                     st.error(f"⚠️ {response['error']}")
                 else:
                     formatted_response = format_response(
-                        #response.get("processed_text", "Agent1"),
+                        #response.get("processed_text", "other"),
                         response.get("department", "other"),
                         response.get("product", "other"),
                     )
