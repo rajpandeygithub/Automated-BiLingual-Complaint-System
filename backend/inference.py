@@ -16,9 +16,9 @@ def make_inference(
       )
   instances = [
       {
-          'input_ids': inference_features_tf.get('input_ids')[0],
-          'token_type_ids': inference_features_tf.get('token_type_ids')[0],
-          'attention_mask': inference_features_tf.get('attention_mask')[0]
+          'input_ids': inference_features_tf.get('input_ids').tolist()[0],
+          'token_type_ids': inference_features_tf.get('token_type_ids').tolist()[0],
+          'attention_mask': inference_features_tf.get('attention_mask').tolist()[0]
       }
   ]
 
