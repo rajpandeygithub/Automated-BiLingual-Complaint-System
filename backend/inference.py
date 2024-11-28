@@ -11,14 +11,14 @@ def make_inference(
   inference_features_tf = tokenizer(
       text,
       padding=True, truncation=True,
-      return_tensors="tf",
+      return_tensors="np",
       max_length=max_length
       )
   instances = [
       {
-          'input_ids': inference_features_tf.get('input_ids').numpy().tolist()[0],
-          'token_type_ids': inference_features_tf.get('token_type_ids').numpy().tolist()[0],
-          'attention_mask': inference_features_tf.get('attention_mask').numpy().tolist()[0]
+          'input_ids': inference_features_tf.get('input_ids')[0],
+          'token_type_ids': inference_features_tf.get('token_type_ids')[0],
+          'attention_mask': inference_features_tf.get('attention_mask')[0]
       }
   ]
 
