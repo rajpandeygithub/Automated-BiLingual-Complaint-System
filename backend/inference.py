@@ -11,7 +11,7 @@ def make_inference(
   inference_features_tf = tokenizer(
       text,
       padding=True, truncation=True,
-      return_tensors="pt",
+      return_tensors="tf",
       max_length=max_length
       )
   instances = [
