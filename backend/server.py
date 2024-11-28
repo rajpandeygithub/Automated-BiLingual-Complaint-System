@@ -2,12 +2,16 @@ import os
 import sys
 import uvicorn
 import logging
+import numpy as np
+from google.cloud import aiplatform
+from transformers import BertTokenizer
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from custom_exceptions import ValidationException
 from object_models import Complaint, PredictionResponse, ErrorResponse
 from preprocessing import DataValidationPipeline, DataTransformationPipeline
+from inference import make_inference
 
 log_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
@@ -40,6 +44,36 @@ validation_checks = {
 }
 validation_pipeline = DataValidationPipeline(validation_checks)
 preprocessing_pipeline = DataTransformationPipeline()
+
+# Vertex AI Project Config
+PROJECT_ID = 'bilingualcomplaint-system'
+LOCATION = 'us-east1'
+
+# Endpoint Config
+product_endpoint_id = '1035603613923147776'
+
+aiplatform.init(project=PROJECT_ID, location=LOCATION)
+product_endpoint = aiplatform.Endpoint(product_endpoint_id)
+
+# Model Config
+max_length = 128
+hugging_face_model_name = 'bert-base-multilingual-cased'
+tokenizer = BertTokenizer.from_pretrained(hugging_face_model_name)
+
+# Product Config
+product_labels = [
+    'Credit reporting, credit repair services, or other personal consumer reports',
+    'Debt collection',
+    'Checking or savings account',
+    'Credit card or prepaid card',
+    'Mortgage',
+    'Money transfer, virtual currency, or money service',
+    'Vehicle loan or lease',
+    'Student loan'
+    ]
+
+product_2_idx_map = {label: idx for idx, label in enumerate(product_labels)}
+idx_2_product_map = {idx: label for label, idx in product_2_idx_map.items()}
 
 app = FastAPI(
     title="MLOps - Bilingual Complaint Classification System",
@@ -86,7 +120,14 @@ async def submit_complaint(complaint: Complaint):
         processed_text = preprocessing_pipeline.process_text(
             text=complaint.complaint_text, language=complaint_language
         )
-        predicted_product = "student loan"
+        try:
+            logger.info(f'Product Inference - Started')
+            product_prediction = make_inference(text=processed_text, tokenizer=tokenizer, max_length=max_length, endpoint=product_endpoint)
+            predicted_product = idx_2_product_map.get(np.argmax(product_prediction.predictions[0]))
+            logger.info(f'Product Inference - Completed')
+        except Exception as e:
+            logger.error(f'Product Inference - ERROR\n{e}')
+        
         predicted_departmet = "loan services"
 
         return PredictionResponse(
