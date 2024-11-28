@@ -1,9 +1,9 @@
-def format_response(agent, department, product):
+def format_response(department, product):
     """
     Formats the response to display on the Streamlit app.
     """
     return (
-        f"### Assigned Agent: {agent}  \n"
-        f"### Department: {department}  \n"
-        f"### Product: {product}"
+        f"It has been assigned to **Agent_Placeholder** in the **{department}** department. "
+        f"Our team will review the issue related to **{product}** shortly. "
+        f"Thank you for your patience."
     )
