@@ -6,6 +6,8 @@ on:
       - Dev  # Trigger workflow on push to the 'Dev' branch
     paths:
       - 'pipeline/**'
+      - 'Dev/**'
+      - 'Prod/**'
 jobs:
   run-script:
     runs-on: ubuntu-latest
