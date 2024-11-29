@@ -1,6 +1,4 @@
-import pandas as pd
 import io
-from pandas import Int64Dtype, StringDtype
 import logging
 import os
 import io

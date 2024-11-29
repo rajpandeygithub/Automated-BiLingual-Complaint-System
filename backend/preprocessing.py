@@ -174,7 +174,6 @@ class DataTransformationPipeline:
     
     def _remove_hindi_abusive_words(self, text: str) -> str:
         redacted_words = [w for w in text.split(" ") if w in self._hin_abusive_bf]
-        logger.info(f'Hindi Bad words: {redacted_words}')
         if len(redacted_words) > 0:
             pattern = r"\b(" + "|".join(map(re.escape, redacted_words)) + r")\b"
             text = re.sub(

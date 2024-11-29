@@ -21,6 +21,7 @@ from scripts.preprocessing import (
     data_cleaning,
     remove_abusive_data,
     insert_data_to_bigquery,
+    standardise_product_class
 )
 from scripts.deidentification import anonymize_sensitive_data
 from scripts.data_quality import validate_data_quality
@@ -162,7 +163,7 @@ with DAG(
 
     # Task 2: Validate the data
     data_validation_task = PythonOperator(
-        task_id="validate_data",
+        task_id="data_quality_checks",
         python_callable=validate_data_quality,
         op_args=[data_loading_task.output],
         on_failure_callback=send_failure_email,
@@ -188,7 +189,7 @@ with DAG(
             on_failure_callback=send_failure_email,
         ),
         PythonOperator(
-            task_id="detect_language",
+            task_id="language_checks",
             python_callable=filter_records_by_language,
             op_args=[schema_and_statistics_generation_task.output],
             on_failure_callback=send_failure_email,
@@ -197,7 +198,7 @@ with DAG(
 
     # Task 5: Aggregate results from Task 3, 4
     aggregate_parallel_tasks = PythonOperator(
-        task_id="validation_aggregation",
+        task_id="aggregation",
         python_callable=aggregate_filtered_task,
         op_args=[filter_parallel_tasks[0].output, filter_parallel_tasks[1].output],
         provide_context=True,
@@ -256,7 +257,15 @@ with DAG(
         on_failure_callback=send_failure_email,
     )
 
-    # Task 4: Send Success Email
+    # Task 4: Standardize Product Labels
+    product_standardization_task = PythonOperator(
+        task_id="standardize_product_class_task",
+        python_callable=standardise_product_class,
+        op_args=[remove_abusive_task.output],
+        on_failure_callback=send_failure_email,
+    )
+
+    # Task 5: Send Success Email
     send_email_task = PythonOperator(
         task_id="send_success_email_task",
         python_callable=send_success_email,
@@ -264,17 +273,19 @@ with DAG(
         on_failure_callback=send_failure_email,
     )
 
-    # Task 5: Insert data into BigQuery
-    insert_to_bigquery_task = PythonOperator(
-        task_id="insert_to_bigquery_task",
-        python_callable=insert_data_to_bigquery,
-        op_args=[remove_abusive_task.output],
-        on_failure_callback=send_failure_email,
-    )
+    # # Task 6: Insert data into BigQuery
+    # insert_to_bigquery_task = PythonOperator(
+    #     task_id="insert_to_bigquery_task",
+    #     python_callable=insert_data_to_bigquery,
+    #     op_args=[remove_abusive_task.output],
+    #     on_failure_callback=send_failure_email,
+    # )
 
     (
         data_cleaning_task
         >> anonymization_task
         >> remove_abusive_task
-        >> [insert_to_bigquery_task, send_email_task]
+        >> product_standardization_task
+        >> send_email_task
+        # >> [insert_to_bigquery_task, send_email_task]
     )

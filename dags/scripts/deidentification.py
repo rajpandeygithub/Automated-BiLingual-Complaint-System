@@ -6,9 +6,9 @@ import logging
 
 # Define regex patterns for different PII entities
 PATTERNS = {
-    "bank_account_numbers": r"\b\d{10,12}\b",
-    "bank_routing_numbers": r"\b\d{9}\b",
-    "credit_card_numbers": [
+    "bank_account_number": r"\b\d{10,12}\b",
+    "bank_routing_number": r"\b\d{9}\b",
+    "credit_card_number": [
         r"\b(?:4\d{3}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4})\b",  # Visa
         r"\b(?:5[1-5]\d{2}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4})\b",  # Mastercard
         r"\b(?:3[47]\d{2}[-\s]?\d{6}[-\s]?\d{5})\b",  # American Express
@@ -18,7 +18,7 @@ PATTERNS = {
         r"\b(?:(?:5[0678]\d\d|6304|6390|67\d\d)\d{8,15})\b",  # Maestro
         r"\b(?:\d{4}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4})\b",  # Generic 16-digit pattern
     ],
-    "transaction_date_or_date_of_birth": [
+    "date": [
         r"\b(?:0[1-9]|1[0-2])[-/](?:0[1-9]|[12][0-9]|3[01])[-/](?:\d{4}|\d{2})\b",  # MM/DD/YYYY or MM/DD/YY
         r"\b(?:0[1-9]|[12][0-9]|3[01])[-/](?:0[1-9]|1[0-2])[-/](?:\d{4}|\d{2})\b",  # DD/MM/YYYY or DD/MM/YY
         r"\b\d{4}[-/](?:0[1-9]|1[0-2])[-/](?:0[1-9]|[12][0-9]|3[01])\b",  # YYYY/MM/DD or YYYY-MM-DD
@@ -30,15 +30,15 @@ PATTERNS = {
         r"\b\w+\s+\d{1,2},\s+\d{4}\s+\d{1,2}:\d{2}\b",  # January 31, 2024 2:30 PM
         r"\b\d{4}-\d{1,2}-\d{1,2}T\d{1,2}:\d{2}:\d{2}Z\b",  # ISO 8601 Format
     ],
-    "transaction_amounts": [
-        r"\$\s*\d+(?:,\d{3})*(?:\.\d{2})?",
-        r"\b\d+(?:,\d{3})*(?:\.\d{2})?\b",
+    "money": [
+        r'\{\$?\d+(?:\.\d{2})?\$?\}',
+        r'(?:\$\s?\d+(?:,\d{3})*(?:\.\d{2})?|\d+(?:,\d{3})*(?:\.\d{2})?\s?\$)'
     ],
     "ssn_tin": r"\b\d{3}-\d{2}-\d{4}\b",
     "ein": r"\b\d{2}-\d{7}\b",
-    "passport_numbers": r"\b[A-Z]{1}\d{7}\b",
+    "passport_number": r"\b[A-Z]{1}\d{7}\b",
     "email_address": r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b",
-    "phone_numbers": [
+    "phone_number": [
         r"\+?\b(?:1[-.\\s]?)?(?:\(?[2-9]\d{2}\)?[-.\\s]?)?[2-9]\d{2}[-.\\s]?\d{4}\b|\b\d{10}\b|\b\(\d{3}\)\s?\d{3}[-.\\s]?\d{4}\b|\b\d{3}[-.]?\d{3}[-.]?\d{4}\b",
         r"(\+\d{1,2}\s?)?(\(\d{3}\)\s?)?[\d\-\.\s]{10,}",
     ],

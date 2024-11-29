@@ -92,15 +92,18 @@ def filter_records_by_word_count_and_date(dataset: str, min_word_length: int) ->
     logger.info(f"Total records before filtering: {len(dataset)}")
 
     # Filter records based on the minimum word count and remove the count column
+
     dataset = (
-        dataset.with_columns(num_words=pl.col("complaint").str.split(" ").list.len())
-        .filter(pl.col("num_words") > min_word_length)
-        .drop("num_words")
-        .filter(
-            (pl.col("date_received") >= pl.date(2015, 3, 19))
-            & (pl.col("date_received") <= pl.date(2024, 7, 28))
-        )
-    )
+        dataset.with_columns(
+            num_english_words = pl.col("complaint").str.split(" ").list.len(),
+            num_hindi_words = pl.col("complaint_hindi").str.split(" ").list.len()
+            ).filter(
+                (pl.col('num_english_words') > min_word_length) & (pl.col('num_hindi_words') > min_word_length)
+                ).drop(['num_english_words', 'num_hindi_words']
+                       ).filter(
+                           (pl.col("date_received") >= pl.date(2015, 3, 19)) & (pl.col("date_received") <= pl.date(2024, 7, 28))
+                           )
+                           )
 
     # Log count after date filtering
     logger.info(f"Records after date filtering: {len(dataset)}")
@@ -218,6 +221,36 @@ def aggregate_filtered_task(dataset_a: str, dataset_b: str) -> None:
     dataset_joined.write_parquet(output_path)
     logger.info(f"Dataset aggregation complete and saved to file at: {output_path}")
 
+def clean_xxx_patterns(text: str) -> str:
+    newline_tabs_slash_pattern = r'[\\/\n\t]'
+    # punctuations_pattern = r'[!"#%&\'()*+,\-./:;=?@[\\\]^_`{|}~]'
+    punctuations_pattern = r'[!"#%&\'()*+,\-./:;=?@[\\\]^_`|~]'
+    pattern_whitespace = r'\s+'
+    pattern_stx_3x = r'\b[xX]{2,}\w*'
+    pattern_multiple_x = r'[xX]{2,}'
+
+    # Remove newlines, tabs, back and front slash special characters
+    text = re.sub(newline_tabs_slash_pattern, '', text)
+    # Remove additional white space after above operation
+    text = re.sub(pattern_whitespace, ' ', text)
+
+    # Clean patterns like xxxx2022 -> 2022
+    text = re.sub(pattern_stx_3x, '', text)
+    # Remove additional white space after above operation
+    text = re.sub(pattern_whitespace, ' ', text)
+
+    # Remove Punctuations
+    text = re.sub(punctuations_pattern, ' ', text)
+    # Remove additional white space after above operation
+    text = re.sub(pattern_whitespace, ' ', text)
+
+    # Cleaning abcxxx -> abc 
+    text = re.sub(pattern_multiple_x, ' ', text)
+    # Remove additional white space after above operation
+    text = re.sub(pattern_whitespace, ' ', text)
+    
+    return text.strip()
+
 
 def data_cleaning() -> str:
     """
@@ -243,13 +276,13 @@ def data_cleaning() -> str:
     dataset = dataset.with_columns(pl.col("complaint").str.to_lowercase())
 
     # Remove special characters from 'complaint' column
-    dataset = dataset.with_columns(
-        pl.col("complaint").map_elements(
-            lambda x: re.sub(r"[^A-Za-z0-9\s]", "", x), return_dtype=pl.Utf8
-        )
-    )
+    # dataset = dataset.with_columns(
+    #     pl.col("complaint").map_elements(
+    #         lambda x: re.sub(r"[^A-Za-z0-9\s]", "", x), return_dtype=pl.Utf8
+    #     )
+    # )
 
-    logger.info("Removed special characters from complaint narratives.")
+    # logger.info("Removed special characters from complaint narratives.")
 
     # Remove duplicate records based on specific columns
     dataset = dataset.unique(
@@ -260,14 +293,24 @@ def data_cleaning() -> str:
     # Drop records with nulls in specified columns
     dataset = dataset.drop_nulls(subset=["product", "department", "complaint"])
 
-    # Log the final cleaned record count
-    logger.info(f"Data cleaning complete. Cleaned records count: {len(dataset)}")
+    # Removing patterns like xxxx, xxxx2022, abcxxxx
+    dataset = dataset.with_columns(
+        complaint = pl.col("complaint").map_elements(
+            lambda x: clean_xxx_patterns(x), return_dtype=pl.Utf8
+        ),
+        complaint_hindi = pl.col('complaint_hindi').map_elements(
+            lambda x: clean_xxx_patterns(x), return_dtype=pl.Utf8
+        )
+    )
 
+    logger.info("Removed xxx patterns from the complaint hindi & english narratives.")
+
+    logger.info(f"Data cleaning complete. Cleaned records count: {len(dataset)}")
     # Serialize and return the cleaned dataset
     return dataset.serialize(format="json")
 
 
-def remove_abusive_data(dataset: str, abuse_placeholder: str = "<abusive_data>") -> str:
+def remove_abusive_data(dataset: str, english_abuse_placeholder: str = "<abusive_data>", hindi_abuse_placeholder: str = '<गाल>') -> str:
     """
     Remove abusive words from both 'complaint' and 'complaint_hindi' columns in the dataset,
     replacing them with a specified placeholder. The cleaned dataset is saved to a
@@ -327,7 +370,7 @@ def remove_abusive_data(dataset: str, abuse_placeholder: str = "<abusive_data>")
                 (
                     w
                     if w not in profanity_bloom_eng or w not in profane_set_eng
-                    else abuse_placeholder
+                    else english_abuse_placeholder
                 )
                 for w in record
             ]
@@ -345,7 +388,7 @@ def remove_abusive_data(dataset: str, abuse_placeholder: str = "<abusive_data>")
                 (
                     w
                     if w not in profanity_bloom_hindi or w not in profane_set_hindi
-                    else abuse_placeholder
+                    else hindi_abuse_placeholder
                 )
                 for w in record
             ]
@@ -368,6 +411,55 @@ def remove_abusive_data(dataset: str, abuse_placeholder: str = "<abusive_data>")
     # Save the processed dataset to output path
     dataset.write_parquet(output_path)
     return output_path
+
+
+def standardise_product_class(dataset_path: str) -> str:
+    '''
+    - Lower case the product & department
+    - Drop other financial services class
+    - standardize product names by mapping them
+    '''
+
+    dataset = pl.read_parquet(dataset_path)
+
+    # Drop other financial services records as they are too general
+    dataset = dataset.with_columns(
+        product = pl.col('product').str.to_lowercase(),
+        department = pl.col('department').str.to_lowercase()
+        ).filter(
+            pl.col('product') != 'other financial service'
+            )
+    
+    # standardize product labels
+    product_map = {
+        'credit reporting': 'credit / debt management & repair services',
+        'credit reporting or other personal consumer reports': 'credit / debt management & repair services',
+        'credit reporting, credit repair services, or other personal consumer reports': 'credit / debt management & repair services',
+        'debt or credit management': 'credit / debt management & repair services',
+        'debt collection': 'credit / debt management & repair services',
+        'money transfer, virtual currency, or money service': 'money transfers',
+        'bank account or service': 'checking or savings account',
+        'payday loan, title loan, or personal loan': 'payday loan',
+        'payday loan, title loan, personal loan, or advance loan': 'payday loan',
+        'credit card': 'credit / prepaid card services',
+        'credit card or prepaid card': 'credit / prepaid card services',
+        'prepaid card': 'credit / prepaid card services',
+        'vehicle loan or lease': 'vehicle loan'
+        }
+    def standardize_product(product_label: str):
+        if product_map.get(product_label):
+            return product_map.get(product_label)
+        return product_label
+    
+    dataset = dataset.with_columns(
+        product = pl.col('product').map_elements(
+            lambda x: standardize_product(x), return_dtype=pl.Utf8
+            )
+            )
+    # Save the processed dataset to output path
+    dataset.write_parquet(dataset_path)
+
+    return dataset_path
 
 
 def insert_data_to_bigquery(file_path: str):
