@@ -21,7 +21,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.12'  # Specify the required Python version
+        python-version: '3.12'
 
     - name: Cache pip
       uses: actions/cache@v3
@@ -39,7 +39,7 @@ jobs:
 
     - name: Set PYTHONPATH
       run: |
-        export PYTHONPATH=$PYTHONPATH:$(pwd)
+        echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
 
     - name: Run tests
       env:
