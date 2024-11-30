@@ -115,8 +115,6 @@ def ping():
     },
 )
 async def submit_complaint(complaint: Complaint):
-    logger.info("Prediction Service Accessed")
-
     logger.log_struct(
                      {
                          "severity": "INFO",
@@ -149,7 +147,6 @@ async def submit_complaint(complaint: Complaint):
         try:
             product_prediction = make_inference(text=processed_text, tokenizer=tokenizer, max_length=max_length, endpoint=product_endpoint)
             predicted_product = idx_2_product_map.get(np.argmax(product_prediction.predictions[0]))
-            logger.info(f'Product Inference - Completed')
             logger.log_struct(
                      {
                          "severity": "INFO",
