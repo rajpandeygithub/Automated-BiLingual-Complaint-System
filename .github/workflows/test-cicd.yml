@@ -37,6 +37,11 @@ jobs:
         pip install -r data_preprocessing_pipeline/requirements.txt
         pip install pytest
 
+    - name: Set PYTHONPATH
+      run: |
+        echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
+      # Adds the current directory to PYTHONPATH
+
     - name: Ensure tests directory exists
       run: mkdir -p tests
 
