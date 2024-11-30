@@ -1,9 +1,8 @@
 import os
 import sys
 import uvicorn
-import logging
 import numpy as np
-from google.cloud import aiplatform
+from google.cloud import aiplatform, logging as gcloud_logging
 from transformers import BertTokenizer
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Request
@@ -15,26 +14,22 @@ from inference import make_inference
 
 log_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
-# Configure the root logger
-logging.basicConfig(
-    level=logging.INFO,  # Set the logging level
-    format=log_format,  # Set the log format
-    handlers=[
-        logging.StreamHandler(sys.stdout),  # Output logs to stdout
-        logging.FileHandler("app.log"),  # Output logs to a file
-    ],
-)
-
-logger = logging.getLogger("my_fastapi_app")
-
+client = gcloud_logging.Client()
+logger = client.logger("complaint-portal")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup logic
-    logger.info("Application startup")
+    logger.log_struct({
+        "severity": "INFO",
+        "message": "Application startup"}
+        )
     yield
     # Shutdown logic
-    logger.info("Application shutdown")
+    logger.log_struct({
+        "severity": "INFO",
+        "message": "Application shutdown"}
+        )
 
 
 validation_checks = {

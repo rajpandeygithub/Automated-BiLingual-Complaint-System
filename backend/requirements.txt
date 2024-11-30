@@ -9,3 +9,4 @@ bloom-filter2==2.0.0
 transformers==4.46.2
 google-cloud-aiplatform==1.71.1
 numpy==1.26.4
+google-cloud-logging
