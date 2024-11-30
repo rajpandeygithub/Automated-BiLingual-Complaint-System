@@ -1,5 +1,4 @@
 import os
-import sys
 import uvicorn
 import numpy as np
 from google.cloud import aiplatform, logging as gcloud_logging
@@ -45,8 +44,8 @@ PROJECT_ID = 'bilingualcomplaint-system'
 LOCATION = 'us-east1'
 
 # Endpoint Config
-product_endpoint_id = '4779080066686517248'
-department_endpoint_id = '7084923075900211200'
+product_endpoint_id = '9057499712688488448'
+department_endpoint_id = '2189510280948482048'
 
 aiplatform.init(project=PROJECT_ID, location=LOCATION)
 product_endpoint = aiplatform.Endpoint(product_endpoint_id)
@@ -160,7 +159,7 @@ async def submit_complaint(complaint: Complaint):
                      {
                          "severity": "ERROR",
                          "message": "Failed Predicting Product Class",
-                         "type": "PRODUCT-PREDICTION-ERROR",
+                         "type": f"PRODUCT-PREDICTION-ERROR\nException: {e}",
                          "count": 1
                     }
                     )
@@ -180,7 +179,7 @@ async def submit_complaint(complaint: Complaint):
             logger.log_struct(
                      {
                          "severity": "ERROR",
-                         "message": "Failed Predicting Department Class",
+                         "message": f"Failed Predicting Department Class\nException: {e}",
                          "type": "DEPARTMENT-PREDICTION-ERROR",
                          "count": 1
                     }
