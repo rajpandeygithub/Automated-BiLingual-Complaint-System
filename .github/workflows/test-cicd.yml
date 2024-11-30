@@ -39,24 +39,24 @@ jobs:
 
     - name: Set PYTHONPATH
       run: |
-        echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
+        echo "PYTHONPATH=$(pwd)/data_preprocessing_pipeline/dags/scripts" >> $GITHUB_ENV
 
     - name: Run tests
       env:
-        PYTHONPATH: ${{ runner.workspace }}/Automated-BiLingual-Complaint-System
+        PYTHONPATH: ${{ runner.workspace }}/data_preprocessing_pipeline/dags/scripts
       run: |
         pytest tests/ --log-file=tests/pytest.log
 
     - name: Upload pytest logs on failure
       if: failure()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: pytest-logs-failure
         path: tests/pytest.log
 
     - name: Upload pytest logs on success
       if: success()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: pytest-logs-success
         path: tests/pytest.log
