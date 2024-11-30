@@ -3,8 +3,6 @@ import sys
 import uvicorn
 import logging
 import numpy as np
-import asyncio
-from concurrent.futures import ThreadPoolExecutor
 from google.cloud import aiplatform
 from transformers import BertTokenizer
 from contextlib import asynccontextmanager
@@ -52,8 +50,8 @@ PROJECT_ID = 'bilingualcomplaint-system'
 LOCATION = 'us-east1'
 
 # Endpoint Config
-product_endpoint_id = '4736858820179918848'
-department_endpoint_id = '8971931319768449024'
+product_endpoint_id = '4779080066686517248'
+department_endpoint_id = '7084923075900211200'
 
 aiplatform.init(project=PROJECT_ID, location=LOCATION)
 product_endpoint = aiplatform.Endpoint(product_endpoint_id)
@@ -123,10 +121,27 @@ def ping():
 )
 async def submit_complaint(complaint: Complaint):
     logger.info("Prediction Service Accessed")
+
+    logger.log_struct(
+                     {
+                         "severity": "INFO",
+                         "message": "New Request Recieved",
+                         "type": "REQUEST-RECIEVED",
+                         "count": 1
+                    }
+                    )
+
     try:
         is_valid = validation_pipeline.is_valid(text=complaint.complaint_text)
         if not is_valid:
-            logger.info("Complaint Recieved failed validation checks")
+            logger.log_struct(
+                     {
+                         "severity": "WARNING",
+                         "message": "Input did not pass validation check",
+                         "type": "VALIDATION-ERROR",
+                         "count": 1
+                    }
+                    )
             raise ValidationException(
                 error_code=1001,
                 error_message="Complaint Recieved failed validation checks",
@@ -137,20 +152,47 @@ async def submit_complaint(complaint: Complaint):
         )
 
         try:
-            logger.info(f'Product Inference - Started')
             product_prediction = make_inference(text=processed_text, tokenizer=tokenizer, max_length=max_length, endpoint=product_endpoint)
             predicted_product = idx_2_product_map.get(np.argmax(product_prediction.predictions[0]))
             logger.info(f'Product Inference - Completed')
+            logger.log_struct(
+                     {
+                         "severity": "INFO",
+                         "message": "Product Prediction Complete",
+                         "type": "PRODUCT-PREDICTION-SUCCESS",
+                         "count": 1
+                    }
+                    )
         except Exception as e:
-            logger.error(f'Product Inference - ERROR\n{e}')
+            logger.log_struct(
+                     {
+                         "severity": "ERROR",
+                         "message": "Failed Predicting Product Class",
+                         "type": "PRODUCT-PREDICTION-ERROR",
+                         "count": 1
+                    }
+                    )
         
         try:
-            logger.info(f'Department Inference - Started')
             department_prediction = make_inference(text=processed_text, tokenizer=tokenizer, max_length=max_length, endpoint=department_endpoint)
             predicted_department = idx_2_department_map.get(np.argmax(department_prediction.predictions[0]))
-            logger.info(f'Department Inference - Completed')
+            logger.log_struct(
+                     {
+                         "severity": "INFO",
+                         "message": "Department Prediction Complete",
+                         "type": "DEPARTMENT-PREDICTION-SUCCESS",
+                         "count": 1
+                    }
+                    )
         except Exception as e:
-            logger.error(f'Department Inference - ERROR\n{e}')
+            logger.log_struct(
+                     {
+                         "severity": "ERROR",
+                         "message": "Failed Predicting Department Class",
+                         "type": "DEPARTMENT-PREDICTION-ERROR",
+                         "count": 1
+                    }
+                    )
 
         return PredictionResponse(
             product=predicted_product,
