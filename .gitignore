@@ -6,10 +6,6 @@ logs/*
 __pycache__/
 *.py[cod]
 venv/
-pytorch-lightning
-transformers==4.44.2
-google-cloud-storage==2.18.2
-pandas==1.5.3
-mlflow
-torch
-torchmetrics
+data-preprocessing-pipeline/data/*
+data-preprocessing-pipeline/logs/*
+data-preprocessing-pipeline/dags/keys/*
