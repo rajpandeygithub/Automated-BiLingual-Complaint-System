@@ -21,7 +21,7 @@ def make_inference(
           'attention_mask': inference_features_tf.get('attention_mask').tolist()[0]
       }
   ]
-
+  
   prediction = endpoint.predict(instances=instances)
   return prediction
     

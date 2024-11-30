@@ -3,6 +3,8 @@ import sys
 import uvicorn
 import logging
 import numpy as np
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from google.cloud import aiplatform
 from transformers import BertTokenizer
 from contextlib import asynccontextmanager
@@ -50,16 +52,18 @@ PROJECT_ID = 'bilingualcomplaint-system'
 LOCATION = 'us-east1'
 
 # Endpoint Config
-product_endpoint_id = '1035603613923147776'
+product_endpoint_id = '4736858820179918848'
+department_endpoint_id = '8971931319768449024'
 
 aiplatform.init(project=PROJECT_ID, location=LOCATION)
 product_endpoint = aiplatform.Endpoint(product_endpoint_id)
+department_endpoint = aiplatform.Endpoint(department_endpoint_id)
 
 # Model Config
 max_length = 128
 hugging_face_model_name = 'bert-base-multilingual-cased'
 tokenizer = BertTokenizer.from_pretrained(hugging_face_model_name)
-
+ 
 # Product Config
 product_labels = [
     'Credit reporting, credit repair services, or other personal consumer reports',
@@ -72,8 +76,19 @@ product_labels = [
     'Student loan'
     ]
 
+department_labels = [
+    "Customer Relations and Compliance",
+    "Loans and Credit",
+    "Fraud and Security",
+    "Account Services",
+    "Payments and Transactions"
+]
+
 product_2_idx_map = {label: idx for idx, label in enumerate(product_labels)}
 idx_2_product_map = {idx: label for label, idx in product_2_idx_map.items()}
+
+department_2_idx_map = {label: idx for idx, label in enumerate(department_labels)}
+idx_2_department_map = {idx: label for label, idx in department_2_idx_map.items()}
 
 app = FastAPI(
     title="MLOps - Bilingual Complaint Classification System",
@@ -120,6 +135,7 @@ async def submit_complaint(complaint: Complaint):
         processed_text = preprocessing_pipeline.process_text(
             text=complaint.complaint_text, language=complaint_language
         )
+
         try:
             logger.info(f'Product Inference - Started')
             product_prediction = make_inference(text=processed_text, tokenizer=tokenizer, max_length=max_length, endpoint=product_endpoint)
@@ -128,11 +144,17 @@ async def submit_complaint(complaint: Complaint):
         except Exception as e:
             logger.error(f'Product Inference - ERROR\n{e}')
         
-        predicted_departmet = "loan services"
+        try:
+            logger.info(f'Department Inference - Started')
+            department_prediction = make_inference(text=processed_text, tokenizer=tokenizer, max_length=max_length, endpoint=department_endpoint)
+            predicted_department = idx_2_department_map.get(np.argmax(department_prediction.predictions[0]))
+            logger.info(f'Department Inference - Completed')
+        except Exception as e:
+            logger.error(f'Department Inference - ERROR\n{e}')
 
         return PredictionResponse(
             product=predicted_product,
-            department=predicted_departmet,
+            department=predicted_department,
             processed_text=processed_text,
         )
     except ValidationException as ve:
