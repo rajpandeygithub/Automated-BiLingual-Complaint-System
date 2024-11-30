@@ -39,13 +39,11 @@ jobs:
 
     - name: Set PYTHONPATH
       run: |
-        echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
-      # Adds the current directory to PYTHONPATH
-
-    - name: Ensure tests directory exists
-      run: mkdir -p tests
+        export PYTHONPATH=$PYTHONPATH:$(pwd)
 
     - name: Run tests
+      env:
+        PYTHONPATH: ${{ runner.workspace }}/Automated-BiLingual-Complaint-System
       run: |
         pytest tests/ --log-file=tests/pytest.log
 
