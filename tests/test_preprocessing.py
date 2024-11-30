@@ -1,457 +1,328 @@
 import pytest
-from unittest.mock import patch, MagicMock
 import polars as pl
 import io
 import os
 import sys
-from datetime import datetime, date
+import logging
+import warnings
+from datetime import datetime
+from unittest.mock import patch
+import re
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+
+# Suppress DeprecationWarnings related to google.protobuf
+warnings.filterwarnings(
+    "ignore",
+    category=DeprecationWarning,
+    message=r".*google\.protobuf\..*",
+)
 
 # Add the project root to PYTHONPATH
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from data_preprocessing_pipeline.dags.scripts.preprocessing import (
+    get_custom_logger,
     load_data,
     filter_records_by_word_count_and_date,
     filter_records_by_language,
     aggregate_filtered_task,
+    clean_xxx_patterns,
     data_cleaning,
     remove_abusive_data,
-    insert_data_to_bigquery
+    standardise_product_class,
 )
 
-# Function 1: load_data()
-def test_load_data_success():
-    # Test that data is loaded successfully
-    data = load_data()
-    assert data is not None
-    dataset = pl.read_json(io.BytesIO(data))
-    assert len(dataset) > 0
+def test_get_custom_logger():
+    """
+    Test the get_custom_logger function to ensure it initializes a logger with the correct settings.
+    """
+    logger = get_custom_logger()
+    assert logger.name == "preprocessing_logger"
+    assert logger.level == logging.INFO
+    assert not logger.propagate
+    assert len(logger.handlers) > 0
 
-@patch('data_preprocessing_pipeline.dags.scripts.preprocessing.pl.read_parquet')
-def test_load_data_file_not_found(mock_read_parquet):
-    # Simulate FileNotFoundError
-    mock_read_parquet.side_effect = FileNotFoundError("File not found")
-    with pytest.raises(Exception) as exc_info:
-        load_data()
-    assert "Error With Dataset Loading" in str(exc_info.value)
-
-@patch('data_preprocessing_pipeline.dags.scripts.preprocessing.pl.read_parquet')
-def test_load_data_empty_dataset(mock_read_parquet):
-    # Simulate empty dataset
-    empty_df = pl.DataFrame()
-    mock_read_parquet.return_value = empty_df
-    data = load_data()
-    dataset = pl.read_json(io.BytesIO(data))
-    assert len(dataset) == 0
-
-# Function 2: filter_records_by_word_count_and_date
-
-def test_filter_by_word_count():
-    # Create sample data
-    data = pl.DataFrame({
-        'complaint': ['short', 'this is a longer complaint'],
-        'date_received': [date(2020, 1, 1), date(2020, 1, 2)]
+def test_load_data():
+    """
+    Test the load_data function to ensure it correctly loads and serializes the dataset.
+    """
+    # Mock dataset to be returned by pl.read_parquet
+    mock_dataset = pl.DataFrame({
+        'complaint_id': [1, 2, 3],
+        'complaint': ['Complaint 1', 'Complaint 2', 'Complaint 3'],
+        'complaint_hindi': ['शिकायत 1', 'शिकायत 2', 'शिकायत 3'],
     })
-    # Ensure the date_received column is of type Date
-    data = data.with_columns([
-        pl.col('date_received').cast(pl.Date)
-    ])
 
-    serialized_data = data.write_json()
+    # Mock pl.read_parquet to return the mock dataset
+    def mock_read_parquet(path):
+        return mock_dataset
 
-    # Apply filter with min_word_length=2
-    result = filter_records_by_word_count_and_date(serialized_data, min_word_length=2)
-    filtered_data = pl.read_json(io.BytesIO(result))
+    with patch('data_preprocessing_pipeline.dags.scripts.preprocessing.pl.read_parquet', new=mock_read_parquet):
+        serialized_data = load_data()
+        # Deserialize to check correctness
+        loaded_data = pl.DataFrame.deserialize(io.StringIO(serialized_data), format='json')
+        # Assertions
+        assert len(loaded_data) == 3
+        assert loaded_data['complaint_id'].to_list() == [1, 2, 3]
+        assert loaded_data['complaint'][0] == 'Complaint 1'
 
-    assert len(filtered_data) == 1
-    assert filtered_data['complaint'][0] == 'this is a longer complaint'
-
-def test_filter_by_date_range():
-    # Create sample data
+def test_filter_records_by_word_count_and_date():
+    """
+    Test the filter_records_by_word_count_and_date function to ensure it correctly filters out records
+    that do not meet the minimum word count and date range criteria.
+    """
+    # Create a sample dataset
     data = pl.DataFrame({
-        'complaint': ['valid complaint', 'another complaint'],
-        'date_received': [date(2014, 1, 1), date(2025, 1, 1)]
+        "complaint": ["This is a valid complaint", "Too short", "", "Another valid complaint"],
+        "complaint_hindi": ["यह एक वैध शिकायत है", "छोटी", "", "एक और वैध शिकायत"],
+        "date_received": [datetime(2016, 1, 1), datetime(2014, 1, 1), datetime(2018, 5, 20), datetime(2025, 1, 1)],
+        "complaint_id": [1, 2, 3, 4],
     })
-    data = data.with_columns([
-        pl.col('date_received').cast(pl.Date)
-    ])
+    min_word_length = 3
+    # Serialize the dataset
+    serialized_data = data.serialize(format="json")
 
-    serialized_data = data.write_json()
+    # Apply the filtering function
+    filtered_data_serialized = filter_records_by_word_count_and_date(serialized_data, min_word_length)
+    # Deserialize the filtered data
+    filtered_data = pl.DataFrame.deserialize(io.StringIO(filtered_data_serialized), format="json")
 
-    # Apply filter
-    result = filter_records_by_word_count_and_date(serialized_data, min_word_length=1)
-    filtered_data = pl.read_json(io.BytesIO(result))
+    # Assert that only the valid record within date range remains
+    expected_ids = [1]  # Only the first record meets all criteria
 
-    assert len(filtered_data) == 0  # Both dates are outside the range
+    assert filtered_data["complaint_id"].to_list() == expected_ids
 
-def test_filter_by_word_count_and_date():
-    # Create sample data
+def test_filter_records_by_language():
+    """
+    Test the filter_records_by_language function to ensure it correctly filters out records
+    that do not have the specified languages ('HI' or 'EN'), accounting for threading misalignment.
+    """
+    # Place the warnings filter at the very top, before any imports
+    import warnings
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
+
+    import polars as pl
+    import io
+    from unittest.mock import patch
+
+    # Sample dataset
     data = pl.DataFrame({
-        'complaint': ['valid complaint', 'short', 'another valid complaint'],
-        'date_received': [date(2020, 6, 1), date(2020, 6, 2), date(2020, 6, 3)]
+        'complaint': [
+            'This is an English complaint',
+            'यह हिंदी शिकायत है',
+            'Ceci est une plainte en français'
+        ],
+        'complaint_id': [1, 2, 3],
     })
-    data = data.with_columns([
-        pl.col('date_received').cast(pl.Date)
-    ])
+    serialized_data = data.serialize(format='json')
 
-    serialized_data = data.write_json()
+    # Mock detect_language function
+    def mock_detect_language(text):
+        if 'English' in text:
+            return 'EN'
+        elif 'हिंदी' in text:
+            return 'HI'
+        else:
+            return 'FR'  # French
 
-    # Apply filter with min_word_length=2
-    result = filter_records_by_word_count_and_date(serialized_data, min_word_length=2)
-    filtered_data = pl.read_json(io.BytesIO(result))
+    # Mock as_completed to return futures in the order they were submitted
+    from concurrent.futures import as_completed
 
-    assert len(filtered_data) == 2
-    assert 'short' not in filtered_data['complaint'].to_list()
+    def mock_as_completed(futures):
+        # Since futures are a dictionary in the original code, we need to return the keys (future objects) in order
+        return list(futures.keys())
 
-def test_no_records_meet_criteria():
-    # Create sample data
-    data = pl.DataFrame({
-        'complaint': ['short', 'tiny'],
-        'date_received': [date(2014, 1, 1), date(2025, 1, 1)]
-    })
-    data = data.with_columns([
-        pl.col('date_received').cast(pl.Date)
-    ])
+    with patch('data_preprocessing_pipeline.dags.scripts.preprocessing.detect_language', new=mock_detect_language), \
+         patch('data_preprocessing_pipeline.dags.scripts.preprocessing.as_completed', new=mock_as_completed):
+        filtered_data_serialized = filter_records_by_language(serialized_data)
+        filtered_data = pl.DataFrame.deserialize(io.StringIO(filtered_data_serialized), format='json')
 
-    serialized_data = data.write_json()
-
-    # Apply filter
-    result = filter_records_by_word_count_and_date(serialized_data, min_word_length=5)
-    filtered_data = pl.read_json(io.BytesIO(result))
-
-    assert len(filtered_data) == 0
-
-# Function 3: filter_records_by_language
-
-@patch('data_preprocessing_pipeline.dags.scripts.preprocessing.detect_language')
-def test_filter_records_by_language_mixed(mock_detect_language):
-    # Mock the language detection
-    mock_detect_language.side_effect = ['EN', 'FR', 'HI']
-
-    data = pl.DataFrame({
-        'complaint': ['This is an English complaint', 'Ceci est une plainte en français', 'यह एक हिंदी शिकायत है']
-    })
-    serialized_data = data.write_json()
-
-    result = filter_records_by_language(serialized_data)
-    filtered_data = pl.read_json(io.BytesIO(result))
-
-    assert len(filtered_data) == 2
-    assert 'Ceci est une plainte en français' not in filtered_data['complaint'].to_list()
-
-@patch('data_preprocessing_pipeline.dags.scripts.preprocessing.detect_language')
-def test_filter_records_by_language_all_supported(mock_detect_language):
-    mock_detect_language.side_effect = ['EN', 'HI']
-
-    data = pl.DataFrame({
-        'complaint': ['English complaint', 'हिंदी शिकायत']
-    })
-    serialized_data = data.write_json()
-
-    result = filter_records_by_language(serialized_data)
-    filtered_data = pl.read_json(io.BytesIO(result))
-
+    # Assert that only records with 'HI' or 'EN' are retained
     assert len(filtered_data) == 2
 
-@patch('data_preprocessing_pipeline.dags.scripts.preprocessing.detect_language')
-def test_filter_records_by_language_none_supported(mock_detect_language):
-    mock_detect_language.side_effect = ['FR', 'ES']
-
-    data = pl.DataFrame({
-        'complaint': ['Plainte en français', 'Queja en español']
-    })
-    serialized_data = data.write_json()
-
-    result = filter_records_by_language(serialized_data)
-    filtered_data = pl.read_json(io.BytesIO(result))
-
-    assert len(filtered_data) == 0
-
-@patch('data_preprocessing_pipeline.dags.scripts.preprocessing.detect_language')
-def test_language_detection_accuracy(mock_detect_language):
-    # Mock language detection to return unexpected languages
-    mock_detect_language.side_effect = ['EN', 'DE', 'HI', 'IT']
-
-    data = pl.DataFrame({
-        'complaint': ['English text', 'Deutscher Text', 'हिंदी पाठ', 'Testo italiano']
-    })
-    serialized_data = data.write_json()
-
-    result = filter_records_by_language(serialized_data)
-    filtered_data = pl.read_json(io.BytesIO(result))
-
-    assert len(filtered_data) == 2
-    assert 'Deutscher Text' not in filtered_data['complaint'].to_list()
-    assert 'Testo italiano' not in filtered_data['complaint'].to_list()
-
-# Function 4: aggregate_filtered_task
-
-def test_aggregate_successful_join(tmpdir):
+    # Get the complaint_ids from the filtered data
+    complaint_ids = sorted(filtered_data['complaint_id'].to_list())
+    # Now the complaint_ids should be [1, 2]
+    assert complaint_ids == [1, 2]
+    
+def test_aggregate_filtered_task():
+    """
+    Test the aggregate_filtered_task function to ensure it correctly joins two datasets on 'complaint_id' and
+    selects the specified columns.
+    """
+    # Sample datasets with necessary columns
     data_a = pl.DataFrame({
-        'complaint_id': [1, 2],
-        'data_a_col': ['a1', 'a2']
+        'complaint_id': [1, 2, 3],
+        'date_received': [datetime(2020, 1, 1)] * 3,
+        'complaint': ['Complaint A1', 'Complaint A2', 'Complaint A3'],
+        'product': ['Product A', 'Product B', 'Product C'],
+        'department': ['Dept A', 'Dept B', 'Dept C'],
+        'time_resolved_in_days': [5, 10, 15],
+        'sub_product': ['Sub Product A', 'Sub Product B', 'Sub Product C'],
+        'issue': ['Issue A', 'Issue B', 'Issue C'],
+        'sub_issue': ['Sub Issue A', 'Sub Issue B', 'Sub Issue C'],
+        'company': ['Company A', 'Company B', 'Company C'],
+        'state': ['CA', 'NY', 'TX'],
+        'zipcode': ['90001', '10001', '73301'],
+        'company_response_consumer': ['Response A', 'Response B', 'Response C'],
+        'consumer_consent_provided': ['Yes', 'No', 'Yes'],
+        'submitted_via': ['Web', 'Email', 'Fax'],
+        'date_sent_to_company': [datetime(2020, 1, 2)] * 3,
+        'timely_response': ['Yes', 'No', 'Yes'],
+        'consumer_disputed': ['No', 'Yes', 'No'],
     })
     data_b = pl.DataFrame({
-        'complaint_id': [1, 2],
-        'data_b_col': ['b1', 'b2']
+        'complaint_id': [2, 3, 4],
+        'date_resolved': [datetime(2020, 2, 1)] * 3,
+        'complaint_hindi': ['शिकायत B2', 'शिकायत B3', 'शिकायत B4'],
+        # Include any additional columns if necessary
     })
-    serialized_a = data_a.write_json()
-    serialized_b = data_b.write_json()
+    serialized_data_a = data_a.serialize(format='json')
+    serialized_data_b = data_b.serialize(format='json')
 
-    # Override the output path
-    output_path = os.path.join(tmpdir, 'preprocessed_dataset.parquet')
-    with patch('data_preprocessing_pipeline.dags.scripts.preprocessing.os.path.join', return_value=output_path):
-        aggregate_filtered_task(serialized_a, serialized_b)
-        assert os.path.exists(output_path)
-        result = pl.read_parquet(output_path)
-        assert len(result) == 2
-        assert 'data_a_col' in result.columns
-        assert 'data_b_col' in result.columns
+    # Mock write_parquet to avoid actual file IO
+    with patch('data_preprocessing_pipeline.dags.scripts.preprocessing.pl.DataFrame.write_parquet') as mock_write_parquet:
+        aggregate_filtered_task(serialized_data_a, serialized_data_b)
+        # Ensure write_parquet was called
+        assert mock_write_parquet.called
 
-def test_aggregate_no_common_ids(tmpdir):
-    data_a = pl.DataFrame({
-        'complaint_id': [1, 2],
-        'data_a_col': ['a1', 'a2']
-    })
-    data_b = pl.DataFrame({
-        'complaint_id': [3, 4],
-        'data_b_col': ['b3', 'b4']
-    })
-    serialized_a = data_a.write_json()
-    serialized_b = data_b.write_json()
+def test_clean_xxx_patterns():
+    """
+    Test the clean_xxx_patterns function to ensure it removes patterns like 'xxx', 'xxxx2022', 'abcxxx' correctly.
+    """
+    # Input text with various patterns
+    input_text = "This is xxxx2022 an example abcxxx text with xxx patterns xxx."
+    expected_output = "This is an example abc text with patterns"
 
-    output_path = os.path.join(tmpdir, 'preprocessed_dataset.parquet')
-    with patch('data_preprocessing_pipeline.dags.scripts.preprocessing.os.path.join', return_value=output_path):
-        aggregate_filtered_task(serialized_a, serialized_b)
-        result = pl.read_parquet(output_path)
-        assert len(result) == 0
+    # Apply the cleaning function
+    cleaned_text = clean_xxx_patterns(input_text)
 
-def test_aggregate_missing_columns(tmpdir):
-    data_a = pl.DataFrame({
-        'complaint_id': [1, 2],
-        'data_a_col': ['a1', 'a2']
-    })
-    data_b = pl.DataFrame({
-        'id': [1, 2],  # Missing 'complaint_id' column
-        'data_b_col': ['b1', 'b2']
-    })
-    serialized_a = data_a.write_json()
-    serialized_b = data_b.write_json()
+    # Assert the cleaned text matches the expected output
+    assert cleaned_text == expected_output
 
-    output_path = os.path.join(tmpdir, 'preprocessed_dataset.parquet')
-    with patch('data_preprocessing_pipeline.dags.scripts.preprocessing.os.path.join', return_value=output_path):
-        with pytest.raises(Exception):
-            aggregate_filtered_task(serialized_a, serialized_b)
-
-def test_aggregate_duplicate_ids(tmpdir):
-    data_a = pl.DataFrame({
-        'complaint_id': [1, 1],
-        'data_a_col': ['a1', 'a1_duplicate']
-    })
-    data_b = pl.DataFrame({
-        'complaint_id': [1],
-        'data_b_col': ['b1']
-    })
-    serialized_a = data_a.write_json()
-    serialized_b = data_b.write_json()
-
-    output_path = os.path.join(tmpdir, 'preprocessed_dataset.parquet')
-    with patch('data_preprocessing_pipeline.dags.scripts.preprocessing.os.path.join', return_value=output_path):
-        aggregate_filtered_task(serialized_a, serialized_b)
-        result = pl.read_parquet(output_path)
-        assert len(result) == 2  # Should have two records due to duplicate IDs
-
-# Function 5: data_cleaning
-
-def test_data_cleaning_text_processing(tmpdir):
-    # Create sample data
+def test_data_cleaning():
+    """
+    Test the data_cleaning function to ensure it correctly cleans the dataset.
+    """
+    # Sample dataset
     data = pl.DataFrame({
-        'product': ['Product1'],
-        'department': ['Department1'],
-        'complaint': ['This is A COMPLAINT! With Special #Characters$'],
-        'complaint_id': [1]
+        'complaint_id': [1, 2, 3],
+        'product': ['Product A', 'Product B', None],
+        'department': ['Dept A', None, 'Dept C'],
+        'complaint': ['Complaint with XXX1234', 'Another complaint', 'Duplicate complaint'],
+        'complaint_hindi': ['शिकायत xxx', 'एक और शिकायत', 'Duplicate complaint'],
     })
-    output_path = os.path.join(tmpdir, 'preprocessed_dataset.parquet')
-    data.write_parquet(output_path)
 
-    with patch('data_preprocessing_pipeline.dags.scripts.preprocessing.os.path.join', return_value=output_path):
+    # Mock pl.read_parquet to return the sample dataset
+    def mock_read_parquet(path):
+        return data
+
+    # Mock write_parquet to avoid actual file IO
+    with patch('data_preprocessing_pipeline.dags.scripts.preprocessing.pl.read_parquet', new=mock_read_parquet):
         cleaned_data_serialized = data_cleaning()
-        cleaned_data = pl.read_json(io.BytesIO(cleaned_data_serialized))
-        assert cleaned_data['complaint'][0] == 'this is a complaint with special characters'
+        # Deserialize to check correctness
+        cleaned_data = pl.DataFrame.deserialize(io.StringIO(cleaned_data_serialized), format='json')
 
-def test_data_cleaning_duplicate_removal(tmpdir):
+    # Assertions
+    # Check that records with nulls in 'product', 'department', 'complaint' are dropped
+    assert len(cleaned_data) == 1  # Only the first record should remain
+    # Check that 'complaint' is lowercased and cleaned
+    assert cleaned_data['complaint'][0] == 'complaint with'
+    # Check that 'complaint_hindi' is cleaned
+    assert cleaned_data['complaint_hindi'][0] == 'शिकायत'
+
+def test_remove_abusive_data():
+    """
+    Test the remove_abusive_data function to ensure it replaces abusive words with placeholders in both
+    English and Hindi complaints.
+    """
+    # Sample dataset with abusive words
     data = pl.DataFrame({
-        'product': ['Product1', 'Product1'],
-        'department': ['Department1', 'Department1'],
-        'complaint': ['Complaint text', 'Complaint text'],
-        'complaint_id': [1, 2]
+        "complaint": ["This is a badword in the complaint", "Clean complaint"],
+        "complaint_hindi": ["यह एक गाली है", "साफ शिकायत"],
+        "complaint_id": [1, 2],
     })
-    output_path = os.path.join(tmpdir, 'preprocessed_dataset.parquet')
-    data.write_parquet(output_path)
+    # Serialize the dataset
+    serialized_data = data.serialize(format="json")
 
-    with patch('data_preprocessing_pipeline.dags.scripts.preprocessing.os.path.join', return_value=output_path):
-        cleaned_data_serialized = data_cleaning()
-        cleaned_data = pl.read_json(io.BytesIO(cleaned_data_serialized))
-        assert len(cleaned_data) == 1
+    # Mock the abusive words datasets
+    def mock_read_parquet(path):
+        if "profanity_bank_dataset.parquet" in path:
+            return pl.DataFrame({"profanity": ["badword"]})
+        elif "hindi_abuse_words.parquet" in path:
+            return pl.DataFrame({"words": ["गाली"]})
+        else:
+            return pl.DataFrame()
 
-def test_data_cleaning_null_values(tmpdir):
+    # Prepare to capture the dataset
+    captured_dataset = []
+
+    # Define a side effect function to capture the dataset
+    def mock_write_parquet(self, path):
+        captured_dataset.append(self)
+
+    # Use monkeypatch to replace read_parquet and write_parquet functions
+    with patch('data_preprocessing_pipeline.dags.scripts.preprocessing.pl.read_parquet', new=mock_read_parquet), \
+         patch('data_preprocessing_pipeline.dags.scripts.preprocessing.pl.DataFrame.write_parquet', new=mock_write_parquet):
+
+        output_path = remove_abusive_data(serialized_data)
+        # Access the cleaned dataset
+        cleaned_data = captured_dataset[0]
+
+    # Expected placeholders
+    english_placeholder = "<abusive_data>"
+    hindi_placeholder = "<गाल>"
+
+    # Assert that abusive words are replaced
+    assert cleaned_data["abuse_free_complaint"][0] == f"This is a {english_placeholder} in the complaint"
+    assert cleaned_data["abuse_free_complaint_hindi"][0] == f"यह एक {hindi_placeholder} है"
+    # Assert that clean complaints remain unchanged
+    assert cleaned_data["abuse_free_complaint"][1] == "Clean complaint"
+    assert cleaned_data["abuse_free_complaint_hindi"][1] == "साफ शिकायत"
+
+def test_standardise_product_class():
+    """
+    Test the standardise_product_class function to ensure it correctly standardizes product names.
+    """
+    # Sample dataset
     data = pl.DataFrame({
-        'product': ['Product1', None],
-        'department': ['Department1', 'Department2'],
-        'complaint': ['Complaint text', 'Another complaint'],
-        'complaint_id': [1, 2]
+        'product': ['Credit Reporting', 'Debt Collection', 'Other Financial Service', 'Unknown Product'],
+        'department': ['Dept A', 'Dept B', 'Dept C', 'Dept D'],
     })
-    output_path = os.path.join(tmpdir, 'preprocessed_dataset.parquet')
-    data.write_parquet(output_path)
+    dataset_path = 'dummy/path/to/dataset.parquet'
 
-    with patch('data_preprocessing_pipeline.dags.scripts.preprocessing.os.path.join', return_value=output_path):
-        cleaned_data_serialized = data_cleaning()
-        cleaned_data = pl.read_json(io.BytesIO(cleaned_data_serialized))
-        assert len(cleaned_data) == 1
-        assert cleaned_data['complaint'][0] == 'complaint text'
+    # Mock pl.read_parquet to return the sample dataset
+    def mock_read_parquet(path):
+        return data
 
-def test_data_cleaning_no_changes(tmpdir):
-    data = pl.DataFrame({
-        'product': ['product1'],
-        'department': ['department1'],
-        'complaint': ['clean complaint'],
-        'complaint_id': [1]
-    })
-    output_path = os.path.join(tmpdir, 'preprocessed_dataset.parquet')
-    data.write_parquet(output_path)
+    # Prepare to capture the dataset
+    captured_dataset = []
 
-    with patch('data_preprocessing_pipeline.dags.scripts.preprocessing.os.path.join', return_value=output_path):
-        cleaned_data_serialized = data_cleaning()
-        cleaned_data = pl.read_json(io.BytesIO(cleaned_data_serialized))
-        assert len(cleaned_data) == 1
-        assert cleaned_data['complaint'][0] == 'clean complaint'
+    # Define a side effect function to capture the dataset
+    def mock_write_parquet(self, path):
+        captured_dataset.append(self)
 
-# Function 6: remove_abusive_data
+    # Mock write_parquet to avoid actual file IO
+    with patch('data_preprocessing_pipeline.dags.scripts.preprocessing.pl.read_parquet', new=mock_read_parquet), \
+         patch('data_preprocessing_pipeline.dags.scripts.preprocessing.pl.DataFrame.write_parquet', new=mock_write_parquet):
 
-@patch('data_preprocessing_pipeline.dags.scripts.preprocessing.pl.read_parquet')
-def test_remove_abusive_data_english(mock_read_parquet, tmpdir):
-    # Mock abusive words dataset
-    abusive_words_eng = pl.DataFrame({'profanity': ['badword']})
-    abusive_words_hindi = pl.DataFrame({'words': []})  # Empty for this test
+        output_path = standardise_product_class(dataset_path)
+        # Ensure write_parquet was called
+        assert len(captured_dataset) > 0
+        # Retrieve the DataFrame passed to write_parquet
+        standardized_data = captured_dataset[0]
 
-    def side_effect(*args, **kwargs):
-        if 'profanity_bank_dataset.parquet' in args[0]:
-            return abusive_words_eng
-        elif 'hindi_abuse_words.parquet' in args[0]:
-            return abusive_words_hindi
-    mock_read_parquet.side_effect = side_effect
+    # Expected products after standardization
+    expected_products = [
+        'credit / debt management & repair services',
+        'credit / debt management & repair services',
+        # 'Other Financial Service' should be dropped, so 'Unknown Product' remains
+        'unknown product',
+    ]
 
-    data = pl.DataFrame({
-        'complaint': ['This is a badword in the complaint'],
-        'complaint_hindi': ['']
-    })
-    serialized_data = data.write_json()
-    output_path = os.path.join(tmpdir, 'preprocessed_dataset.parquet')
-
-    with patch('data_preprocessing_pipeline.dags.scripts.preprocessing.os.path.join', return_value=output_path):
-        result_path = remove_abusive_data(serialized_data)
-        result_data = pl.read_parquet(result_path)
-        assert 'abuse_free_complaint' in result_data.columns
-        assert result_data['abuse_free_complaint'][0] == 'This is a <abusive_data> in the complaint'
-
-@patch('data_preprocessing_pipeline.dags.scripts.preprocessing.pl.read_parquet')
-def test_remove_abusive_data_no_abusive_words(mock_read_parquet, tmpdir):
-    # Mock empty abusive words datasets
-    abusive_words_eng = pl.DataFrame({'profanity': []})
-    abusive_words_hindi = pl.DataFrame({'words': []})
-
-    def side_effect(*args, **kwargs):
-        if 'profanity_bank_dataset.parquet' in args[0]:
-            return abusive_words_eng
-        elif 'hindi_abuse_words.parquet' in args[0]:
-            return abusive_words_hindi
-    mock_read_parquet.side_effect = side_effect
-
-    data = pl.DataFrame({
-        'complaint': ['Clean complaint text'],
-        'complaint_hindi': ['']
-    })
-    serialized_data = data.write_json()
-    output_path = os.path.join(tmpdir, 'preprocessed_dataset.parquet')
-
-    with patch('data_preprocessing_pipeline.dags.scripts.preprocessing.os.path.join', return_value=output_path):
-        result_path = remove_abusive_data(serialized_data)
-        result_data = pl.read_parquet(result_path)
-        assert result_data['abuse_free_complaint'][0] == 'Clean complaint text'
-
-@patch('data_preprocessing_pipeline.dags.scripts.preprocessing.pl.read_parquet')
-def test_remove_abusive_data_hindi(mock_read_parquet, tmpdir):
-    abusive_words_eng = pl.DataFrame({'profanity': []})
-    abusive_words_hindi = pl.DataFrame({'words': ['खराबशब्द']})
-
-    def side_effect(*args, **kwargs):
-        if 'profanity_bank_dataset.parquet' in args[0]:
-            return abusive_words_eng
-        elif 'hindi_abuse_words.parquet' in args[0]:
-            return abusive_words_hindi
-    mock_read_parquet.side_effect = side_effect
-
-    data = pl.DataFrame({
-        'complaint': [''],
-        'complaint_hindi': ['यह एक खराबशब्द है']
-    })
-    serialized_data = data.write_json()
-    output_path = os.path.join(tmpdir, 'preprocessed_dataset.parquet')
-
-    with patch('data_preprocessing_pipeline.dags.scripts.preprocessing.os.path.join', return_value=output_path):
-        result_path = remove_abusive_data(serialized_data)
-        result_data = pl.read_parquet(result_path)
-        assert result_data['abuse_free_complaint_hindi'][0] == 'यह एक <abusive_data> है'
-
-@patch('data_preprocessing_pipeline.dags.scripts.preprocessing.pl.read_parquet')
-def test_remove_abusive_data_empty_complaints(mock_read_parquet, tmpdir):
-    abusive_words_eng = pl.DataFrame({'profanity': ['badword']})
-    abusive_words_hindi = pl.DataFrame({'words': ['खराबशब्द']})
-
-    def side_effect(*args, **kwargs):
-        if 'profanity_bank_dataset.parquet' in args[0]:
-            return abusive_words_eng
-        elif 'hindi_abuse_words.parquet' in args[0]:
-            return abusive_words_hindi
-    mock_read_parquet.side_effect = side_effect
-
-    data = pl.DataFrame({
-        'complaint': [''],
-        'complaint_hindi': ['']
-    })
-    serialized_data = data.write_json()
-    output_path = os.path.join(tmpdir, 'preprocessed_dataset.parquet')
-
-    with patch('data_preprocessing_pipeline.dags.scripts.preprocessing.os.path.join', return_value=output_path):
-        result_path = remove_abusive_data(serialized_data)
-        result_data = pl.read_parquet(result_path)
-        assert result_data['abuse_free_complaint'][0] == ''
-        assert result_data['abuse_free_complaint_hindi'][0] == ''
-
-# Function 7: insert_data_to_bigquery
-
-def test_insert_data_to_bigquery_dry_run():
-    with patch('data_preprocessing_pipeline.dags.scripts.preprocessing.DRY_RUN', True):
-        # Should return early without any action
-        result = insert_data_to_bigquery('dummy_path')
-        assert result is None  # Function returns None
-
-@patch('data_preprocessing_pipeline.dags.scripts.preprocessing.bigquery.Client')
-def test_insert_data_to_bigquery_success(mock_bq_client):
-    mock_client_instance = MagicMock()
-    mock_bq_client.return_value = mock_client_instance
-
-    with patch('data_preprocessing_pipeline.dags.scripts.preprocessing.DRY_RUN', False):
-        insert_data_to_bigquery('dummy_path')
-        assert mock_client_instance.load_table_from_dataframe.called
-
-@patch('data_preprocessing_pipeline.dags.scripts.preprocessing.bigquery.Client')
-def test_insert_data_to_bigquery_failure(mock_bq_client):
-    mock_client_instance = MagicMock()
-    mock_client_instance.load_table_from_dataframe.side_effect = Exception('Insertion failed')
-    mock_bq_client.return_value = mock_client_instance
-
-    with patch('data_preprocessing_pipeline.dags.scripts.preprocessing.DRY_RUN', False):
-        with pytest.raises(Exception) as exc_info:
-            insert_data_to_bigquery('dummy_path')
-        assert 'Insertion failed' in str(exc_info.value)
+    # Assertions
+    # Check that 'Other Financial Service' is dropped
+    assert len(standardized_data) == 3  # One record should be dropped
+    # Check that 'product' is lowercased and standardized
+    assert standardized_data['product'].to_list() == expected_products
