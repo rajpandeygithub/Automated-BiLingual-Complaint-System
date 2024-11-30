@@ -3,11 +3,11 @@ name: Continuous Integration
 on:
   push:
     paths:
-      - 'data-preprocessing-pipeline/dags/scripts/preprocessing.py'
+      - 'data_preprocessing_pipeline/dags/scripts/preprocessing.py'
       - 'tests/**'
   pull_request:
     paths:
-      - 'data-preprocessing-pipeline/dags/scripts/preprocessing.py'
+      - 'data_preprocessing_pipeline/dags/scripts/preprocessing.py'
       - 'tests/**'
 
 jobs:
