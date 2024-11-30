@@ -37,6 +37,9 @@ jobs:
         pip install -r data_preprocessing_pipeline/requirements.txt
         pip install pytest
 
+    - name: Ensure tests directory exists
+      run: mkdir -p tests
+
     - name: Run tests
       run: |
         pytest tests/ --log-file=tests/pytest.log
@@ -45,5 +48,12 @@ jobs:
       if: failure()
       uses: actions/upload-artifact@v3
       with:
-        name: pytest-logs
+        name: pytest-logs-failure
+        path: tests/pytest.log
+
+    - name: Upload pytest logs on success
+      if: success()
+      uses: actions/upload-artifact@v3
+      with:
+        name: pytest-logs-success
         path: tests/pytest.log
