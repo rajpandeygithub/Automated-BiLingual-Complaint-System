@@ -6,6 +6,6 @@ logs/*
 __pycache__/
 *.py[cod]
 venv/
-data-preprocessing-pipeline/data/*
-data-preprocessing-pipeline/logs/*
-data-preprocessing-pipeline/dags/keys/*
+data_preprocessing_pipeline/data/*
+data_preprocessing_pipeline/logs/*
+data_preprocessing_pipeline/dags/keys/*

@@ -7,13 +7,31 @@ import io
 
 # Defining a custom logger
 def get_custom_logger():
+    # Customer logs are stored in the below path
     log_path = os.path.join(
         os.path.dirname(__file__), "../../logs/application_logs/preprocessing_log.txt"
     )
+
+    log_directory = os.path.dirname(log_path)
+
+    # Create the directory if it doesn't exist
+    if not os.path.exists(log_directory):
+        os.makedirs(log_directory)
+        print(f"Directory '{log_directory}' has been created.")
+
+    # Create the file if it doesn't exist
+    if not os.path.exists(log_path):
+        with open(log_path, 'w') as file:
+            pass  # Create an log empty file
+        print(f"File '{log_path}' has been created.")
+
     custom_logger = logging.getLogger("preprocessing_logger")
     custom_logger.setLevel(logging.INFO)
+
+    # Avoid default logs by setting propagate to False
     custom_logger.propagate = False
 
+    # Set up a file handler for the custom logger
     if not custom_logger.handlers:
         file_handler = logging.FileHandler(log_path, mode="a")
         formatter = logging.Formatter(

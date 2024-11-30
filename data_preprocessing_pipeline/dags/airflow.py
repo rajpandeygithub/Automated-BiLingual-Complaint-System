@@ -1,5 +1,3 @@
-import sys
-import logging
 import requests
 from airflow import DAG
 from airflow.decorators import dag, task
@@ -11,8 +9,6 @@ from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from datetime import datetime, timedelta
 from airflow.models.xcom import XCom
 from airflow.utils.trigger_rule import TriggerRule
-from scripts.success_email import send_success_email
-from scripts.failure_email import send_failure_email
 from scripts.preprocessing import (
     load_data,
     filter_records_by_word_count_and_date,
@@ -23,6 +19,8 @@ from scripts.preprocessing import (
     insert_data_to_bigquery,
     standardise_product_class
 )
+from scripts.success_email import send_success_email
+from scripts.failure_email import send_failure_email
 from scripts.deidentification import anonymize_sensitive_data
 from scripts.data_quality import validate_data_quality
 from scripts.statistics_generation import schema_and_statistics_generation
@@ -41,7 +39,6 @@ MIN_WORD: int = 5
 SLACK_WEBHOOK = (
     "https://hooks.slack.com/services/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"
 )
-
 
 def send_slack_notification(message: str):
     """Send a message to Slack via the defined webhook URL."""

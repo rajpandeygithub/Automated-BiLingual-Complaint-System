@@ -12,6 +12,20 @@ def get_custom_logger():
     log_path = os.path.join(
         os.path.dirname(__file__), "../../logs/application_logs/preprocessing_log.txt"
     )
+
+    log_directory = os.path.dirname(log_path)
+
+    # Create the directory if it doesn't exist
+    if not os.path.exists(log_directory):
+        os.makedirs(log_directory)
+        print(f"Directory '{log_directory}' has been created.")
+
+    # Create the file if it doesn't exist
+    if not os.path.exists(log_path):
+        with open(log_path, 'w') as file:
+            pass  # Create an log empty file
+        print(f"File '{log_path}' has been created.")
+
     custom_logger = logging.getLogger("preprocessing_logger")
     custom_logger.setLevel(logging.INFO)
 
