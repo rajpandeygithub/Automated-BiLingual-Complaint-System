@@ -39,11 +39,11 @@ jobs:
 
     - name: Run tests
       run: |
-        pytest tests/
+        pytest tests/ --log-file=tests/pytest.log
 
     - name: Upload pytest logs on failure
       if: failure()
       uses: actions/upload-artifact@v3
       with:
         name: pytest-logs
-        path: pytest.log
+        path: tests/pytest.log
