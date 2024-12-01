@@ -45,8 +45,8 @@ PROJECT_ID = 'bilingualcomplaint-system'
 LOCATION = 'us-east1'
 
 # Endpoint Config
-product_endpoint_id = '9057499712688488448'
-department_endpoint_id = '2189510280948482048'
+product_endpoint_id = '2434956460640174080'
+department_endpoint_id = '2335877268838023168'
 
 aiplatform.init(project=PROJECT_ID, location=LOCATION)
 product_endpoint = aiplatform.Endpoint(product_endpoint_id)
