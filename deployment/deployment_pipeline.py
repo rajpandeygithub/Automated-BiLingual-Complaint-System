@@ -126,19 +126,37 @@ def main():
         staging_bucket=config["staging_bucket"],
     )
 
+    # Generate pipeline JSON filename dynamically
     TIMESTAMP = datetime.now().strftime("%Y%m%d%H%M%S")
-    pipeline_job = aiplatform.PipelineJob(
-        display_name="dynamic_model_deployment_pipeline",
-        template_path=f"{config['pipeline_name']}_{TIMESTAMP}.json",
-        job_id=f"dynamic-model-deployment-{TIMESTAMP}",
-        enable_caching=True,
-    )
+    pipeline_json_path = f"{config['pipeline_name']}_{TIMESTAMP}.json"
 
+    # Compile the pipeline
     compiler.Compiler().compile(
         pipeline_func=deployment_pipeline,
-        package_path=f"{config['pipeline_name']}_{TIMESTAMP}.json",
+        package_path=pipeline_json_path,
     )
 
+    # Ensure the pipeline JSON file exists before proceeding
+    if not os.path.exists(pipeline_json_path):
+        raise FileNotFoundError(f"Pipeline JSON file not found: {pipeline_json_path}")
+
+    # Submit the pipeline job
+    pipeline_job = aiplatform.PipelineJob(
+        display_name="dynamic_model_deployment_pipeline",
+        template_path=pipeline_json_path,  # Use the compiled JSON file path
+        job_id=f"dynamic-model-deployment-{TIMESTAMP}",
+        enable_caching=True,
+        parameter_values={
+            "model_output_uri": config["model_output_uri"],
+            "project_id": config["project_id"],
+            "location": config["location"],
+            "model_display_name": config["model_display_name"],
+            "endpoint_display_name": config["endpoint_display_name"],
+            "deployed_model_display_name": config["deployed_model_display_name"],
+        },
+    )
+
+    # Submit the job
     pipeline_job.submit()
 
 if __name__ == "__main__":
