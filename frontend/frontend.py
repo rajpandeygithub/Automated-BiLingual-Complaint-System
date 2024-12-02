@@ -45,10 +45,15 @@ def main():
             try:
                 response = fetch_backend_response(complaint_text)
                 if "error" in response and "validation" in response["error"]:
+                    # Show validation error but keep the text
                     st.error("⚠️ Your complaint must be between 6 and 299 words. Please revise your complaint and try again.")
                 elif "error" in response:
+                    # Show other errors and clear the text area
+                    st.session_state["complaint_text"] = ""
                     st.error(f"⚠️ {response['error']}")
                 else:
+                    # Successful response: Clear the text area
+                    st.session_state["complaint_text"] = ""
                     formatted_response = format_response(
                         response.get("department", "other"),
                         response.get("product", "other"),
@@ -56,6 +61,8 @@ def main():
                     st.success("Your complaint has been registered successfully.")
                     st.markdown(formatted_response)
             except Exception as e:
+                # Clear the text area for any exception
+                st.session_state["complaint_text"] = ""
                 st.error(f"An error occurred: {str(e)}")
 
 if __name__ == "__main__":
