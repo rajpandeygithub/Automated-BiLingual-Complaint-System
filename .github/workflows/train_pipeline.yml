@@ -31,7 +31,7 @@ jobs:
           pip install -r train/requirements.txt
 
       - name: Run Training for Department
-        run: python train/submit_train_pipeline.py --config train-department.yml
+        run: python train/submit_train_pipeline.py --config train/train-department.yml
 
       - name: Run Training for Product
-        run: python train/submit_train_pipeline.py --config train-product.yml
+        run: python train/submit_train_pipeline.py --config train/train-product.yml
