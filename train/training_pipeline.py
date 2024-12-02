@@ -41,7 +41,8 @@ def training_pipeline():
         start_year=data_params.get("start_year"),
         end_year=data_params.get("end_year"),
         label_name=data_params.get("label_column_name"),
-        limit=data_params.get("limit", None)
+        limit=data_params.get("limit", None),
+        minimum_label_count=data_params.get("minimum_label_sample_count")
         )
 
     get_data_component_task.set_cpu_limit('1') 
@@ -120,6 +121,6 @@ if __name__ == '__main__':
         display_name=f"training-pipeline-via-yml-{TIMESTAMP}",
         template_path=f"training-pipeline-via-yml-{TIMESTAMP}.json",
         job_id=f"training-pipeline-via-yml-{TIMESTAMP}",
-        enable_caching=True
+        enable_caching=False
     )
     job.submit()

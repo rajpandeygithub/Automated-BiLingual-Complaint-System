@@ -16,6 +16,7 @@ data_params:
   start_year: 2018
   end_year: 2020
   limit: 10
+  minimum_label_sample_count: 500
   label_column_name: product
   unique_label_values:
     - checking or savings account

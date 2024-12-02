@@ -15,6 +15,7 @@ def get_data_component(
     location: str,
     start_year: int, end_year: int,
     label_name: str,
+    minimum_label_count: int,
     train_data: Output[Dataset],
     holdout_data: Output[Dataset],
     testset_size: float = 0.2,
@@ -30,7 +31,13 @@ def get_data_component(
   try:
     bqclient = bigquery.Client(project=project_id, location=location)
 
-    QUERY = f'''select complaint_english, complaint_hindi, {label_name} from `bilingualcomplaint-system.MLOps`.get_dataset_by_complaint_year_interval({start_year}, {end_year})'''
+    if label_name == 'product':
+       QUERY = f'''select complaint_english, complaint_hindi, {label_name} from `bilingualcomplaint-system.MLOps`.undersampled_product_dataset({minimum_label_count}, {start_year}, {end_year})'''
+    elif label_name == 'department':
+       QUERY = f'''select complaint_english, complaint_hindi, {label_name} from `bilingualcomplaint-system.MLOps`.undersampled_department_dataset({minimum_label_count}, {start_year}, {end_year})'''
+    else:
+       raise ValueError(f'Unexpected label. Use only `product` or `department`.')
+
     if limit:
        QUERY = f'{QUERY} limit {limit}'
     
