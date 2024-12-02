@@ -1,0 +1,40 @@
+project:
+  name: bilingual-complaint-classification
+  description: Bilingual Complaint Classification Model Training in TF
+  gcp_project_id: bilingualcomplaint-system
+  gcp_project_location: us-east1
+  gcp_artifact_bucket: tfx-artifacts
+  gcp_pipeline_artifact_directory: tfx-artifacts/pipeline_artifacts
+  pipeline_name: complaints-clf-vertex-training
+
+# Component Directory
+components:
+  directory: ./components
+
+# Data Parameters
+data_params:
+  start_year: 2018
+  end_year: 2020
+  limit: 10
+  label_column_name: department
+  unique_label_values:
+    - customer relations and compliance
+    - loans and credit
+    - fraud and security
+    - account services
+    - payments and transactions
+
+# Model Configuration
+model_parms:
+  num_models: 2
+  model_name: bert-base-multilingual-cased
+  max_sequence_length: 128
+
+# Training Parameters
+training_params:
+  epochs: 2
+  batch_size: 4
+
+# Bias Detection Parameters
+bias_detection_params:
+  accuracy_threshold: 0.1
