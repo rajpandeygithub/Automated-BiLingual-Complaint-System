@@ -20,7 +20,7 @@ def main():
         st.session_state["complaint_text"] = ""
 
     # Multi-line input field
-    st.text_area(
+    complaint_text = st.text_area(
         "Describe your complaint:",
         value=st.session_state["complaint_text"],
         placeholder="Enter your complaint here... (max 299 words)",
@@ -45,7 +45,6 @@ def main():
             try:
                 response = fetch_backend_response(complaint_text)
                 if "error" in response and "validation" in response["error"]:
-                    st.session_state["complaint_text"] = ""
                     st.error("⚠️ Your complaint must be between 6 and 299 words. Please revise your complaint and try again.")
                 elif "error" in response:
                     st.error(f"⚠️ {response['error']}")
