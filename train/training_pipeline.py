@@ -20,6 +20,8 @@ bias_detection_params = config.get('bias_detection_params', {})
 label_2_idx_map = {label: idx for idx, label in enumerate(data_params.get("unique_label_values"))}
 idx_2_label_map = {idx: label for label, idx in label_2_idx_map.items()}
 
+pipeline_name = f'{data_params.get("label_column_name")}-{project_parms.get("pipeline_name")}'
+
 aiplatform.init(
     project=project_parms.get("gcp_project_id"),
     location=project_parms.get("gcp_project_location"),
@@ -28,7 +30,7 @@ aiplatform.init(
 pipeline_artifacts_dir = f'gs://{project_parms.get("gcp_pipeline_artifact_directory")}/{project_parms.get("pipeline_name")}'
 
 @dsl.pipeline(
-    name=project_parms.get("pipeline_name"),
+    name=pipeline_name,
     description=project_parms.get("description"),
     pipeline_root=pipeline_artifacts_dir
 )
@@ -88,6 +90,7 @@ def training_pipeline():
         model=train_task.outputs['model_output'],
         test_data_name='holdout',
         label_map=label_2_idx_map,
+        label_name=data_params.get("label_column_name"),
         huggingface_model_name=model_params.get("model_name"),
         batch_size=training_params.get("batch_size")
     )

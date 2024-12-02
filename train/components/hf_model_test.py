@@ -22,6 +22,7 @@ def test_huggingface_model_component(
     reusable_model: Output[Model],
     metrics_artifact: Output[Artifact],
     test_data_name: str,
+    label_name: str,
     label_map: Dict[str, int],
     model_save_name: str = 'saved_tf_hf_model',
     batch_size: int = 8,
@@ -36,7 +37,7 @@ def test_huggingface_model_component(
     from transformers import TFAutoModelForSequenceClassification
     from sklearn.metrics import precision_score, recall_score, f1_score, confusion_matrix
     
-    aiplatform.init(project=project_id, location=location, experiment=f'experiment-{huggingface_model_name}')
+    aiplatform.init(project=project_id, location=location, experiment=f'exp-{label_name}-{huggingface_model_name}')
     experiment_run_id = "run-{}".format(int(time.time()))
 
     aiplatform.start_run(experiment_run_id)

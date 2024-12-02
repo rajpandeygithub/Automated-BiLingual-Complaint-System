@@ -30,7 +30,7 @@ def get_data_component(
   try:
     bqclient = bigquery.Client(project=project_id, location=location)
 
-    QUERY = f'''select complaint_english, complaint_hindi, department from `bilingualcomplaint-system.MLOps`.get_dataset_by_complaint_year_interval({start_year}, {end_year})'''
+    QUERY = f'''select complaint_english, complaint_hindi, {label_name} from `bilingualcomplaint-system.MLOps`.get_dataset_by_complaint_year_interval({start_year}, {end_year})'''
     if limit:
        QUERY = f'{QUERY} limit {limit}'
     
@@ -58,3 +58,4 @@ def get_data_component(
   except Exception as e:
       # Send failure email if there's an error
       error_message = str(e)
+      raise (e)
