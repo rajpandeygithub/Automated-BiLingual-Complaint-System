@@ -45,7 +45,8 @@ def main():
             try:
                 response = fetch_backend_response(complaint_text)
                 if "error" in response and "validation" in response["error"]:
-                    st.error("⚠️ Your complaint must be between 6 and 299 words. Please revise your submission and try again.")
+                    st.session_state["complaint_text"] = ""
+                    st.error("⚠️ Your complaint must be between 6 and 299 words. Please revise your complaint and try again.")
                 elif "error" in response:
                     st.error(f"⚠️ {response['error']}")
                 else:
