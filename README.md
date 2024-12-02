@@ -358,9 +358,56 @@ Key components of the pipeline include:
 - Model Training and Testing: Using XGBoost and Naive Bayes models for complaint classification.
 - Model Selection and Registration: Choosing the best-performing model based on evaluation metrics and registering it in Vertex AI for deployment.
 
-  
-<img width="1434" alt="Screenshot 2024-11-19 at 3 13 25 PM" src="https://github.com/user-attachments/assets/0ae443c7-0312-431f-b770-1e482694a8b5">![image](https://github.com/user-attachments/assets/ccff2c4e-0198-463d-8bc0-fd1129d4f1c9)
+<img width="1674" alt="image" src="https://github.com/user-attachments/assets/a4a430f5-0c8f-4a51-aaf2-acf17454b5a2">
 
+The **Automated BiLingual Complaint System** uses two models for classification tasks. 
+
+### 1. mBERT Model
+The mBERT model was used to classify complaints into appropriate **Departments** and **Products**, ensuring efficient complaint routing and resolution.
+
+#### Department Classification
+Classifies complaints into relevant organizational departments for faster resolution.  
+- **Overall F1 Score**: 0.55  
+- **Precision**: 0.62, **Recall**: 0.55  
+- Departments with at least 468 complaints:
+  - Fraud & Security  
+  - Loans & Credit  
+  - Payments & Transactions  
+  - Customer Relations & Compliance  
+  - Account Services  
+
+<img width="1673" alt="image" src="https://github.com/user-attachments/assets/7bef4e1e-867d-46c2-a5fc-f254c3d1331c">
+
+<img width="513" alt="image" src="https://github.com/user-attachments/assets/7d91f63d-09c0-452d-93b9-c9076dac131d">
+
+#### Product Classification
+Identifies the product category associated with a complaint for targeted handling.  
+- **Overall F1 Score**: 0.69  
+- **Precision**: 0.70, **Recall**: 0.69  
+- Products with at least 681 complaints:
+  - Credit/Debt Management & Repair Services  
+  - Vehicle Loan  
+  - Credit/Prepaid Card Services  
+  - Money Transfers  
+  - Mortgage  
+  - Checking or Savings Account  
+
+<img width="1675" alt="image" src="https://github.com/user-attachments/assets/c618f67e-7041-4832-a8a9-57428c6ba726">
+
+<img width="515" alt="image" src="https://github.com/user-attachments/assets/86b754ab-db1a-4c53-b3fe-02bdce783ffa">
+
+### Monitoring
+
+The system leverages **Vertex AI Monitoring** for real-time tracking and visualization of key metrics, including:
+
+- **Prediction Success Rates**: Monitors the success of department and product predictions.
+- **Resource Utilization**: Tracks CPU and memory usage for deployed endpoints to ensure efficient operation.
+- **Error Tracking**: Captures validation errors and anomalies for proactive troubleshooting.
+
+Below is a snapshot of the monitoring dashboard:
+
+<img width="1678" alt="image" src="https://github.com/user-attachments/assets/a6c51efc-536a-4c93-92d0-738cf67bd7dc">
+<img width="1674" alt="image" src="https://github.com/user-attachments/assets/3281cf0e-af8c-4415-985a-f915e629edac">
 
 ## CI-CD
 
@@ -394,6 +441,22 @@ Models are evaluated using F1 Score, Precision, and Recall, ensuring a comprehen
 
 The best-performing model is automatically registered and deployed to a Vertex AI real-time endpoint, supporting scalable, real-time inference. Vertex AI’s automated traffic splitting manages multiple model versions efficiently. Post-deployment, performance and drift detection are monitored continuously.
 
+## Data Drift Detection
+
+Data drift refers to changes in the statistical properties of data over time, which can affect the performance of machine learning models. To address this, we track data drift in the **Automated BiLingual Complaint System** using several methods:
+
+- **Cosine Similarity Analysis**:  
+  We compute the cosine similarity between embeddings of new complaint data and a reference dataset. If the similarity falls below a defined threshold, we detect drift.
+
+- **Drift Records in BigQuery**:  
+  Drift events are logged in a BigQuery table, capturing details like:
+  - Timestamp of the event.
+  - Complaint text in English and Hindi.
+  - Product and department classifications.
+  - Maximum cosine similarity score.
+
+ <img width="1675" alt="image" src="https://github.com/user-attachments/assets/0a73ec7d-113b-4c34-b57b-61b05bea49fa">
+
 ### f. Monitoring and Notifications
 - Slack Integration: Sends real-time notifications for each pipeline execution stage, ensuring immediate updates on success or failure.
 - BigQuery Tracking: Logs metrics and metadata, such as training duration, model performance, and record counts, for centralized analysis.
@@ -417,7 +480,37 @@ The best-performing model is automatically registered and deployed to a Vertex A
 
 <img width="1139" alt="Screenshot 2024-11-19 at 3 28 42 PM" src="https://github.com/user-attachments/assets/9159a298-ac26-4dfc-ab08-8cf59f23f4f7">
 
+## User Interaction
 
+The **Customer Complaint Portal** allows users to submit complaints, validate inputs, and receive feedback about their concerns. Below is an example of the portal in action:
+
+### 1. Homepage
+The homepage provides a simple interface for users to begin submitting their complaints. Users are greeted with the title and a text area for input.
+
+<img width="1679" alt="image" src="https://github.com/user-attachments/assets/0deb5a70-abdb-4d01-8707-7553a0024800">
+
+### 2. Complaint Submission
+Users can type their complaints in the provided text area. For example, here's a complaint involving a credit card issue:
+
+<img width="1676" alt="image" src="https://github.com/user-attachments/assets/3280ceeb-305c-43ee-abe3-78c263eac2ba">
+
+### 3. Complaint Resolution
+After submitting, the system processes the complaint and assigns it to the relevant department or product owner. A success message is displayed along with the assignment details.
+
+<img width="1676" alt="image" src="https://github.com/user-attachments/assets/18c75858-a87d-45dc-aeda-1cc97a0f2715">
+
+## Backend API
+
+The backend of the **Bilingual Complaint Classification System** is powered by **FastAPI** and deployed on **Google Cloud Run**. It serves as the core processing engine for complaint classification, exposing endpoints for submitting complaints and predicting the relevant department and product.
+
+### API Documentation
+The API is documented using **OpenAPI** standards, providing an interactive interface for testing and exploring available endpoints. Below is a snapshot of the `/docs` page:
+
+<img width="1677" alt="image" src="https://github.com/user-attachments/assets/6e4c5719-c33b-4b8a-9e8b-7616b4579adf">
+
+The key endpoints include:
+- **GET `/ping`**: A health check endpoint to ensure the backend is running.
+- **POST `/predict`**: Accepts a complaint and returns the predicted department and product classification.
 
 ## License Information
 
