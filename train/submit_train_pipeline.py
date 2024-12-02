@@ -154,4 +154,5 @@ if __name__ == '__main__':
         job_id=f"training-pipeline-via-yml-{TIMESTAMP}",
         enable_caching=False
     )
+    # Submit the Training KubeFlow Pipeline Job to Vertex AI
     job.submit()
