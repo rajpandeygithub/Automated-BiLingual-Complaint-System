@@ -42,20 +42,10 @@ def main():
         complaint_text = st.session_state["complaint_text"].strip()
         if complaint_text:
             word_count = len(complaint_text.split())
-            # Log word count violations
-            if word_count < 6 or word_count > 299:
-                logger.log_struct(
-                    {
-                        "severity": "WARNING",
-                        "message": "Word count violation",
-                        "word_count": word_count,
-                        "complaint_preview": complaint_text[:30] + "..." if len(complaint_text) > 30 else complaint_text,
-                    }
-                )
             try:
                 response = fetch_backend_response(complaint_text)
                 if "error" in response and "validation" in response["error"]:
-                    st.error("⚠️ Maximum word limit is 299. Please shorten your complaint.")
+                    st.error("⚠️ Your complaint must be between 6 and 299 words. Please revise your submission and try again.")
                 elif "error" in response:
                     st.error(f"⚠️ {response['error']}")
                 else:
