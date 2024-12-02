@@ -1,0 +1,9 @@
+project_id: "bilingualcomplaint-system"
+location: "us-east1"
+staging_bucket: "gs://tfx-artifacts"
+pipeline_name: "product_pipeline"
+#model_output_uri: "gs://tfx-artifacts/pipeline_artifacts/product/model_output"
+model_output_uri: gs://tfx-artifacts/pipeline_artifacts/complaints-clf-vertex-training/661860051070/model-data-pipeline-20241130201900/train-mbert-model_-5563503272901214208/model_output
+model_display_name: "tf-mbert-model-product"
+endpoint_display_name: "tf-mbert-endpoint-product"
+deployed_model_display_name: "tf-mbert-deployed-product"

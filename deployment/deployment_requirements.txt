@@ -1,0 +1,6 @@
+# Required for Google Cloud SDK and Vertex AI
+google-cloud-aiplatform
+google-auth
+kfp
+pyyaml
+requests
