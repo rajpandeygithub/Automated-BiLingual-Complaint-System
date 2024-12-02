@@ -84,9 +84,17 @@ def model_deployment(
     )
 
     endpoint.uri = endpoint_obj.resource_name
+    
+if len(sys.argv) != 2:
+        print("Usage: python deployment_pipeline.py <config_path>")
+        sys.exit(1)
 
+config_path = sys.argv[1]
+config = load_config(config_path)
+
+TIMESTAMP = datetime.now().strftime("%Y%m%d%H%M%S")
 @pipeline(
-    name="dynamic_model_deployment_pipeline",
+    name=f"{config['pipeline_name']}_deployment_{TIMESTAMP}",
     description="Pipeline for dynamic model registration and deployment",
 )
 def deployment_pipeline(
