@@ -85,32 +85,35 @@ def model_deployment(
 
     endpoint.uri = endpoint_obj.resource_name
 
-@pipeline(
-    name="dynamic_model_deployment_pipeline",
-    description="Pipeline for dynamic model registration and deployment",
-)
-def deployment_pipeline(
-    model_output_uri: str,
-    project_id: str,
-    location: str,
-    model_display_name: str,
-    endpoint_display_name: str,
-    deployed_model_display_name: str,
-):
-    register_model_task = model_registration(
-        model_output_uri=model_output_uri,
-        project_id=project_id,
-        location=location,
-        model_display_name=model_display_name,
+def create_pipeline(config):
+    """Dynamically create a pipeline based on the config."""
+    @pipeline(
+        name=f"{config['pipeline_name']}_{datetime.now().strftime('%Y%m%d%H%M%S')}",
+        description="Pipeline for dynamic model registration and deployment",
     )
+    def deployment_pipeline(
+        model_output_uri: str,
+        project_id: str,
+        location: str,
+        model_display_name: str,
+        endpoint_display_name: str,
+        deployed_model_display_name: str,
+    ):
+        register_model_task = model_registration(
+            model_output_uri=model_output_uri,
+            project_id=project_id,
+            location=location,
+            model_display_name=model_display_name,
+        )
 
-    model_deployment(
-        model=register_model_task.outputs["model"],
-        project_id=project_id,
-        location=location,
-        endpoint_display_name=endpoint_display_name,
-        deployed_model_display_name=deployed_model_display_name,
-    )
+        model_deployment(
+            model=register_model_task.outputs["model"],
+            project_id=project_id,
+            location=location,
+            endpoint_display_name=endpoint_display_name,
+            deployed_model_display_name=deployed_model_display_name,
+        )
+    return deployment_pipeline
 
 def main():
     if len(sys.argv) != 2:
@@ -126,9 +129,11 @@ def main():
         staging_bucket=config["staging_bucket"],
     )
 
-    # Generate pipeline JSON filename dynamically
     TIMESTAMP = datetime.now().strftime("%Y%m%d%H%M%S")
     pipeline_json_path = f"{config['pipeline_name']}_{TIMESTAMP}.json"
+
+    # Dynamically create the pipeline
+    deployment_pipeline = create_pipeline(config)
 
     # Compile the pipeline
     compiler.Compiler().compile(
@@ -136,15 +141,10 @@ def main():
         package_path=pipeline_json_path,
     )
 
-    # Ensure the pipeline JSON file exists before proceeding
-    if not os.path.exists(pipeline_json_path):
-        raise FileNotFoundError(f"Pipeline JSON file not found: {pipeline_json_path}")
-
-    # Submit the pipeline job
     pipeline_job = aiplatform.PipelineJob(
-        display_name="dynamic_model_deployment_pipeline",
-        template_path=pipeline_json_path,  # Use the compiled JSON file path
-        job_id=f"dynamic-model-deployment-{TIMESTAMP}",
+        display_name=config["pipeline_name"],
+        template_path=pipeline_json_path,
+        job_id=f"{config['pipeline_name']}-{TIMESTAMP}",
         enable_caching=True,
         parameter_values={
             "model_output_uri": config["model_output_uri"],
@@ -156,7 +156,6 @@ def main():
         },
     )
 
-    # Submit the job
     pipeline_job.submit()
 
 if __name__ == "__main__":
