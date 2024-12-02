@@ -1,1 +1,2 @@
 kfp==2.10.1
+google-cloud-aiplatform==1.73.0
