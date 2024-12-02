@@ -144,7 +144,7 @@ def main():
     pipeline_job = aiplatform.PipelineJob(
         display_name=config["pipeline_name"],
         template_path=pipeline_json_path,
-        job_id=f"{config['pipeline_name']}-{TIMESTAMP}",
+        job_id=f"d-{config['pipeline_name']}-{TIMESTAMP}",
         enable_caching=True,
         parameter_values={
             "model_output_uri": config["model_output_uri"],
