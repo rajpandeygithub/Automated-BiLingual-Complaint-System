@@ -90,6 +90,7 @@ app = FastAPI(
     description="Backend API Server to handle complaints from banking domain",
     version="0.1",
     lifespan=lifespan,
+    debug=False
 )
 
 
@@ -124,6 +125,7 @@ def ping():
     response_model=PredictionResponse,
     responses={
         400: {"model": ErrorResponse, "description": "Validation Error"},
+        400: {"model": ErrorResponse, "description": "Drift Detection"}
     },
 )
 async def submit_complaint(complaint: Complaint):
@@ -135,7 +137,6 @@ async def submit_complaint(complaint: Complaint):
                          "count": 1,
                     }
                     )
-
     try:
         is_valid = validation_pipeline.is_valid(text=complaint.complaint_text)
         if not is_valid:
@@ -157,47 +158,37 @@ async def submit_complaint(complaint: Complaint):
         )
 
         # Drift Detection
-        try:
-            response = requests.post(
-                cloud_function_url,
-                json={"current_text": [processed_text]},  
-                headers={"Content-Type": "application/json"}  
+        response = requests.post(
+            cloud_function_url,
+            json={"current_text": [processed_text]},  
+            headers={"Content-Type": "application/json"}
             )
-            
-            if response.status_code == 200:
-                result = response.json()
-                drift_status = result.get('drift_detected')
-                if drift_status:
-                    logger.log_struct(
-                        {
-                            "severity": "WARNING",
-                            "message": "Drift Detected in the current text",
-                            "type": "DRIFT-DETECTED",
-                            "count": 1,
-                        }
-                    )
-                    raise DriftException(
-                        error_code=1002,
-                        error_message="Drift Detected!"
-                        )
-            else:
+
+        if response.status_code == 200:
+            result = response.json()
+            drift_status = result.get('drift_detected')
+            if drift_status:
                 logger.log_struct(
                     {
-                         "severity": "ERROR",
-                         "message": f"Drift Detection Failed\nError: {response.text}",
-                         "type": "DRIFT-DETECTION-FAILED",
-                         "count": 1,
+                        "severity": "WARNING",
+                        "message": "Drift Detected in the current text",
+                        "type": "DRIFT-DETECTED",
+                        "count": 1,
                     }
                 )
-        except Exception as e:
+                raise DriftException(
+                    error_code=1002,
+                    error_message="Drift Detected!"
+                    )
+        else:
             logger.log_struct(
-                    {
-                         "severity": "ERROR",
-                         "message": f"Failed connecting to Drift Detection Cloud Function\nError: {e}",
-                         "type": "DRIFT-DETECTION-CONNECTION-FAILED",
-                         "count": 1,
-                    }
-                )
+                {
+                        "severity": "ERROR",
+                        "message": f"Drift Detection Failed\nError: {response.text}",
+                        "type": "DRIFT-DETECTION-FAILED",
+                        "count": 1,
+                }
+            )
 
         try:
             product_prediction = make_inference(text=processed_text, tokenizer=tokenizer, max_length=max_length, endpoint=product_endpoint)
@@ -246,6 +237,8 @@ async def submit_complaint(complaint: Complaint):
             department=predicted_department,
             processed_text=processed_text,
         )
+    except DriftException as de:
+        raise de
     except ValidationException as ve:
         raise ve
     except Exception as e:
