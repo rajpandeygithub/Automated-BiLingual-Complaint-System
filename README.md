@@ -396,6 +396,38 @@ Identifies the product category associated with a complaint for targeted handlin
 
 <img width="515" alt="image" src="https://github.com/user-attachments/assets/86b754ab-db1a-4c53-b3fe-02bdce783ffa">
 
+## 2.XLM-RoBERTa Model
+The XLM-RoBERTa model is used as an alternative for classifying complaints into Departments and Products. This multilingual model leverages state-of-the-art transformer-based architecture to handle bilingual data efficiently
+
+### Department Classification
+Classifies complaints into the relevant organizational departments for streamlined resolution.
+
+**Overall F1 Score**: 0.42
+**Precision**: 0.55, **Recall**: 0.39
+Departments with at least 468 complaints:
+Fraud & Security
+Loans & Credit
+Payments & Transactions
+Customer Relations & Compliance
+Account Services
+
+<img width="518" alt="image" src="https://github.com/user-attachments/assets/dbe07021-fcbd-466c-9610-163068b288a0">
+
+### Product Classification
+Classifies complaints into product categories for precise issue handling.
+
+**Overall F1 Score**: 0.68
+**Precision**: 0.72, **Recall**: 0.65
+Products with at least 681 complaints:
+Credit/Debt Management & Repair Services
+Vehicle Loan
+Credit/Prepaid Card Services
+Money Transfers
+Mortgage
+Checking or Savings Account
+
+<img width="518" alt="image" src="https://github.com/user-attachments/assets/b33c9499-d4a5-43e5-ada3-dc7f6731e5b7">
+
 ### Monitoring
 
 The system leverages **Vertex AI Monitoring** for real-time tracking and visualization of key metrics, including:
