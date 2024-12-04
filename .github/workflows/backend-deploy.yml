@@ -1,0 +1,54 @@
+name: Deploy Backend to Google Cloud Run
+
+on:
+  push:
+    branches:
+      - Dev
+    paths:
+      - 'backend/**'
+
+env:
+  PROJECT_ID: bilingualcomplaint-system
+  REGION: us-east1
+  ARTIFACT_REGISTRY_NAME: backend-server
+  SERVICE_NAME: backend-api-server
+
+jobs:
+  build-and-deploy:
+    name: Build and Deploy Backend Docker Image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Google Auth
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.BACKEND_DEPLOY_CLOUD_RUN }}
+      
+      - name: Docker Auth
+        id: docker-auth
+        uses: docker/login-action@v3
+        with:
+          username: _json_key
+          password: ${{ secrets.BACKEND_DEPLOY_CLOUD_RUN }}
+          registry: ${{ env.REGION }}-docker.pkg.dev
+
+      - name: Build and Push Docker Image
+        run: |-
+          docker build -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_NAME }}/${{env.SERVICE_NAME}}:latest -f backend/Dockerfile backend
+          docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_NAME }}/${{env.SERVICE_NAME}}:latest
+
+      - name: Deploy to Cloud Run
+        id: deploy
+        uses: 'google-github-actions/deploy-cloudrun@v2'
+        with:
+          service: ${{ env.SERVICE_NAME }}
+          region: ${{ env.REGION }}
+          image: "${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_NAME }}/${{env.SERVICE_NAME}}:latest"
+          memory: 1Gi
+      
+      - name: Show Output
+        run: echo ${{ steps.deploy.outputs.url }}

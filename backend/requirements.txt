@@ -1,0 +1,12 @@
+fastapi==0.115.5
+uvicorn==0.32.0
+pydantic==2.9.2
+fast-langdetect==0.2.2
+polars==1.14.0
+nltk==3.9.1
+rapidfuzz==3.10.1
+bloom-filter2==2.0.0
+transformers==4.46.2
+google-cloud-aiplatform==1.71.1
+numpy==1.26.4
+google-cloud-logging==3.11.3

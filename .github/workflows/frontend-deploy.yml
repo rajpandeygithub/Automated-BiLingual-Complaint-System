@@ -1,0 +1,67 @@
+name: Deploy Frontend to Google Cloud Run
+
+on:
+  push:
+    branches:
+      - Dev
+    paths:
+      - 'frontend/**'
+
+env:
+  PROJECT_ID: bilingualcomplaint-system
+  REGION: us-east1
+  ARTIFACT_REGISTRY_NAME: frontend-app
+  SERVICE_NAME: frontend-service
+
+jobs:
+  build-and-deploy:
+    name: Build and Deploy Frontend Docker Image
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the repository code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: Authenticate with Google Cloud
+      - name: Google Auth
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.BACKEND_DEPLOY_CLOUD_RUN }}
+
+      # Step 3: Authenticate Docker with Google Artifact Registry
+      - name: Docker Auth
+        id: docker-auth
+        uses: docker/login-action@v3
+        with:
+          username: _json_key
+          password: ${{ secrets.BACKEND_DEPLOY_CLOUD_RUN }}
+          registry: ${{ env.REGION }}-docker.pkg.dev
+
+      # Step 4: Build and Push Docker Image
+      - name: Build and Push Docker Image
+        run: |-
+          docker build -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_NAME }}/${{ env.SERVICE_NAME }}:latest -f frontend/Dockerfile frontend
+          docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_NAME }}/${{ env.SERVICE_NAME }}:latest
+
+      # Step 5: Deploy to Cloud Run
+      - name: Deploy to Cloud Run
+        id: deploy
+        uses: 'google-github-actions/deploy-cloudrun@v2'
+        with:
+          service: ${{ env.SERVICE_NAME }}
+          region: ${{ env.REGION }}
+          image: "${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_NAME }}/${{ env.SERVICE_NAME }}:latest"
+
+      # Step 6: Allow Unauthenticated Access
+      - name: Allow Unauthenticated Access
+        run: |
+          gcloud run services add-iam-policy-binding ${{ env.SERVICE_NAME }} \
+            --region=${{ env.REGION }} \
+            --member="allUsers" \
+            --role="roles/run.invoker"
+
+      # Step 7: Show Output
+      - name: Show Output
+        run: echo ${{ steps.deploy.outputs.url }}

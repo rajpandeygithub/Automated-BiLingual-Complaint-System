@@ -1,0 +1,9 @@
+project_id: "bilingualcomplaint-system"
+location: "us-east1"
+staging_bucket: "gs://tfx-artifacts"
+pipeline_name: "product_pipeline"
+#model_output_uri: "gs://tfx-artifacts/pipeline_artifacts/product/model_output"
+model_output_uri: gs://tfx-artifacts/pipeline_artifacts/complaints-clf-vertex-training/661860051070/training-pipeline-via-yml-20241204043847/train-huggingface-model-component_-4733759022023311360/model_output
+model_display_name: "tf-mbert-model-product"
+endpoint_display_name: "tf-mbert-endpoint-product"
+deployed_model_display_name: "tf-mbert-deployed-product"
