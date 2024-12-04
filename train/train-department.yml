@@ -1,6 +1,6 @@
 project:
   name: bilingual-complaint-classification
-  description: Bilingual Complaint Classification Model Training in TF
+  description: Bilingual Complaint Classification Model Training
   gcp_project_id: bilingualcomplaint-system
   gcp_project_location: us-east1
   gcp_artifact_bucket: tfx-artifacts
