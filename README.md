@@ -473,21 +473,7 @@ Models are evaluated using F1 Score, Precision, and Recall, ensuring a comprehen
 
 The best-performing model is automatically registered and deployed to a Vertex AI real-time endpoint, supporting scalable, real-time inference. Vertex AI’s automated traffic splitting manages multiple model versions efficiently. Post-deployment, performance and drift detection are monitored continuously.
 
-## Data Drift Detection
 
-Data drift refers to changes in the statistical properties of data over time, which can affect the performance of machine learning models. To address this, we track data drift in the **Automated BiLingual Complaint System** using several methods:
-
-- **Cosine Similarity Analysis**:  
-  We compute the cosine similarity between embeddings of new complaint data and a reference dataset. If the similarity falls below a defined threshold, we detect drift.
-
-- **Drift Records in BigQuery**:  
-  Drift events are logged in a BigQuery table, capturing details like:
-  - Timestamp of the event.
-  - Complaint text in English and Hindi.
-  - Product and department classifications.
-  - Maximum cosine similarity score.
-
- <img width="1675" alt="image" src="https://github.com/user-attachments/assets/0a73ec7d-113b-4c34-b57b-61b05bea49fa">
 
 ### f. Monitoring and Notifications
 - Slack Integration: Sends real-time notifications for each pipeline execution stage, ensuring immediate updates on success or failure.
@@ -511,6 +497,32 @@ Data drift refers to changes in the statistical properties of data over time, wh
 ### Cloud Run function:
 
 <img width="1139" alt="Screenshot 2024-11-19 at 3 28 42 PM" src="https://github.com/user-attachments/assets/9159a298-ac26-4dfc-ab08-8cf59f23f4f7">
+
+## Data Drift Detection
+
+Data drift refers to changes in the statistical properties of data over time, which can affect the performance of machine learning models. To address this, we track data drift in the **The Automated BiLingual Complaint System** implements a robust mechanism to monitor data drift, leveraging advanced NLP techniques and cloud infrastructure. Below, we describe each component in detail.
+
+**Cosine Similarity Analysis**:  
+To monitor data drift, we compare incoming complaint data with a reference dataset using cosine similarity. This process helps identify whether new complaints deviate significantly from the patterns in historical data. The steps involved are:
+
+- **Sentence Embeddings**: Each complaint (in English or Hindi) is converted into a high-dimensional vector representation using a pre-trained model 'MiniLM-L12-v2' to generate english embeddings and 'paraphrase-multilingual-MiniLM-L12-v2' to generate hindi embeddings.This embedding captures the semantic meaning of the text, enabling us to analyze similarities at a deeper level than keyword matching.
+
+- **Reference Dataset**: A historical dataset of complaints (baseline data/reference embeddings) is maintained, representing typical complaints that the system has been trained on or encountered in the past. These embeddings are stored in a pickel file in Google Cloud Storage Bucket and is picked up from the cloud function through this path.
+
+- **Cosine Similarity Calculation**: The cosine similarity between each new complaint and the reference dataset is computed. Cosine similarity measures the angular distance between two vectors, providing a score between -1 (completely dissimilar) and 1 (identical).
+A threshold (e.g., 0.55) is defined to detect drift in case of english embeddings, whereas a threshold of (e.g. , 0.7) is used for hindi text drift detection. If the maximum cosine similarity score for a new complaint falls below this threshold, it indicates significant deviation, and the complaint is flagged as "drifted."
+
+- **Most Similar Complaint Identification**: For each incoming complaint, the system identifies the most similar complaint in the reference dataset and logs it along with the similarity score. This provides insight into whether the complaint is a slight variation of an existing pattern or entirely new.
+
+
+**Drift Records in BigQuery**:  
+  Drift events are logged in a BigQuery table, capturing details like:
+  - Timestamp of the event.
+  - Complaint text in English and Hindi.
+  - Product and department classifications.
+  - Maximum cosine similarity score.
+
+ <img width="1675" alt="image" src="https://github.com/user-attachments/assets/0a73ec7d-113b-4c34-b57b-61b05bea49fa">
 
 ## User Interaction
 
