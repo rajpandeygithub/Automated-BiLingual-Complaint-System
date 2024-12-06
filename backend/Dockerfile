@@ -1,6 +1,12 @@
 # Use the official Python image as the base
 FROM python:3.9-slim
 
+ENV DRIFT_EN_URL=https://us-east1-bilingualcomplaint-system.cloudfunctions.net/data_drift
+ENV DRIFT_HI_URL=https://us-east1-bilingualcomplaint-system.cloudfunctions.net/data-drift-hindi
+
+ENV PRODUCT_ENDPOINT_ID=5930875671386521600
+ENV DEPARTMENT_ENDPOINT_ID=1069239873640071168
+
 # Set the working directory inside the container
 WORKDIR /app
 

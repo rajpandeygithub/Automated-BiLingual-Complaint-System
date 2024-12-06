@@ -12,6 +12,9 @@ from object_models import Complaint, PredictionResponse, ErrorResponse
 from preprocessing import DataValidationPipeline, DataTransformationPipeline
 from inference import make_inference
 
+drift_en_url = os.environ.get('DRIFT_EN_URL')
+drift_hi_url = os.environ.get('DRIFT_HI_URL')
+
 log_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
 client = gcloud_logging.Client()
@@ -45,8 +48,8 @@ PROJECT_ID = 'bilingualcomplaint-system'
 LOCATION = 'us-east1'
 
 # Endpoint Config
-product_endpoint_id = '5930875671386521600'
-department_endpoint_id = '1069239873640071168'
+product_endpoint_id = os.environ.get('PRODUCT_ENDPOINT_ID')
+department_endpoint_id = os.environ.get('DEPARTMENT_ENDPOINT_ID')
 
 aiplatform.init(project=PROJECT_ID, location=LOCATION)
 product_endpoint = aiplatform.Endpoint(product_endpoint_id)
@@ -82,8 +85,6 @@ idx_2_product_map = {idx: label for label, idx in product_2_idx_map.items()}
 
 department_2_idx_map = {label: idx for idx, label in enumerate(department_labels)}
 idx_2_department_map = {idx: label for label, idx in department_2_idx_map.items()}
-
-cloud_function_url = "https://us-east1-bilingualcomplaint-system.cloudfunctions.net/data_drift"
 
 app = FastAPI(
     title="MLOps - Bilingual Complaint Classification System",
@@ -139,6 +140,7 @@ async def submit_complaint(complaint: Complaint):
                     )
     try:
         is_valid = validation_pipeline.is_valid(text=complaint.complaint_text)
+        complaint_language = validation_pipeline.get_recognised_language()
         if not is_valid:
             logger.log_struct(
                      {
@@ -148,18 +150,24 @@ async def submit_complaint(complaint: Complaint):
                          "count": 1,
                     }
                     )
+            
             raise ValidationException(
                 error_code=1001,
                 error_message="Complaint Recieved failed validation checks",
             )
-        complaint_language = validation_pipeline.get_recognised_language()
+        
         processed_text = preprocessing_pipeline.process_text(
             text=complaint.complaint_text, language=complaint_language
         )
 
         # Drift Detection
+        if complaint_language == 'EN':
+            drift_url = drift_en_url
+        elif complaint_language == 'HI':
+            drift_url = drift_hi_url
+
         response = requests.post(
-            cloud_function_url,
+            drift_url,
             json={"current_text": [processed_text]},  
             headers={"Content-Type": "application/json"}
             )
