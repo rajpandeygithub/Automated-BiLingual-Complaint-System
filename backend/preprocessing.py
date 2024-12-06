@@ -107,6 +107,7 @@ class DataValidationPipeline:
                          "severity": "WARNING",
                          "message": "Language Not Recognised",
                          "type": "Language-UNRECOGNISED",
+                         "language": text_language,
                          "count": 1
                          })
         return language_validation

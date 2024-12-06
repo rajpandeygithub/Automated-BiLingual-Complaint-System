@@ -34,7 +34,6 @@ async def lifespan(app: FastAPI):
         "message": "Application shutdown"}
         )
 
-
 validation_checks = {
     "min_words": 5,
     "max_words": 300,
@@ -44,14 +43,14 @@ validation_pipeline = DataValidationPipeline(validation_checks)
 preprocessing_pipeline = DataTransformationPipeline()
 
 # Vertex AI Project Config
-PROJECT_ID = 'bilingualcomplaint-system'
-LOCATION = 'us-east1'
+project_id = os.environ.get('PROJECT_ID')
+location = os.environ.get('LOCATION')
 
 # Endpoint Config
 product_endpoint_id = os.environ.get('PRODUCT_ENDPOINT_ID')
 department_endpoint_id = os.environ.get('DEPARTMENT_ENDPOINT_ID')
 
-aiplatform.init(project=PROJECT_ID, location=LOCATION)
+aiplatform.init(project=project_id, location=location)
 product_endpoint = aiplatform.Endpoint(product_endpoint_id)
 department_endpoint = aiplatform.Endpoint(department_endpoint_id)
 

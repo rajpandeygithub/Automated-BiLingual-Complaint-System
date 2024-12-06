@@ -1,6 +1,9 @@
 # Use the official Python image as the base
 FROM python:3.9-slim
 
+ENV PROJECT_ID=bilingualcomplaint-system
+ENV LOCATION=us-east1
+
 ENV DRIFT_EN_URL=https://us-east1-bilingualcomplaint-system.cloudfunctions.net/data_drift
 ENV DRIFT_HI_URL=https://us-east1-bilingualcomplaint-system.cloudfunctions.net/data-drift-hindi
 
