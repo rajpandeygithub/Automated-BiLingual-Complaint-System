@@ -2,7 +2,7 @@ from typing import Dict
 from kfp.dsl import component, Input, Output, Dataset, Model
 
 @component(
-    base_image="tensorflow/tensorflow:2.14.0",
+    base_image="us-docker.pkg.dev/vertex-ai/training/tf-gpu.2-14.py310:latest",
     packages_to_install = [
         'pandas==1.5.3',
         'numpy==1.26.4',

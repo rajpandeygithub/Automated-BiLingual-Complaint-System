@@ -2,7 +2,7 @@ import yaml
 import argparse
 from typing import Callable, Dict
 from datetime import datetime
-from kfp import dsl, compiler
+from kfp import dsl, compiler, components
 from google.cloud import aiplatform
 from components.get_data import get_data_component
 from components.prepare_data import prepare_data_component
@@ -79,9 +79,11 @@ def get_training_pipeline(
         train_task.set_display_name(f'Training: {model_params.get("model_name")}')
         
         if training_params.get("use_gpu", False):
-            train_task.set_accelerator_type('NVIDIA_TESLA_T4') 
-            train_task.set_accelerator_limit(1)
-
+            train_task.add_node_selector_constraint(
+                label_name="cloud.google.com/gke-accelerator",
+                value="NVIDIA_TESLA_T4"
+                )
+        
         test_task = test_huggingface_model_component(
             project_id=project_params.get("gcp_project_id"),
             location=project_params.get("gcp_project_location"),
