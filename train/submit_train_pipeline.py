@@ -79,7 +79,8 @@ def get_training_pipeline(
         train_task.set_display_name(f'Training: {model_params.get("model_name")}')
         
         if training_params.get("use_gpu", False):
-            train_task.set_gpu_limit(1)
+            train_task.set_accelerator_type('NVIDIA_TESLA_T4') 
+            train_task.set_accelerator_limit(1)
 
         test_task = test_huggingface_model_component(
             project_id=project_params.get("gcp_project_id"),
