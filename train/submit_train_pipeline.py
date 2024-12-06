@@ -77,6 +77,9 @@ def get_training_pipeline(
             batch_size=training_params.get("batch_size")
             )
         train_task.set_display_name(f'Training: {model_params.get("model_name")}')
+        
+        if training_params.get("use_gpu", False):
+            train_task.set_gpu_limit(1)
 
         test_task = test_huggingface_model_component(
             project_id=project_params.get("gcp_project_id"),

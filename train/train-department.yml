@@ -33,8 +33,9 @@ model_parms:
 
 # Training Parameters
 training_params:
-  epochs: 2
+  epochs: 1
   batch_size: 4
+  use_gpu: True
 
 # Bias Detection Parameters
 bias_detection_params:
