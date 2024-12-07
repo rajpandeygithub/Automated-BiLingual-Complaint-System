@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, NamedTuple
 from kfp.dsl import component, Input, Output, Dataset, Model, Metrics, Artifact
 
 @component(
@@ -28,11 +28,16 @@ def test_huggingface_model_component(
     batch_size: int = 8,
     max_sequence_length: int = 128,
     huggingface_model_name: str = 'bert-base-multilingual-cased'
-):
+) -> NamedTuple('Outputs', [
+    ('precision', float),
+    ('recall', float),
+    ('f1_score', float)
+]):
     import os
     import json
     import time
     import tensorflow as tf
+    from collections import namedtuple
     import google.cloud.aiplatform as aiplatform
     from transformers import TFAutoModelForSequenceClassification
     from sklearn.metrics import precision_score, recall_score, f1_score, confusion_matrix
@@ -95,6 +100,7 @@ def test_huggingface_model_component(
       metric.log_metric('precision', precision)
       metric.log_metric('recall', recall)
       metric.log_metric('f1', f1)
+
       metrics_information = {
          'huggingface_model_name': huggingface_model_name,
          'precision': precision, 
@@ -118,6 +124,9 @@ def test_huggingface_model_component(
           json.dump(metrics_information, f)
 
       aiplatform.end_run()
+
+      output = namedtuple('Outputs', ['precision', 'recall', 'f1_score'])
+      return output(precision, recall, f1)
 
     except Exception as e:
       error_message = str(e)

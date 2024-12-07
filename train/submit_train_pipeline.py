@@ -106,21 +106,26 @@ def get_training_pipeline(
         bias_detection_task.set_display_name(f'Bias Detection Task')
         bias_detection_task.set_cpu_limit('1')
         bias_detection_task.set_memory_limit('1G')
-        
-        if deploy_params.get("deploy"):
-            registry_task = register_model_component(
-                model_artifact=test_task.outputs["reusable_model"],
-                project_id=project_params.get("gcp_project_id"),
-                location=project_params.get("gcp_project_location"),
-                model_display_name=f'model-{model_params.get("model_name")}'
+
+        if deploy_params.get("deploy") == True:
+            # Deployment Component
+            with dsl.If(
+                (test_task.outputs['f1_score'] > deploy_params.get("performance_score_thresholds").get("f1_score")),
+                name='Conditional Deployment'
+                ):
+                registry_task = register_model_component(
+                    model_artifact=test_task.outputs["reusable_model"],
+                    project_id=project_params.get("gcp_project_id"),
+                    location=project_params.get("gcp_project_location"),
+                    model_display_name=f'model-{model_params.get("model_name")}'
+                    )
+                deployment_task = deploy_model_component(
+                    model=registry_task.outputs['registered_model_artifact'],
+                    project_id=project_params.get("gcp_project_id"),
+                    location=project_params.get("gcp_project_location"),
+                    endpoint_display_name = f'endpoint-{model_params.get("model_name")}',
+                    deployed_model_display_name = f'deploy-model-{model_params.get("model_name")}',
                 )
-            deployment_task = deploy_model_component(
-                model=registry_task.outputs['registered_model_artifact'],
-                project_id=project_params.get("gcp_project_id"),
-                location=project_params.get("gcp_project_location"),
-                endpoint_display_name = f'endpoint-{model_params.get("model_name")}',
-                deployed_model_display_name = f'deploy-model-{model_params.get("model_name")}',
-            )
     
     return training_pipeline
 
