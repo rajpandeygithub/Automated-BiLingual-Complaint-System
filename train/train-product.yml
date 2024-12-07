@@ -31,7 +31,7 @@ data_params:
 # Model Configuration
 model_parms:
   num_models: 2
-   model_names:
+  model_names:
     - bert-base-multilingual-cased
     - microsoft/Multilingual-MiniLM-L12-H384
   max_sequence_length: 128
