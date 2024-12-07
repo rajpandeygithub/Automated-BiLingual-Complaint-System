@@ -11,6 +11,7 @@ from components.hf_model_test import test_huggingface_model_component
 from components.bias_detection import detect_bias_component
 from components.model_registry import register_model_component
 from components.model_deployment import deploy_model_component
+from components.select_best_model import select_best_model
 
 
 def get_training_pipeline(
@@ -45,86 +46,92 @@ def get_training_pipeline(
         get_data_component_task.set_cpu_limit('1') 
         get_data_component_task.set_memory_limit('1G')
 
-        train_data_prep_task = prepare_data_component(
-            data=get_data_component_task.outputs['train_data'],
-            dataset_name='train',
-            feature_name='complaints',
-            label_name=data_params.get("label_column_name"),
-            label_map=label_2_idx_map,
-            hugging_face_model_name=model_params.get("model_name"),
-            max_sequence_length=model_params.get('max_sequence_length')
-            )
-        train_data_prep_task.set_display_name(f'Training Data Prep: {model_params.get("model_name")}')
-        train_data_prep_task.set_cpu_limit('1')
-        train_data_prep_task.set_memory_limit('1G')
 
-        test_data_prep_task = prepare_data_component(
-            data=get_data_component_task.outputs['holdout_data'],
-            dataset_name='holdout',
-            feature_name='complaints',
-            label_name=data_params.get("label_column_name"),
-            label_map=label_2_idx_map,
-            hugging_face_model_name=model_params.get("model_name"),
-            max_sequence_length=model_params.get('max_sequence_length')
-        )
-        test_data_prep_task.set_display_name(f'Holdout Data Prep: {model_params.get("model_name")}')
-        test_data_prep_task.set_cpu_limit('1')
-        test_data_prep_task.set_memory_limit('1G')
+        with dsl.ParallelFor(model_params.get("model_names"), name='Parallelized Training for Multiple Models') as model_name:
 
-        train_task = train_huggingface_model_component(
-            train_data=train_data_prep_task.outputs['tf_dataset'],
-            label_map=label_2_idx_map,
-            train_data_name='train',
-            huggingface_model_name=model_params.get("model_name"),
-            max_epochs=training_params.get("epochs"),
-            batch_size=training_params.get("batch_size")
+            train_data_prep_task = prepare_data_component(
+                data=get_data_component_task.outputs['train_data'],
+                dataset_name='train',
+                feature_name='complaints',
+                label_name=data_params.get("label_column_name"),
+                label_map=label_2_idx_map,
+                hugging_face_model_name=model_name,
+                max_sequence_length=model_params.get('max_sequence_length')
+                )
+            train_data_prep_task.set_display_name(f'Training Data Prep: {model_name}')
+            train_data_prep_task.set_cpu_limit('1')
+            train_data_prep_task.set_memory_limit('1G')
+
+            test_data_prep_task = prepare_data_component(
+                data=get_data_component_task.outputs['holdout_data'],
+                dataset_name='holdout',
+                feature_name='complaints',
+                label_name=data_params.get("label_column_name"),
+                label_map=label_2_idx_map,
+                hugging_face_model_name=model_name,
+                max_sequence_length=model_params.get('max_sequence_length')
             )
-        train_task.set_display_name(f'Training: {model_params.get("model_name")}')
+            test_data_prep_task.set_display_name(f'Holdout Data Prep: {model_name}')
+            test_data_prep_task.set_cpu_limit('1')
+            test_data_prep_task.set_memory_limit('1G')
+
+            train_task = train_huggingface_model_component(
+                train_data=train_data_prep_task.outputs['tf_dataset'],
+                label_map=label_2_idx_map,
+                train_data_name='train',
+                huggingface_model_name=model_name,
+                max_epochs=training_params.get("epochs"),
+                batch_size=training_params.get("batch_size")
+                )
+            train_task.set_display_name(f'Training: {model_name}')
+            
+            test_task = test_huggingface_model_component(
+                project_id=project_params.get("gcp_project_id"),
+                location=project_params.get("gcp_project_location"),
+                test_data=test_data_prep_task.outputs['tf_dataset'],
+                model=train_task.outputs['model_output'],
+                test_data_name='holdout',
+                label_map=label_2_idx_map,
+                label_name=data_params.get("label_column_name"),
+                huggingface_model_name=model_name,
+                batch_size=training_params.get("batch_size")
+            )
+            test_task.set_display_name(f'Testing: {model_params.get("model_name")}')
         
-        test_task = test_huggingface_model_component(
-            project_id=project_params.get("gcp_project_id"),
-            location=project_params.get("gcp_project_location"),
-            test_data=test_data_prep_task.outputs['tf_dataset'],
-            model=train_task.outputs['model_output'],
-            test_data_name='holdout',
-            label_map=label_2_idx_map,
-            label_name=data_params.get("label_column_name"),
-            huggingface_model_name=model_params.get("model_name"),
-            batch_size=training_params.get("batch_size")
-        )
-        test_task.set_display_name(f'Testing: {model_params.get("model_name")}')
+        metric_artifacts = dsl.Collected(test_task.outputs['metrics_artifact'])
+        models = dsl.Collected(test_task.outputs['reusable_model'])
+        test_datasets = dsl.Collected(test_data_prep_task.outputs['tf_dataset'])
+
+        best_model_selection_task = select_best_model(metrics_artifacts=metric_artifacts, test_datasets=test_datasets, models=models)
 
         bias_detection_task = detect_bias_component(
             accuracy_threshold=bias_detection_params.get("accuracy_threshold"),
-            test_data=test_data_prep_task.outputs['tf_dataset'],
-            model=test_task.outputs['reusable_model'],
+            test_data=best_model_selection_task.outputs['best_model_test_data'],
+            model=best_model_selection_task.outputs['best_model'],
             test_data_name='holdout',
             label_map=label_2_idx_map,
-            huggingface_model_name=model_params.get("model_name"),
+            huggingface_model_name=best_model_selection_task.outputs["best_model_name"],
             batch_size=training_params.get("batch_size")
         )
-        bias_detection_task.set_display_name(f'Bias Detection Task')
-        bias_detection_task.set_cpu_limit('1')
-        bias_detection_task.set_memory_limit('1G')
 
         if deploy_params.get("deploy") == True:
             # Deployment Component
             with dsl.If(
-                (test_task.outputs['f1_score'] > deploy_params.get("performance_score_thresholds").get("f1_score")),
+                (best_model_selection_task.outputs['best_f1_score'] > deploy_params.get("performance_score_thresholds").get("f1_score")),
                 name='Conditional Deployment'
                 ):
                 registry_task = register_model_component(
-                    model_artifact=test_task.outputs["reusable_model"],
+                    model_artifact=best_model_selection_task.outputs["best_model"],
                     project_id=project_params.get("gcp_project_id"),
                     location=project_params.get("gcp_project_location"),
-                    model_display_name=f'model-{model_params.get("model_name")}'
+                    model_display_name=f'model-{best_model_selection_task.outputs["best_model_name"]}'
                     )
                 deployment_task = deploy_model_component(
                     model=registry_task.outputs['registered_model_artifact'],
                     project_id=project_params.get("gcp_project_id"),
                     location=project_params.get("gcp_project_location"),
-                    endpoint_display_name = f'endpoint-{model_params.get("model_name")}',
-                    deployed_model_display_name = f'deploy-model-{model_params.get("model_name")}',
+                    endpoint_display_name = f'endpoint-{best_model_selection_task.outputs["best_model_name"]}',
+                    deployed_model_display_name = f'deploy-model-{best_model_selection_task.outputs["best_model_name"]}',
                 )
     
     return training_pipeline

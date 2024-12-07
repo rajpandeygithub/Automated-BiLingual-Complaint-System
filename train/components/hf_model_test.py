@@ -34,6 +34,7 @@ def test_huggingface_model_component(
     ('f1_score', float)
 ]):
     import os
+    import re
     import json
     import time
     import tensorflow as tf
@@ -41,8 +42,22 @@ def test_huggingface_model_component(
     import google.cloud.aiplatform as aiplatform
     from transformers import TFAutoModelForSequenceClassification
     from sklearn.metrics import precision_score, recall_score, f1_score, confusion_matrix
+
+    def build_experiment_name(experiment_name: str) -> str:
+        name = experiment_name.lower()
+        # Replace invalid characters with hyphens
+        name = re.sub(r'[^a-z0-9-]', '-', name)
+        # Ensure the name starts with a lowercase letter or digit
+        if not re.match(r'^[a-z0-9]', name):
+            name = 'a' + name
+        # Truncate to 128 characters
+        name = name[:128]
+        # Remove trailing hyphens
+        name = name.rstrip('-')
+        return name
     
-    aiplatform.init(project=project_id, location=location, experiment=f'exp-{label_name}-{huggingface_model_name}')
+    experiment_name = build_experiment_name(experiment_name=f'exp-{label_name}-{huggingface_model_name}')
+    aiplatform.init(project=project_id, location=location, experiment=experiment_name)
     experiment_run_id = "run-{}".format(int(time.time()))
 
     aiplatform.start_run(experiment_run_id)
