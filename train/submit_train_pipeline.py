@@ -2,13 +2,15 @@ import yaml
 import argparse
 from typing import Callable, Dict
 from datetime import datetime
-from kfp import dsl, compiler, components
+from kfp import dsl, compiler
 from google.cloud import aiplatform
 from components.get_data import get_data_component
 from components.prepare_data import prepare_data_component
 from components.hf_model_train import train_huggingface_model_component
 from components.hf_model_test import test_huggingface_model_component
 from components.bias_detection import detect_bias_component
+from components.model_registry import register_model_component
+from components.model_deployment import deploy_model_component
 
 
 def get_training_pipeline(
@@ -21,6 +23,7 @@ def get_training_pipeline(
     label_2_idx_map: Dict,
     training_params: Dict, 
     bias_detection_params: Dict,
+    deploy_params: Dict,
     ) -> Callable:
 
     @dsl.pipeline(
@@ -78,12 +81,6 @@ def get_training_pipeline(
             )
         train_task.set_display_name(f'Training: {model_params.get("model_name")}')
         
-        if training_params.get("use_gpu", False):
-            train_task.add_node_selector_constraint(
-                label_name="cloud.google.com/gke-accelerator",
-                value="NVIDIA_TESLA_T4"
-                )
-        
         test_task = test_huggingface_model_component(
             project_id=project_params.get("gcp_project_id"),
             location=project_params.get("gcp_project_location"),
@@ -109,6 +106,21 @@ def get_training_pipeline(
         bias_detection_task.set_display_name(f'Bias Detection Task')
         bias_detection_task.set_cpu_limit('1')
         bias_detection_task.set_memory_limit('1G')
+        
+        if deploy_params.get("deploy"):
+            registry_task = register_model_component(
+                model_artifact=test_task.outputs["reusable_model"],
+                project_id=project_params.get("gcp_project_id"),
+                location=project_params.get("gcp_project_location"),
+                model_display_name=f'model-{model_params.get("model_name")}'
+                )
+            deployment_task = deploy_model_component(
+                model=registry_task.outputs['registered_model_artifact'],
+                project_id=project_params.get("gcp_project_id"),
+                location=project_params.get("gcp_project_location"),
+                endpoint_display_name = f'endpoint-{model_params.get("model_name")}',
+                deployed_model_display_name = f'deploy-model-{model_params.get("model_name")}',
+            )
     
     return training_pipeline
 
@@ -130,6 +142,7 @@ if __name__ == '__main__':
     model_params = config.get('model_parms', {})
     training_params = config.get('training_params', {})
     bias_detection_params = config.get('bias_detection_params', {})
+    deploy_params = config.get('deploy_params', {})
 
     label_2_idx_map = {label: idx for idx, label in enumerate(data_params.get("unique_label_values"))}
     idx_2_label_map = {idx: label for label, idx in label_2_idx_map.items()}
@@ -147,8 +160,10 @@ if __name__ == '__main__':
 
     training_pipeline = get_training_pipeline(
         pipeline_name=pipeline_name, description=project_params.get('description'), pipeline_root=pipeline_artifacts_dir, 
-        project_params=project_params, data_params=data_params, model_params=model_params, training_params=training_params, bias_detection_params=bias_detection_params, 
-        label_2_idx_map=label_2_idx_map, 
+        project_params=project_params, data_params=data_params, model_params=model_params, training_params=training_params, 
+        bias_detection_params=bias_detection_params, 
+        label_2_idx_map=label_2_idx_map,
+        deploy_params=deploy_params
         )
     compiler.Compiler().compile(
         pipeline_func=training_pipeline, package_path=f"training-pipeline-via-yml-{TIMESTAMP}.json"
@@ -158,7 +173,7 @@ if __name__ == '__main__':
         display_name=f"training-pipeline-via-yml-{TIMESTAMP}",
         template_path=f"training-pipeline-via-yml-{TIMESTAMP}.json",
         job_id=f"training-pipeline-via-yml-{TIMESTAMP}",
-        enable_caching=False
+        enable_caching=True
     )
     # Submit the Training KubeFlow Pipeline Job to Vertex AI
     job.submit()
