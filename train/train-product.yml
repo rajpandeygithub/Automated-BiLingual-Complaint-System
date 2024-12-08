@@ -34,7 +34,7 @@ model_parms:
   num_models: 2
   model_names:
     - bert-base-multilingual-cased
-    - microsoft/Multilingual-MiniLM-L12-H384
+    # - microsoft/Multilingual-MiniLM-L12-H384
   max_sequence_length: 128
 
 # Training Parameters
@@ -69,7 +69,7 @@ email_params:
   email_content:
     subject: "[Kubeflow Product Training Job] - Submitted"
     message: |
-    Hi team,
-    
-    A new Kubeflow Training Job is submitted on Vertex AI to train the Product Classifier.
-    Please monitor the pipeline for further updates. 
+      Hi team,
+      
+      A new Kubeflow Training Job is submitted on Vertex AI to train the Product Classifier.
+      Please monitor the pipeline for further updates. 
