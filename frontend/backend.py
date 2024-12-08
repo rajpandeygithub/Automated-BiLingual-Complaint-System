@@ -1,14 +1,26 @@
 import json
 import requests
 
+def preprocess_text(complaint_text):
+    """
+    Preprocesses the complaint text by removing newlines and any other required cleaning.
+    """
+    # Remove newline characters
+    complaint_text = complaint_text.replace('\n', ' ')
+    # Additional preprocessing can be added here if needed
+    return complaint_text
+
 def fetch_backend_response(complaint_text):
     """
     Sends a POST request to the backend API with the complaint text.
     """
+
+    # Preprocess the complaint_text
+    cleaned_text = preprocess_text(complaint_text)
     # Uncomment the following lines to connect to the actual backend API
     response = requests.post(
         'https://backend-api-server-661860051070.us-east1.run.app/predict',
-        json={"complaint_text": complaint_text}
+        json={"complaint_text": cleaned_text}
     )
     if response.status_code == 200:
         return json.loads(response.content)

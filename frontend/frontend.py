@@ -7,9 +7,38 @@ def reset_input():
     st.session_state["complaint_text"] = ""  # Clear the text field
     st.session_state["complaint_submitted"] = False  # Reset submission flag
 
-def main():
+def show_homepage():
+    st.title("Automated BiLingual Complaint Management System for Bank")
+    st.subheader("Revolutionizing Customer Support with AI-Powered Automation")
+    st.markdown("""
+    ### Introduction
+    This system automates handling customer complaints for bank products. Using an AI-powered model,
+    it efficiently routes complaints to the right department and support agent. The scalable,
+    bilingual system ensures faster resolution, cost savings, and improved customer satisfaction.
+    """)
+    st.markdown("""
+    ### Key Features
+    - **Bi-Lingual Support**: Handles complaints in English, Hindi.
+    - **Accurate Routing**: Predicts the product and department responsible for resolving complaints.
+    - **Ethical Validation**: Filters inappropriate or offensive complaints.
+    - **Scalable Infrastructure**: Cloud-based for reliability and growth.
+    """)
+    st.markdown("### Experience the System in Action!")
+    if st.button("Try Me Out"):
+        # Set session state and rerun to navigate immediately
+        st.session_state["show_portal"] = True
+        st.experimental_rerun()
+
+def show_complaint_portal():
     st.title("📢 Customer Complaint Portal")
     st.write("We value your feedback and are committed to resolving your concerns promptly. Please describe your issue below.")
+
+    # Add a "Back to Homepage" button below the title and center-align it
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        if st.button("⬅️ Back to Homepage"):
+            st.session_state["show_portal"] = False
+            st.experimental_rerun()
 
     # Initialize session state
     if "complaint_text" not in st.session_state:
@@ -47,7 +76,7 @@ def main():
             try:
                 response = fetch_backend_response(st.session_state["complaint_text"])
                 if "error" in response and "validation" in response["error"]:
-                    st.error("⚠️ Your complaint must be between 6 and 299 words. Please revise your complaint and try again.")
+                    st.error(f"⚠️ Your complaint must be between 6 and 299 words. Please revise your complaint and try again.{response['error']}")
                 elif "error" in response:
                     st.error(f"⚠️ {response['error']}")
                 else:
@@ -66,6 +95,16 @@ def main():
                 st.error(f"An error occurred: {str(e)}")
         else:
             st.error("⚠️ Complaint text cannot be empty.")
+
+def main():
+    # Default to showing homepage if no session state is set
+    if "show_portal" not in st.session_state:
+        st.session_state["show_portal"] = False
+
+    if not st.session_state["show_portal"]:
+        show_homepage()
+    else:
+        show_complaint_portal()
 
 if __name__ == "__main__":
     main()
