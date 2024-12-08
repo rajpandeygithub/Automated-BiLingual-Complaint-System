@@ -3,7 +3,6 @@ from backend import fetch_backend_response
 from utils import format_response
 from dotenv import load_dotenv
 import os
-import webbrowser
 
 # Load environment variables
 load_dotenv()
@@ -25,9 +24,13 @@ def show_complaint_portal():
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         if st.button("⬅️ Back to Homepage"):
-            # Open the homepage in the browser
-            webbrowser.open_new_tab("https://storage.cloud.google.com/frontend_homepage/homepage.html")
-            return
+            # Use JavaScript for redirection
+            homepage_url = "https://storage.googleapis.com/frontend_homepage/homepage.html"
+            st.markdown(f"""
+                <script type="text/javascript">
+                    window.location.href = "{homepage_url}";
+                </script>
+            """, unsafe_allow_html=True)
 
     # Initialize session state
     if "complaint_text" not in st.session_state:
@@ -45,7 +48,7 @@ def show_complaint_portal():
             st.text_area(
                 "Describe your complaint:",
                 value=st.session_state["complaint_text"],
-                placeholder=f"Enter your complaint here... (min {9} and max {299} words)",
+                placeholder=f"Enter your complaint here... (min {COMPLAINT_MIN_LENGTH} and max {COMPLAINT_MAX_LENGTH} words)",
                 height=150,
                 key="complaint_text"
             )
@@ -65,7 +68,7 @@ def show_complaint_portal():
             try:
                 response = fetch_backend_response(st.session_state["complaint_text"])
                 if "error" in response and "validation" in response["error"]:
-                    st.error("⚠️ Your complaint must be between 6 and 299 words. Please revise your complaint and try again.")
+                    st.error("⚠️ Your complaint must be between 6 and 299 words. Please revise your complaint and try again")
                 elif "error" in response:
                     st.error(f"⚠️ {response['error']}")
                 else:
@@ -85,9 +88,7 @@ def show_complaint_portal():
         else:
             st.error("⚠️ Complaint text cannot be empty.")
 
-def main():
-    # Directly show the complaint portal
+if __name__ == "__main__":
     show_complaint_portal()
 
-if __name__ == "__main__":
-    main()
+
