@@ -270,19 +270,18 @@ with DAG(
         on_failure_callback=send_failure_email,
     )
 
-    # # Task 6: Insert data into BigQuery
-    # insert_to_bigquery_task = PythonOperator(
-    #     task_id="insert_to_bigquery_task",
-    #     python_callable=insert_data_to_bigquery,
-    #     op_args=[remove_abusive_task.output],
-    #     on_failure_callback=send_failure_email,
-    # )
+    # Task 6: Insert data into BigQuery
+    insert_to_bigquery_task = PythonOperator(
+        task_id="insert_to_bigquery_task",
+        python_callable=insert_data_to_bigquery,
+        op_args=[remove_abusive_task.output],
+        on_failure_callback=send_failure_email,
+    )
 
     (
         data_cleaning_task
         >> anonymization_task
         >> remove_abusive_task
         >> product_standardization_task
-        >> send_email_task
-        # >> [insert_to_bigquery_task, send_email_task]
+        >> [insert_to_bigquery_task, send_email_task]
     )
