@@ -1,6 +1,15 @@
 import streamlit as st
 from backend import fetch_backend_response
 from utils import format_response
+from dotenv import load_dotenv
+import os
+
+# Load environment variables
+load_dotenv()
+
+# Get complaint constraints
+COMPLAINT_MIN_LENGTH = int(os.getenv("COMPLAINT_MIN_LENGTH", 6))
+COMPLAINT_MAX_LENGTH = int(os.getenv("COMPLAINT_MAX_LENGTH", 299))
 
 # Function to reset input field
 def reset_input():
@@ -56,7 +65,7 @@ def show_complaint_portal():
             st.text_area(
                 "Describe your complaint:",
                 value=st.session_state["complaint_text"],
-                placeholder="Enter your complaint here... (min 6 and max 299 words)",
+                placeholder=f"Enter your complaint here... (min {COMPLAINT_MIN_LENGTH} and max {COMPLAINT_MAX_LENGTH} words)",
                 height=150,
                 key="complaint_text"
             )

@@ -1,3 +1,5 @@
 streamlit
 requests
+random
+python-dotenv
 google-cloud-logging

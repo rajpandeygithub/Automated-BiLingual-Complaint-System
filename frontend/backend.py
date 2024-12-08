@@ -1,5 +1,13 @@
 import json
 import requests
+from dotenv import load_dotenv
+import os
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Get the backend API URL from the environment variables
+BACKEND_API_URL = os.getenv("BACKEND_API_URL")
 
 def preprocess_text(complaint_text):
     """
@@ -7,7 +15,6 @@ def preprocess_text(complaint_text):
     """
     # Remove newline characters
     complaint_text = complaint_text.replace('\n', ' ')
-    # Additional preprocessing can be added here if needed
     return complaint_text
 
 def fetch_backend_response(complaint_text):
@@ -17,9 +24,8 @@ def fetch_backend_response(complaint_text):
 
     # Preprocess the complaint_text
     cleaned_text = preprocess_text(complaint_text)
-    # Uncomment the following lines to connect to the actual backend API
     response = requests.post(
-        'https://backend-api-server-661860051070.us-east1.run.app/predict',
+        BACKEND_API_URL,
         json={"complaint_text": cleaned_text}
     )
     if response.status_code == 200:
@@ -33,10 +39,3 @@ def fetch_backend_response(complaint_text):
             return {"error": f"Unexpected Error: Status Code {response.status_code}"}
         except Exception as e:
             return {"error": f"An error occurred while communicating with the backend: {str(e)}"}
-
-    """# Hardcoded response for now
-    return {
-        "agent": "Agent1",
-        "product_department": "Department XYZ",
-        "product": "Product PQR"
-    }"""
