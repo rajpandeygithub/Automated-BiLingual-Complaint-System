@@ -27,7 +27,7 @@ def show_homepage():
     if st.button("Try Me Out"):
         # Set session state and rerun to navigate immediately
         st.session_state["show_portal"] = True
-        st.experimental_rerun()
+        st.rerun()
 
 def show_complaint_portal():
     st.title("📢 Customer Complaint Portal")
@@ -38,7 +38,7 @@ def show_complaint_portal():
     with col2:
         if st.button("⬅️ Back to Homepage"):
             st.session_state["show_portal"] = False
-            st.experimental_rerun()
+            st.rerun()
 
     # Initialize session state
     if "complaint_text" not in st.session_state:
