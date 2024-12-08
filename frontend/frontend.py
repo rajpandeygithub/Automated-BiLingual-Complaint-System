@@ -20,17 +20,18 @@ def show_complaint_portal():
     st.title("📢 Customer Complaint Portal")
     st.write("We value your feedback and are committed to resolving your concerns promptly. Please describe your issue below.")
 
-    # Add a "Back to Homepage" button below the title and center-align it
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        if st.button("⬅️ Back to Homepage"):
-            # Use JavaScript for redirection
-            homepage_url = "https://storage.googleapis.com/frontend_homepage/homepage.html"
-            st.markdown(f"""
-                <script type="text/javascript">
-                    window.location.href = "{homepage_url}";
-                </script>
-            """, unsafe_allow_html=True)
+    # Add a "Back to Homepage" link
+    homepage_url = "https://storage.googleapis.com/frontend_homepage/homepage.html"
+    st.markdown(
+        f"""
+        <div style="text-align: center; margin-top: 20px;">
+            <a href="{homepage_url}" target="_self" style="color: #0056e0; font-size: 1.2rem; text-decoration: none; border: 2px solid #0056e0; padding: 10px 15px; border-radius: 5px; display: inline-block; font-weight: bold;">
+                ⬅️ Back to Homepage
+            </a>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
     # Initialize session state
     if "complaint_text" not in st.session_state:
@@ -90,5 +91,3 @@ def show_complaint_portal():
 
 if __name__ == "__main__":
     show_complaint_portal()
-
-
