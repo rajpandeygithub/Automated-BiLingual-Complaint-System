@@ -3,6 +3,7 @@ from backend import fetch_backend_response
 from utils import format_response
 from dotenv import load_dotenv
 import os
+import webbrowser
 
 # Load environment variables
 load_dotenv()
@@ -16,28 +17,6 @@ def reset_input():
     st.session_state["complaint_text"] = ""  # Clear the text field
     st.session_state["complaint_submitted"] = False  # Reset submission flag
 
-def show_homepage():
-    st.title("Automated BiLingual Complaint Management System for Bank")
-    st.subheader("Revolutionizing Customer Support with AI-Powered Automation")
-    st.markdown("""
-    ### Introduction
-    This system automates handling customer complaints for bank products. Using an AI-powered model,
-    it efficiently routes complaints to the right department and support agent. The scalable,
-    bilingual system ensures faster resolution, cost savings, and improved customer satisfaction.
-    """)
-    st.markdown("""
-    ### Key Features
-    - **Bi-Lingual Support**: Handles complaints in English, Hindi.
-    - **Accurate Routing**: Predicts the product and department responsible for resolving complaints.
-    - **Ethical Validation**: Filters inappropriate or offensive complaints.
-    - **Scalable Infrastructure**: Cloud-based for reliability and growth.
-    """)
-    st.markdown("### Experience the System in Action!")
-    if st.button("Try Me Out"):
-        # Set session state and rerun to navigate immediately
-        st.session_state["show_portal"] = True
-        st.rerun()
-
 def show_complaint_portal():
     st.title("📢 Customer Complaint Portal")
     st.write("We value your feedback and are committed to resolving your concerns promptly. Please describe your issue below.")
@@ -46,8 +25,9 @@ def show_complaint_portal():
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         if st.button("⬅️ Back to Homepage"):
-            st.session_state["show_portal"] = False
-            st.rerun()
+            # Open the homepage in the browser
+            webbrowser.open_new_tab("https://storage.cloud.google.com/frontend_homepage/homepage.html")
+            return
 
     # Initialize session state
     if "complaint_text" not in st.session_state:
@@ -65,7 +45,7 @@ def show_complaint_portal():
             st.text_area(
                 "Describe your complaint:",
                 value=st.session_state["complaint_text"],
-                placeholder=f"Enter your complaint here... (min {COMPLAINT_MIN_LENGTH} and max {COMPLAINT_MAX_LENGTH} words)",
+                placeholder=f"Enter your complaint here... (min {9} and max {299} words)",
                 height=150,
                 key="complaint_text"
             )
@@ -85,7 +65,7 @@ def show_complaint_portal():
             try:
                 response = fetch_backend_response(st.session_state["complaint_text"])
                 if "error" in response and "validation" in response["error"]:
-                    st.error("⚠️ Your complaint must be between 6 and 299 words. Please revise your complaint and try again")
+                    st.error("⚠️ Your complaint must be between 6 and 299 words. Please revise your complaint and try again.")
                 elif "error" in response:
                     st.error(f"⚠️ {response['error']}")
                 else:
@@ -106,14 +86,8 @@ def show_complaint_portal():
             st.error("⚠️ Complaint text cannot be empty.")
 
 def main():
-    # Default to showing homepage if no session state is set
-    if "show_portal" not in st.session_state:
-        st.session_state["show_portal"] = False
-
-    if not st.session_state["show_portal"]:
-        show_homepage()
-    else:
-        show_complaint_portal()
+    # Directly show the complaint portal
+    show_complaint_portal()
 
 if __name__ == "__main__":
     main()
