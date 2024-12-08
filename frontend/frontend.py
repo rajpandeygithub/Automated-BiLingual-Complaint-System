@@ -21,7 +21,7 @@ def show_complaint_portal():
     st.write("We value your feedback and are committed to resolving your concerns promptly. Please describe your issue below.")
 
     # Add a "Back to Homepage" link
-    homepage_url = "https://storage.googleapis.com/frontend_homepage/homepage.html"
+    homepage_url = "https://storage.cloud.google.com/frontend_homepage/homepage.html"
     st.markdown(
         f"""
         <div style="text-align: center; margin-top: 20px;">
