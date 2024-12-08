@@ -76,7 +76,7 @@ def show_complaint_portal():
             try:
                 response = fetch_backend_response(st.session_state["complaint_text"])
                 if "error" in response and "validation" in response["error"]:
-                    st.error(f"⚠️ Your complaint must be between 6 and 299 words. Please revise your complaint and try again.{response['error']}")
+                    st.error("⚠️ Your complaint must be between 6 and 299 words. Please revise your complaint and try again")
                 elif "error" in response:
                     st.error(f"⚠️ {response['error']}")
                 else:
