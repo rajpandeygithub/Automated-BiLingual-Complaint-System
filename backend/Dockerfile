@@ -10,6 +10,9 @@ ENV DRIFT_HI_URL=https://us-east1-bilingualcomplaint-system.cloudfunctions.net/d
 ENV PRODUCT_ENDPOINT_ID=5930875671386521600
 ENV DEPARTMENT_ENDPOINT_ID=7987050376257863680
 
+ENV DATASET_ID=MLOps
+ENV PREDICTION_TABLE_ID=predicted_records
+
 # Set the working directory inside the container
 WORKDIR /app
 

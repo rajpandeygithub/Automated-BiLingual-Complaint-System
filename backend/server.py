@@ -2,7 +2,7 @@ import os
 import uvicorn
 import numpy as np
 import requests
-from google.cloud import aiplatform, logging as gcloud_logging
+from google.cloud import aiplatform, logging as gcloud_logging, bigquery
 from transformers import BertTokenizer
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Request
@@ -11,14 +11,15 @@ from custom_exceptions import ValidationException, DriftException
 from object_models import Complaint, PredictionResponse, ErrorResponse
 from preprocessing import DataValidationPipeline, DataTransformationPipeline
 from inference import make_inference
+from bigquery_operations import insert_to_prediction_table
 
 drift_en_url = os.environ.get('DRIFT_EN_URL')
 drift_hi_url = os.environ.get('DRIFT_HI_URL')
 
 log_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
-client = gcloud_logging.Client()
-logger = client.logger("complaint-portal")
+logger_client = gcloud_logging.Client()
+logger = logger_client.logger("complaint-portal")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -49,6 +50,12 @@ location = os.environ.get('LOCATION')
 # Endpoint Config
 product_endpoint_id = os.environ.get('PRODUCT_ENDPOINT_ID')
 department_endpoint_id = os.environ.get('DEPARTMENT_ENDPOINT_ID')
+
+# BigQuery Config
+dataset_id = os.environ.get('DATASET_ID')
+prediction_table_id = os.environ.get('PREDICTION_TABLE_ID')
+predicition_table_name = f"{project_id}.{dataset_id}.{prediction_table_id}"
+big_query_client = bigquery.Client(project=project_id)
 
 aiplatform.init(project=project_id, location=location)
 product_endpoint = aiplatform.Endpoint(product_endpoint_id)
@@ -238,6 +245,14 @@ async def submit_complaint(complaint: Complaint):
                          "count": 1,
                     }
                     )
+        
+        # Save the records to BigQuery
+
+        insert_to_prediction_table(
+            bqClient=big_query_client, processed_complaint=processed_text,
+            language=complaint_language, product=predicted_product, department=predicted_department, 
+            table_id=predicition_table_name
+        )
 
         return PredictionResponse(
             product=predicted_product,
