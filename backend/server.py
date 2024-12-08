@@ -249,8 +249,16 @@ async def submit_complaint(complaint: Complaint):
     except ValidationException as ve:
         raise ve
     except Exception as e:
+        logger.log_struct(
+                     {
+                         "severity": "ERROR",
+                         "message": f"Failed to Respond to Request\nException: {e}",
+                         "type": "PREDICTION-ROUTE-ERROR",
+                         "count": 1,
+                    }
+                    )
         raise HTTPException(
-            status_code=500, detail="An unexpected error occurred in prediction route."
+            status_code=500, detail=f"An unexpected error occurred in prediction route.\nError: {e}"
         )
 
 
