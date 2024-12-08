@@ -1,3 +1,4 @@
+# Project Settings
 project:
   name: bilingual-complaint-classification
   description: Bilingual Complaint Classification Model training
@@ -53,3 +54,22 @@ deploy_params:
   max_replica_count: 3
   performance_score_thresholds:
     f1_score: 0.2
+
+# Communications
+email_params:
+  sender_email: sucessemailtrigger@gmail.com
+  reciever_email:
+   - hegde.anir@northeastern.edu
+   - nenavath.r@northeastern.edu
+   - pandey.raj@northeastern.edu
+   - khatri.say@northeastern.edu
+   - singh.arc@northeastern.edu
+   - goparaju.v@northeastern.edu
+  password: jomnpxbfunwjgitb
+  email_content:
+    subject: "[Kubeflow Product Training Job] - Submitted"
+    message: |
+    Hi team,
+    
+    A new Kubeflow Training Job is submitted on Vertex AI to train the Product Classifier.
+    Please monitor the pipeline for further updates. 

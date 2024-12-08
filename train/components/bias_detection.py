@@ -21,7 +21,8 @@ def detect_bias_component(
     max_sequence_length: int = 128,
     accuracy_threshold: float = 0.2,
     model_save_name: str = 'saved_tf_hf_model',
-    huggingface_model_name: str = 'bert-base-multilingual-cased'
+    huggingface_model_name: str = 'bert-base-multilingual-cased',
+    slack_url: str = None,
 ):
     import os
     import requests
@@ -34,16 +35,58 @@ def detect_bias_component(
     # Hardcoded label map
     idx_2_label_map = {v:k for k,v in label_map.items()}
 
-    # Function to send alert
-    def send_alert(summary_message):
-        SLACK_WEBHOOK_URL = 'https://hooks.slack.com/services/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'
-        payload = {"text": summary_message}
+    def send_slack_message(
+        webhook_url: str,
+        message_str: str,
+        execution_date: str, 
+        execution_time: str, 
+        duration: str,
+        is_success: bool,
+        ):
+    
+        if is_success:
+            color = "#36a64f"
+            pretext = f":large_green_circle: {message_str}"
+        else:
+            color = "FF0000"
+            pretext = f":large_red_circle: {message_str}"
+
+        message = {
+            "attachments": [
+                {
+                    "color": color,  # Green color for success
+                    "pretext": pretext,
+                    "fields": [
+                        {
+                            "title": "Component Name",
+                            "value": "Get Data KubeFlow Component",
+                            "short": True
+                        },
+                        {
+                            "title": "Execution Date",
+                            "value": str(execution_date),
+                            "short": True
+                        },
+                        {
+                            "title": "Execution Time",
+                            "value": str(execution_time),
+                            "short": True
+                        },
+                        {
+                            "title": "Duration",
+                            "value": f"{duration} minutes",
+                            "short": True
+                        }
+                    ]
+                }
+            ]
+        }
+
         try:
-            response = requests.post(SLACK_WEBHOOK_URL, json=payload)
+            response = requests.post(webhook_url, json=message)
             response.raise_for_status()
-            print(f"Alert sent successfully: {summary_message}")
-        except Exception as e:
-            print(f"Failed to send alert: {str(e)}")
+        except requests.exceptions.RequestException as e:
+            print(e)
 
     # Load and parse test dataset
     def parse_tfrecord_fn(example_proto, max_sequence_length=max_sequence_length):
@@ -56,6 +99,18 @@ def detect_bias_component(
 
 
     try:
+
+        start_time = datetime.now()
+
+        if slack_url:
+            send_slack_message(
+                webhook_url=slack_url, message_str='KubeFlow Component: Bias Detection | Component Started', 
+                execution_date=start_time.date(), execution_time=start_time.time(), 
+                duration=(datetime.now() - start_time).total_seconds() / 60,
+                is_success=True
+                )
+
+
         record_path = os.path.join(test_data.path, f'{test_data_name}.tfrecord')
         test_dataset = tf.data.TFRecordDataset(record_path)
         test_dataset = test_dataset.map(parse_tfrecord_fn).batch(batch_size)
@@ -125,10 +180,26 @@ def detect_bias_component(
                 f"{low_accuracy_slices_str}\n\n"
                 f"**Action Required:** Please mitigate this issue as soon as possible to ensure fairness in the model."
             )
-            send_alert(summary_message)
+            if slack_url:
+                send_slack_message(
+                    webhook_url=slack_url, message_str=f'KubeFlow Component: Bias Detection | Bias Detected! Slices Accuracy below threshold',
+                    execution_date=start_time.date(), execution_time=start_time.time(), 
+                    duration=(datetime.now() - start_time).total_seconds() / 60, is_success=False
+                    )
         else:
-            print("No bias detected. All slices meet the accuracy threshold.")
+            if slack_url:
+                send_slack_message(
+                    webhook_url=slack_url, message_str=f'KubeFlow Component: Bias Detection | No Bias Detected',
+                    execution_date=start_time.date(), execution_time=start_time.time(), 
+                    duration=(datetime.now() - start_time).total_seconds() / 60, is_success=True
+                    )
 
     except Exception as e:
         print(f"Error in bias detection: {str(e)}")
+        if slack_url:
+            send_slack_message(
+                webhook_url=slack_url, message_str=f'KubeFlow Component: Bias Detection | Error in Bias Detection',
+                execution_date=start_time.date(), execution_time=start_time.time(), 
+                duration=(datetime.now() - start_time).total_seconds() / 60, is_success=False
+                )
         raise e

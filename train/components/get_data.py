@@ -1,3 +1,4 @@
+from typing import Dict
 from kfp.dsl import Output, Dataset, component
 
 @component(
@@ -19,14 +20,76 @@ def get_data_component(
     train_data: Output[Dataset],
     holdout_data: Output[Dataset],
     testset_size: float = 0.2,
-    limit:int=None):
-
+    limit:int=None,
+    slack_url: str = None
+    ):
+  
+  import requests
   from google.cloud import bigquery
   from sklearn.model_selection import train_test_split
   from datetime import datetime
 
-  # Track the start time of the component execution
+  def send_slack_message(
+        webhook_url: str,
+        message_str: str,
+        execution_date: str, 
+        execution_time: str, 
+        duration: str,
+        is_success: bool,
+        ):
+    
+    if is_success:
+        color = "#36a64f"
+        pretext = f":large_green_circle: {message_str}"
+    else:
+        color = "FF0000"
+        pretext = f":large_red_circle: {message_str}"
+
+    message = {
+        "attachments": [
+            {
+                "color": color,  # Green color for success
+                "pretext": pretext,
+                "fields": [
+                    {
+                        "title": "Component Name",
+                        "value": "Get Data KubeFlow Component",
+                        "short": True
+                    },
+                    {
+                        "title": "Execution Date",
+                        "value": str(execution_date),
+                        "short": True
+                    },
+                    {
+                        "title": "Execution Time",
+                        "value": str(execution_time),
+                        "short": True
+                    },
+                    {
+                        "title": "Duration",
+                        "value": f"{duration} minutes",
+                        "short": True
+                    }
+                ]
+            }
+        ]
+    }
+
+    try:
+        response = requests.post(webhook_url, json=message)
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        print(e)
+
   start_time = datetime.now()
+  
+  if slack_url:
+    send_slack_message(
+       webhook_url=slack_url, message_str='KubeFlow Component: Get BigQuery Data | Component Started', 
+       execution_date=start_time.date(), execution_time=start_time.time(), 
+       duration=0, is_success=True
+       )
 
   try:
     bqclient = bigquery.Client(project=project_id, location=location)
@@ -36,6 +99,13 @@ def get_data_component(
     elif label_name == 'department':
        QUERY = f'''select complaint_english, complaint_hindi, {label_name} from `bilingualcomplaint-system.MLOps`.undersampled_department_dataset({minimum_label_count}, {start_year}, {end_year})'''
     else:
+       if slack_url:
+          send_slack_message(
+             webhook_url=slack_url, message_str='KubeFlow Component: Get BigQuery Data | Failed Data Pull from BigQuery', 
+             execution_date=start_time.date(), execution_time=start_time.time(), 
+             duration=(datetime.now() - start_time).total_seconds() / 60,
+             is_success=False
+             )
        raise ValueError(f'Unexpected label. Use only `product` or `department`.')
 
     if limit:
@@ -44,6 +114,14 @@ def get_data_component(
     query_job = bqclient.query(QUERY)  # API request
     rows = query_job.result()  # Waits for query to finish
     data = rows.to_dataframe()
+
+    if slack_url:
+        send_slack_message(
+           webhook_url=slack_url, message_str='KubeFlow Component: Get BigQuery Data | Data Pull from BigQuery Complete', 
+           execution_date=start_time.date(), execution_time=start_time.time(), 
+           duration=(datetime.now() - start_time).total_seconds() / 60,
+           is_success=True
+           )
     
     # Melt the DataFrame
     data_features = data.melt(
@@ -58,11 +136,23 @@ def get_data_component(
 
     train.to_pickle(train_data.path)
     holdout.to_pickle(holdout_data.path)
-    # Track the end time and calculate duration
-    end_time = datetime.now()
-    duration = (end_time - start_time).total_seconds() / 60  # Duration in minutes
+
+    if slack_url:
+        send_slack_message(
+           webhook_url=slack_url, message_str='KubeFlow Component: Get BigQuery Data | Component Finished', 
+           execution_date=start_time.date(), execution_time=start_time.time(), 
+           duration=(datetime.now() - start_time).total_seconds() / 60,
+           is_success=True
+           )
 
   except Exception as e:
       # Send failure email if there's an error
       error_message = str(e)
+      if slack_url:
+        send_slack_message(
+           webhook_url=slack_url, message_str='KubeFlow Component: Get BigQuery Data | Component Failed', 
+           execution_date=start_time.date(), execution_time=start_time.time(), 
+           duration=(datetime.now() - start_time).total_seconds() / 60,
+           is_success=False
+           )
       raise (e)

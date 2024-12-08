@@ -27,7 +27,8 @@ def test_huggingface_model_component(
     model_save_name: str = 'saved_tf_hf_model',
     batch_size: int = 8,
     max_sequence_length: int = 128,
-    huggingface_model_name: str = 'bert-base-multilingual-cased'
+    huggingface_model_name: str = 'bert-base-multilingual-cased',
+    slack_url: str = None,
 ) -> NamedTuple('Outputs', [
     ('precision', float),
     ('recall', float),
@@ -37,11 +38,66 @@ def test_huggingface_model_component(
     import re
     import json
     import time
+    import requests
+    from datetime import datetime
     import tensorflow as tf
     from collections import namedtuple
     import google.cloud.aiplatform as aiplatform
     from transformers import TFAutoModelForSequenceClassification
     from sklearn.metrics import precision_score, recall_score, f1_score, confusion_matrix
+
+    def send_slack_message(
+        webhook_url: str,
+        message_str: str,
+        execution_date: str, 
+        execution_time: str, 
+        duration: str,
+        is_success: bool,
+        ):
+    
+        if is_success:
+            color = "#36a64f"
+            pretext = f":large_green_circle: {message_str}"
+        else:
+            color = "FF0000"
+            pretext = f":large_red_circle: {message_str}"
+
+        message = {
+            "attachments": [
+                {
+                    "color": color,  # Green color for success
+                    "pretext": pretext,
+                    "fields": [
+                        {
+                            "title": "Component Name",
+                            "value": "Get Data KubeFlow Component",
+                            "short": True
+                        },
+                        {
+                            "title": "Execution Date",
+                            "value": str(execution_date),
+                            "short": True
+                        },
+                        {
+                            "title": "Execution Time",
+                            "value": str(execution_time),
+                            "short": True
+                        },
+                        {
+                            "title": "Duration",
+                            "value": f"{duration} minutes",
+                            "short": True
+                        }
+                    ]
+                }
+            ]
+        }
+
+        try:
+            response = requests.post(webhook_url, json=message)
+            response.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            print(e)
 
     def build_experiment_name(experiment_name: str) -> str:
         name = experiment_name.lower()
@@ -56,6 +112,8 @@ def test_huggingface_model_component(
         name = name.rstrip('-')
         return name
     
+    start_time = datetime.now()
+
     experiment_name = build_experiment_name(experiment_name=f'exp-{label_name}-{huggingface_model_name}')
     aiplatform.init(project=project_id, location=location, experiment=experiment_name)
     experiment_run_id = "run-{}".format(int(time.time()))
@@ -73,6 +131,14 @@ def test_huggingface_model_component(
       return parsed_example['feature'], parsed_example['label']
 
     try:
+      
+      if slack_url:
+         send_slack_message(
+            webhook_url=slack_url, message_str=f'KubeFlow Component: Test HuggingFace Model | Model: {huggingface_model_name} started', 
+            execution_date=start_time.date(), execution_time=start_time.time(), 
+            duration=0, is_success=True
+            )
+
       # Load test dataset
       record_path = os.path.join(test_data.path, f'{test_data_name}.tfrecord')
       test_dataset = tf.data.TFRecordDataset(record_path)
@@ -140,10 +206,22 @@ def test_huggingface_model_component(
 
       aiplatform.end_run()
 
+      if slack_url:
+         send_slack_message(
+            webhook_url=slack_url, message_str=f'KubeFlow Component: Test HuggingFace Model | Model: {huggingface_model_name} Successfully Tested', 
+            execution_date=start_time.date(), execution_time=start_time.time(), 
+            duration=(datetime.now() - start_time).total_seconds() / 60, is_success=True
+            )
+
       output = namedtuple('Outputs', ['precision', 'recall', 'f1_score'])
       return output(precision, recall, f1)
 
     except Exception as e:
       error_message = str(e)
-      print(f"Error during model testing: {error_message}")
+      if slack_url:
+         send_slack_message(
+            webhook_url=slack_url, message_str=f'KubeFlow Component: Test HuggingFace Model | Model: {huggingface_model_name} Failed to Test', 
+            execution_date=start_time.date(), execution_time=start_time.time(), 
+            duration=(datetime.now() - start_time).total_seconds() / 60, is_success=True
+            )
       raise e

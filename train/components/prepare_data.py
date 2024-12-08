@@ -18,18 +18,76 @@ def prepare_data_component(
     feature_name: str, 
     label_name: str,
     label_map: Dict[str, int],
+    slack_url: str = None,
     max_sequence_length: int = 128,
     hugging_face_model_name: str = 'bert-base-multilingual-cased'
     ):
   import os
   import pickle
+  import requests
   import pandas as pd
+  from datetime import datetime
   import tensorflow as tf
   from transformers import AutoTokenizer
   from google.cloud import logging as gcloud_logging
 
   logging_client = gcloud_logging.Client()
   logger = logging_client.logger("prepare_data_component")
+
+  def send_slack_message(
+        webhook_url: str,
+        message_str: str,
+        execution_date: str, 
+        execution_time: str, 
+        duration: str,
+        is_success: bool,
+        ):
+    
+    if is_success:
+        color = "#36a64f"
+        pretext = f":large_green_circle: {message_str}"
+    else:
+        color = "FF0000"
+        pretext = f":large_red_circle: {message_str}"
+
+    message = {
+        "attachments": [
+            {
+                "color": color,  # Green color for success
+                "pretext": pretext,
+                "fields": [
+                    {
+                        "title": "Component Name",
+                        "value": "Get Data KubeFlow Component",
+                        "short": True
+                    },
+                    {
+                        "title": "Execution Date",
+                        "value": str(execution_date),
+                        "short": True
+                    },
+                    {
+                        "title": "Execution Time",
+                        "value": str(execution_time),
+                        "short": True
+                    },
+                    {
+                        "title": "Duration",
+                        "value": f"{duration} minutes",
+                        "short": True
+                    }
+                ]
+            }
+        ]
+    }
+
+    try:
+        response = requests.post(webhook_url, json=message)
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        print(e)
+
+  start_time = datetime.now()
 
   # Function to serialize each example
   def serialize_example(feature, label):
@@ -41,6 +99,13 @@ def prepare_data_component(
     }
     example_proto = tf.train.Example(features=tf.train.Features(feature=feature_dict))
     return example_proto.SerializeToString()
+  
+  if slack_url:
+    send_slack_message(
+       webhook_url=slack_url, message_str=f'KubeFlow Component: Prepare Data Component | Dataset: {dataset_name} & Model: {hugging_face_model_name} Started', 
+       execution_date=start_time.date(), execution_time=start_time.time(), 
+       duration=0, is_success=True
+       )
 
   tokenizer = AutoTokenizer.from_pretrained(hugging_face_model_name)
 
@@ -80,6 +145,12 @@ def prepare_data_component(
         "type": f"TOKENIZATION-ERROR",
         "count": 1
       })
+    if slack_url:
+      send_slack_message(
+        webhook_url=slack_url, message_str=f'KubeFlow Component: Prepare Data Component | Dataset: {dataset_name} & Model: {hugging_face_model_name} Failed | TFDataset Creation Failed.', 
+        execution_date=start_time.date(), execution_time=start_time.time(), 
+        duration=(datetime.now() - start_time).total_seconds() / 60, is_success=False
+        )
 
   # make the folder if does not exist
   os.makedirs(tf_dataset.path, exist_ok=True)
@@ -91,3 +162,10 @@ def prepare_data_component(
     for feature, label in tf_prepared_dataset:
       serialized_example = serialize_example(feature, label)
       writer.write(serialized_example)
+  
+  if slack_url:
+    send_slack_message(
+       webhook_url=slack_url, message_str=f'KubeFlow Component: Prepare Data Component | Dataset: {dataset_name} & Model: {hugging_face_model_name} Success', 
+       execution_date=start_time.date(), execution_time=start_time.time(), 
+       duration=0, is_success=True
+       )
