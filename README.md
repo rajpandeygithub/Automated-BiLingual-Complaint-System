@@ -445,35 +445,58 @@ Below is a snapshot of the monitoring dashboard:
 
 ### a. Data Source
 
-Data is fetched from Google Cloud BigQuery, with complaint_english as the primary feature and product as the target label. Preprocessing steps include TF-IDF Vectorization for text data transformation and Label Encoding for converting categorical labels into numerical format.
+- Data is fetched in TFRecord format from the provided train_data path.
+- The primary feature (feature) represents tokenized text, and the target label (label) corresponds to the classification category.
+- A TFRecord parsing function converts the data into TensorFlow-compatible format.
 
 <img width="1429" alt="Screenshot 2024-11-19 at 5 33 13 PM" src="https://github.com/user-attachments/assets/4f6b7e25-6ae2-4934-ac3f-d66d28a3ad7c">
 
 ### b. Model
 
-The pipeline implements two models:
-	•	XGBoost: Optimized for high accuracy and performance.
-	•	Naive Bayes: A lightweight, faster alternative suited for text classification tasks.
-Both models are trained, tested, and compared for robust experimentation.
+The pipeline now integrates a Hugging Face model for sequence classification:
+- Hugging Face Pretrained Model: Defaulting to bert-base-multilingual-cased.
+- Architecture: Fine-tunes the Hugging Face transformer using TensorFlow.
+
+Key Model Features:
+- Customizable Parameters:
+- max_epochs: Default of 2.
+- batch_size: Default of 8.
+- max_sequence_length: Default of 128 tokens.
+- Training Strategy:
+	- Dataset split into training and validation subsets (default split ratio: 80/20).
+	- Batch processing and shuffling for efficient training.
 
 ### c. Model Components
 
-Key components of the pipeline include:
-	1.	TF-IDF Vectorizer: Converts text into meaningful numerical representations.
-	2.	Label Encoder: Encodes target labels for model compatibility.
-	3.	Models:
-	•	XGBoost: Gradient boosting algorithm for structured data.
-	•	Naive Bayes: Probabilistic model for quick predictions.
+Key Components:
+ - Data Preprocessing:
+	- TFRecord dataset parsing function (parse_tfrecord_fn) decodes serialized examples.
+	- Dynamic dataset splitting into training and validation subsets.
+- Model Training:
+	- Fine-tunes a Hugging Face transformer model for sequence classification.
+	- Early stopping and learning rate scheduler optimize training.
+- Model Deployment:
+	- Saves the trained model in .keras format and as a complete directory structure for reuse.
 
 ### d. Model Evaluation
 
-Models are evaluated using F1 Score, Precision, and Recall, ensuring a comprehensive assessment of performance. Evaluation results are logged in BigQuery for reference and comparison, while real-time updates on model evaluation are sent through Slack notifications.
+Metrics:
+- Accuracy: Measures the percentage of correct predictions.
+- Loss: Monitored for both training and validation datasets during training.
+
+Callbacks:
+- Early Stopping: Halts training if the validation loss doesn’t improve after 3 epochs.
+- ReduceLROnPlateau: Reduces the learning rate by a factor of 0.1 when the validation loss plateaus.
 
 ### e. Model Deployment
 
-The best-performing model is automatically registered and deployed to a Vertex AI real-time endpoint, supporting scalable, real-time inference. Vertex AI’s automated traffic splitting manages multiple model versions efficiently. Post-deployment, performance and drift detection are monitored continuously.
-
-
+- Model Output:
+	- Trained model saved in the specified directory under the model_output path.
+	- Supports direct reloading via TensorFlow for inference or additional fine-tuning.
+- Slack Integration:
+	- Can be integrated with Slack for real-time notifications on training progress, errors, and completion.
+- Monitoring:
+	- Validation loss monitored via callbacks to ensure early detection of overfitting or underperformance.
 
 ### f. Monitoring and Notifications
 - Slack Integration: Sends real-time notifications for each pipeline execution stage, ensuring immediate updates on success or failure.
@@ -488,15 +511,17 @@ The best-performing model is automatically registered and deployed to a Vertex A
 
 ### Model Pipeline:
 
-<img width="858" alt="Screenshot 2024-11-19 at 3 11 40 PM" src="https://github.com/user-attachments/assets/339f1755-4f73-468d-8f1e-f1866ffeda7c">
+<img width="309" alt="Screenshot 2024-12-08 at 1 38 42 AM" src="https://github.com/user-attachments/assets/8da032e7-348f-483e-9168-f4fbb9bffca8">
+
 
 ### Model Registry:
 
-<img width="1186" alt="Screenshot 2024-11-19 at 3 26 34 PM" src="https://github.com/user-attachments/assets/ae26de45-f962-42a2-8edf-fb5ec387c803">
+<img width="1440" alt="Screenshot 2024-12-08 at 1 40 00 AM" src="https://github.com/user-attachments/assets/3e43328e-24c6-4bd1-a22e-6338f3eeb8ff">
 
 ### Cloud Run function:
 
-<img width="1139" alt="Screenshot 2024-11-19 at 3 28 42 PM" src="https://github.com/user-attachments/assets/9159a298-ac26-4dfc-ab08-8cf59f23f4f7">
+<img width="1440" alt="Screenshot 2024-12-08 at 1 43 12 AM" src="https://github.com/user-attachments/assets/3aa4e0a9-776a-4d73-afb6-19f2a74ef942">
+
 
 ## Data Drift Detection
 
