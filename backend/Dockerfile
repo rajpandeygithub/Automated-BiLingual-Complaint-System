@@ -7,8 +7,8 @@ ENV LOCATION=us-east1
 ENV DRIFT_EN_URL=https://us-east1-bilingualcomplaint-system.cloudfunctions.net/data_drift
 ENV DRIFT_HI_URL=https://us-east1-bilingualcomplaint-system.cloudfunctions.net/data-drift-hindi
 
-ENV PRODUCT_ENDPOINT_ID=7987050376257863680
-ENV DEPARTMENT_ENDPOINT_ID=1857651283406618624
+ENV PRODUCT_ENDPOINT_ID=5930875671386521600
+ENV DEPARTMENT_ENDPOINT_ID=7987050376257863680
 
 # Set the working directory inside the container
 WORKDIR /app
