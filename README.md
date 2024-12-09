@@ -293,25 +293,26 @@ graph TB
     end
 
     subgraph "Data Validation Pipeline DAG"
-        C[Load Data] --> D[Schema Validation]
-        D --> S[Statistic Generation]
-        S --> E[Filter Records]
-        E --> |Parallel Process 1| F[Filter by Word Count & Date]
-        E --> |Parallel Process 2| G[Filter by Language]
-        F --> H[Aggregate Validation Results]
-        G --> H
-        H --> I[Trigger Data Cleaning Pipeline]
+        C[Load Data] --> D[Data Quality Checks]
+        D --> E[Schema and Statistics Generation]
+        E --> F[Filter Records]
+        F --> |Parallel Process 1| G[Filter by Word Count & Date]
+        F --> |Parallel Process 2| H[Filter by Language]
+        G --> I[Aggregate Filtered Results]
+        H --> I
+        I --> J[Trigger Data Cleaning Pipeline]
     end
 
     subgraph "Data Cleaning Pipeline DAG"
-        J[Data Cleaning] --> K[Anonymize Sensitive Data]
-        K --> L[Remove Abusive Content]
-        L --> M[Send Success Email]
-        L --> N[Insert Records to BigQuery]
+        K[Data Cleaning] --> L[Anonymize Sensitive Data]
+        L --> M[Remove Abusive Content]
+        M --> N[Standardize Product Classification]
+        N --> O[Insert Records to BigQuery]
+        N --> P[Send Success Email]
     end
 
     B --> C
-    I --> J
+    J --> K
 ```
 
 Summarizing the entire Airflow Orchestration Graph Below Using Dags:
