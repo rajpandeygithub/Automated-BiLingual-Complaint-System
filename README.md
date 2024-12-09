@@ -536,7 +536,7 @@ Checking or Savings Account
 
 <img width="518" alt="image" src="https://github.com/user-attachments/assets/b33c9499-d4a5-43e5-ada3-dc7f6731e5b7">
 
-### Monitoring
+## Monitoring
 
 The system leverages **Vertex AI Monitoring** for real-time tracking and visualization of key metrics, including:
 
@@ -548,6 +548,162 @@ Below is a snapshot of the monitoring dashboard:
 
 ![image](https://github.com/user-attachments/assets/86286400-5441-4228-8020-02802c90bbac)
 ![image](https://github.com/user-attachments/assets/96a9762c-67b8-4f93-b79a-b42d26e1dee8)
+
+## Test CICD
+
+This pipeline runs tests to validate changes in the preprocessing script using pytest and ensures the code is correct before deployment.
+
+---
+
+### **Trigger Conditions**
+- Runs when:
+  - Code is pushed or a pull request is made.
+  - Changes are detected in:
+    - `data_preprocessing_pipeline/dags/scripts/preprocessing.py`
+    - `tests/**`
+
+---
+
+### **Pipeline Steps**
+1. **Checkout Repository**: Pulls the latest code from the repository.
+2. **Set up Python**: Installs Python 3.12 on the runner.
+3. **Cache pip**: Speeds up dependency installation by caching pip packages.
+4. **Install Dependencies**:
+   - Upgrades `pip`.
+   - Installs packages from `requirements.txt`.
+   - Installs `pytest` for running tests.
+5. **Set PYTHONPATH**: Configures the Python environment to include the project directory.
+6. **Run Tests**: Executes all test cases in the `tests/` directory using `pytest`.
+7. **Upload Logs**:
+   - **On Failure**: Uploads `pytest.log` for debugging.
+   - **On Success**: Uploads `pytest.log` as a record of successful test execution.
+
+---
+
+### **Setup**
+- Ensure all tests are added to the `tests/` directory.
+- Define dependencies in `data_preprocessing_pipeline/requirements.txt`.
+
+This pipeline ensures code changes are validated before merging.
+![image](https://github.com/user-attachments/assets/3d399ffb-73ec-4d85-823e-2219b7252f9e)
+
+
+## Training CICD
+This pipeline automates ML model training. 
+
+---
+
+### **Trigger Conditions**
+- Runs when:
+  - Code is pushed to the `Dev` branch.
+  - Files in the `train/` directory are updated.
+
+---
+
+### **Pipeline Steps**
+1. **Checkout Code**: Pulls the latest repository code.
+2. **Authenticate with Google Cloud**: Logs into GCP using a service account key.
+3. **Setup GCP**: Configures Google Cloud for the project.
+4. **Install Dependencies**: Installs Python packages from `requirements.txt`.
+5. **Run Training for Department**: Executes `train-department.yml` configuration.
+6. **Run Training for Product**: Executes `train-product.yml` configuration.
+7. **Notify Slack**: Sends updates using the provided webhook.
+
+---
+
+### **Setup**
+- Add GCP credentials (`GCP_SA_KEY`) and Slack webhook (`SLACK_URL`) as repository secrets.
+![image](https://github.com/user-attachments/assets/3761caa5-6719-453f-b1d7-4d59abbf74a4)
+
+
+
+## Deployment CICD
+This pipeline automates deploying trained ML models.
+
+---
+
+### **Trigger Conditions**
+- Runs when:
+  - Code is pushed to the `Dev` branch.
+  - Files in the `deployment/` directory are updated.
+
+---
+
+### **Pipeline Steps**
+1. **Checkout Code**: Pulls the latest repository code.
+2. **Authenticate with Google Cloud**: Logs into GCP using a service account key.
+3. **Setup GCP**: Configures Google Cloud for the project.
+4. **Install Dependencies**: Installs Python packages from `deployment_requirements.txt`.
+5. **Run Deployment for Department**: Executes `deployment_pipeline.py` with `department.yml`.
+6. **Run Deployment for Product**: Executes `deployment_pipeline.py` with `product.yml`.
+
+---
+
+### **Setup**
+- Add GCP credentials (`GCP_SA_KEY`) as a repository secret.
+![image](https://github.com/user-attachments/assets/b82b6f24-14d3-46d4-a95e-1ead4f79f4cf)
+
+
+
+## Backend CICD
+This pipeline automates the deployment of the FastAPI backend to Google Cloud Run.
+
+---
+
+### **Trigger Conditions**
+- Runs when:
+  - Code is pushed to the `Dev` branch.
+  - Files in the `backend/` directory are updated.
+
+---
+
+### **Pipeline Steps**
+1. **Checkout Code**: Pulls the latest repository code.
+2. **Google Cloud Authentication**: Authenticates with GCP using a service account key.
+3. **Docker Authentication**: Logs into Google Artifact Registry for pushing Docker images.
+4. **Build and Push Docker Image**: 
+   - Builds a Docker image for the FastAPI backend.
+   - Pushes the image to Google Artifact Registry.
+5. **Deploy to Cloud Run**: Deploys the Docker image to Google Cloud Run with specified memory and region.
+6. **Show Output**: Displays the deployed Cloud Run service URL.
+
+---
+
+### **Setup**
+- Add GCP credentials (`BACKEND_DEPLOY_CLOUD_RUN`) as a repository secret.
+![image](https://github.com/user-attachments/assets/cf0c5298-7599-4ad3-a58f-309fc9f3a9df)
+
+
+
+## Frontend CICD
+This pipeline automates the deployment of the frontend application to Google Cloud Run.
+
+---
+
+### **Trigger Conditions**
+- Runs when:
+  - Code is pushed to the `Dev` branch.
+  - Files in the `frontend/` directory are updated.
+
+---
+
+### **Pipeline Steps**
+1. **Checkout Code**: Pulls the latest repository code.
+2. **Google Cloud Authentication**: Authenticates with GCP using a service account key.
+3. **Docker Authentication**: Logs into Google Artifact Registry for pushing Docker images.
+4. **Build and Push Docker Image**: 
+   - Builds a Docker image for the frontend.
+   - Pushes the image to Google Artifact Registry.
+5. **Deploy to Cloud Run**: Deploys the Docker image to Google Cloud Run in the specified region.
+6. **Allow Unauthenticated Access**: Grants public access to the deployed service.
+7. **Show Output**: Displays the deployed Cloud Run service URL.
+
+---
+
+### **Setup**
+- Add GCP credentials (`BACKEND_DEPLOY_CLOUD_RUN`) as a repository secret.
+![image](https://github.com/user-attachments/assets/c69b4c75-fab3-4986-a22b-954ea837ef21)
+
 
 
 ## User Interaction
