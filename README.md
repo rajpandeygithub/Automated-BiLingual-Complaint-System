@@ -29,7 +29,7 @@ cd Automated-BiLingual-Complaint-System
 #### Step 2: Open the Project in Visual Studio Code or any local termnial app
 Open the project folder (`Automated-BiLingual-Complaint-System`)
 
-## Project Setup
+## Project Architecture
 
 ![Project Architecture Diagram](images/architecture-diagram.jpeg)
 
