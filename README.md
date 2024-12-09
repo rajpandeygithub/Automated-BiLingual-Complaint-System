@@ -62,6 +62,94 @@ To stop and shut down the Docker containers, go to the **Visual Studio Code** te
 docker compose down
 ```
 
+### Steps to Set Up GCP for Replicating the Project
+---
+
+### **1. Create a GCP Project**
+- Go to [Google Cloud Console](https://console.cloud.google.com/).
+- Create a new project:
+  - **Project ID**: Choose a unique name for your project (e.g., `my-project-name`).
+  - **Location**: Choose `us-east1` or your preferred location.
+- **Note**: Save your Project ID, as it will be needed to update configuration files.
+
+---
+
+### **2. Create a Slack Webhook URL**
+- Create an **Incoming Webhook** in your Slack workspace to receive notifications.
+- Save the generated Slack webhook URL.
+
+---
+
+### **3. Store Secrets in GitHub**
+- Go to your repository on GitHub and navigate to **Settings > Secrets and Variables > Actions**.
+- Add the following secrets:
+  - **Slack Webhook URL**:
+    - Key: `SLACK_URL`
+    - Value: Paste the Slack webhook URL.
+  - **GCP Service Account Key**:
+    - Key: `GCP_SA_KEY`
+    - Value: Paste the contents of your service account JSON file (from Step 6).
+
+---
+
+### **4. Enable Required APIs**
+Enable the following APIs in **APIs & Services > Library** in the GCP Console:
+- **Cloud Storage API**
+- **AI Platform Training and Prediction API**
+- **Cloud Run API**
+- **Artifact Registry API**
+- **Cloud Functions API**
+- **Cloud Pub/Sub API**
+  
+![image](https://github.com/user-attachments/assets/ef3b696f-36bc-489e-aa19-5bbb22db405b)
+
+---
+
+### **5. Create a Storage Bucket and Artifact Directory**
+- Go to **Cloud Storage** in the GCP Console.
+- Create a bucket:
+  - **Bucket Name**: `tfx-artifacts` (or a name of your choice).
+  - Choose the same region as your project (e.g., `us-east1`).
+- Create a directory inside the bucket:
+  - **Directory Name**: `pipeline_artifacts`
+  - This will be used to store pipeline artifacts.
+
+---
+
+### **6. Create a Service Account**
+- Go to **IAM & Admin > Service Accounts** in the GCP Console.
+- Create a new service account:
+  - **Name**: Use a descriptive name (e.g., `pipeline-service-account`).
+  - Assign the following roles:
+    - **Owner**
+    - **Editor**
+    - **Cloud Run Admin**
+    - **Artifact Registry Admin**
+- Download the service account key as a JSON file.
+
+---
+
+### **7. Clone the Repository**
+- Clone the project repository to your local machine:
+  ```bash
+  git clone https://github.com/rajpandeygithub/Automated-BiLingual-Complaint-System.git
+  ```
+
+---
+
+### **8. Update Configuration Files**
+- Replace the following in the configuration files:
+  - **Project ID**:
+    - Replace `bilingualcomplaint-system` with your Project ID.
+  - **Region**:
+    - Replace `us-east1` with your chosen location (if different).
+- Files to update:
+  - `.yml` files (CICD pipelines)
+  - Docker configuration files.
+
+---
+
+
 ## Project Overview
 This project implements an automated system for handling customer complaints in the banking domain. Leveraging machine learning, the system analyzes complaints submitted in two languages (English & Hindi), and categorizes them using two distinct classifiers. The first classifier identifies the banking product related to the complaint (e.g., credit card, loan, account services), while the second routes the complaint to the appropriate department for efficient resolution. This solution streamlines complaint management, enhances response times, and significantly improves customer satisfaction by ensuring complaints are swiftly directed to the relevant teams.
 
