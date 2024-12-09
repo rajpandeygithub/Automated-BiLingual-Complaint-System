@@ -358,16 +358,15 @@ Below is the Gantt chart illustrating the pipeline flow after optimization:
 
    ![image](https://github.com/user-attachments/assets/5c5c8f23-06e6-45e8-a4fe-e2a97dbe34e2)
    
-   ![image](https://github.com/user-attachments/assets/3f480236-6392-4ef3-ac65-d5022915ae19)
+   <img width="1198" alt="Screenshot 2024-12-09 at 9 54 33 AM" src="https://github.com/user-attachments/assets/755ffea5-f56d-4847-9fef-90543bef1243">
    
-   ![image](https://github.com/user-attachments/assets/1769d9f2-ef58-40a3-83e9-4f8e037fd68e)
+   <img width="1035" alt="Screenshot 2024-12-09 at 9 52 19 AM" src="https://github.com/user-attachments/assets/951cbb40-3c3e-407c-9a58-5fd340573432">
    
-   ![image](https://github.com/user-attachments/assets/1618e514-367f-4223-b829-55f1c3b4853e)
+   <img width="1043" alt="Screenshot 2024-12-09 at 9 55 17 AM" src="https://github.com/user-attachments/assets/1fb9e2d2-1ef4-41ca-95e6-26ddf7f543de">
    
-   ![image](https://github.com/user-attachments/assets/52757af9-7a15-4146-a083-f273ff67a5ef)
-   
-   ![image](https://github.com/user-attachments/assets/ca715dc8-3836-4d60-92de-e1f1f8a01029)
+   <img width="1194" alt="Screenshot 2024-12-09 at 9 49 21 AM" src="https://github.com/user-attachments/assets/f7f72e49-4340-4f7f-9c59-eb8decbb48b3">
 
+   <img width="1192" alt="Screenshot 2024-12-09 at 9 55 35 AM" src="https://github.com/user-attachments/assets/d06513eb-cdc9-4b7a-8489-d8b900f41ae3">
 
 ## Data Schema & Statistics Generation: 
 
