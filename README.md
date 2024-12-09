@@ -451,15 +451,101 @@ Key Model Features:
 
 ### c. Model Components
 
-Key Components:
- - Data Preprocessing:
-	- TFRecord dataset parsing function (parse_tfrecord_fn) decodes serialized examples.
-	- Dynamic dataset splitting into training and validation subsets.
-- Model Training:
-	- Fine-tunes a Hugging Face transformer model for sequence classification.
-	- Early stopping and learning rate scheduler optimize training.
-- Model Deployment:
-	- Saves the trained model in .keras format and as a complete directory structure for reuse.
+# Bilingual Complaint System - ML Pipeline
+
+This repository implements a machine learning pipeline for processing bilingual complaint data and training a multilingual BERT model for classification. The pipeline uses Google Cloud BigQuery for data extraction, TensorFlow for model training, and Google Cloud AI Platform for model deployment and testing.
+
+## Components
+
+## 1. 'get_data_component'
+This component fetches data from Google BigQuery, processes it, and splits it into training and validation sets. It also sends notifications via email and Slack about the status of the pipeline.
+
+### Key Features:
+- Fetches data from Google BigQuery using a custom SQL query.
+- Performs label encoding on product categories.
+- Splits data into training and validation datasets.
+- Sends a success or failure email based on the outcome.
+- Sends execution details to Slack for monitoring.
+
+---
+
+## 2. 'prepare_data_component'
+This component prepares the data for training by converting the text into a format suitable for BERT-based models using TensorFlow. It tokenizes the text and serializes the data into TensorFlow records.
+
+### Key Features:
+- Loads the preprocessed data.
+- Tokenizes the text using Hugging Face's BERT tokenizer.
+- Creates a TensorFlow dataset and saves it in TFRecord format.
+
+---
+
+## 3. 'train_mbert_model'
+This component trains a multilingual BERT model for sequence classification using TensorFlow. It prepares the data, configures the model, and saves the trained model.
+
+---
+
+### 4. 'test_mbert_model`
+The **Model Testing Component** evaluates the performance of the trained M-BERT model using a test dataset and computes key classification metrics.
+
+#### Key Operations:
+1. Loads the test dataset and parses it.
+2. Loads the trained M-BERT model.
+3. Makes predictions on the test data.
+4. Computes metrics such as precision, recall, and F1 score.
+5. Saves the metrics to a file and sends a Slack notification with the results.
+
+---
+
+### 5. 'log_metrics_to_vertex_ai '
+This component logs metrics to Vertex AI for tracking and monitoring machine learning model performance. It reads the metrics from an input artifact (a JSON file) and logs them to Vertex AI.
+
+## Purpose
+
+This component is designed to streamline the process of logging key metrics from machine learning experiments or models to Vertex AI. This helps teams monitor model performance and experiment results in a centralized location on Google Cloud.
+
+## Key Actions:
+- **Metrics Logging**: Logs metrics such as accuracy, loss, precision, etc., to a Vertex AI run.
+- **Experiment Tracking**: Associates the metrics with a specific experiment for future reference.
+- **Run Management**: Starts and ends a run to ensure that metrics are recorded with timestamps and contextual information.
+
+---
+
+### 6. 'bias_detection'
+The **Bias Detection Component** evaluates the fairness of the trained M-BERT model across different groups, using Fairlearn to calculate metrics like true positive rate, false positive rate, and selection rate.
+
+#### Key Operations:
+1. Loads the test dataset and parses it.
+2. Loads the trained M-BERT model.
+3. Makes predictions on the test data.
+4. Computes fairness metrics using Fairlearn.
+5. Detects bias by comparing the performance across different groups.
+6. Sends an alert to Slack with the bias detection results.
+
+---
+
+### 7. 'model_registration'
+
+The **model registration** component is responsible for uploading and registering models to Vertex AI. It checks if a model with the same display name already exists, and if so, it adds a new version under the existing model. If no model exists, it creates a new model in Vertex AI.
+
+#### Key Actions:
+- **Model Upload**: Uploads the model artifact (e.g., trained model file) to Vertex AI for registration.
+- **Versioning**: If a model with the same display name exists, it creates a new version under the existing model. Otherwise, it creates a new model.
+- **Serving Configuration**: Uses a predefined TensorFlow serving container image for deployment.
+
+---
+
+### 8. 'model_deployment'
+
+The **model deployment** component deploys the registered model to a Vertex AI endpoint. It also handles notifications to team members via email and Slack, providing updates on the success or failure of the deployment process. The component ensures model deployment scalability by setting up traffic splitting and replica counts.
+
+#### Key Actions:
+- **Model Deployment**: Deploys the registered model to an existing or new Vertex AI endpoint.
+- **Endpoint Management**: Checks for an existing endpoint; if none exists, it creates a new one.
+- **Traffic Distribution**: Configures traffic to the deployed model with a specified split between models if necessary.
+- **Notification**: Sends notifications to a list of recipients via email and Slack, reporting deployment success or failure.
+
+---
+
 
 ### d. Model Evaluation
 
