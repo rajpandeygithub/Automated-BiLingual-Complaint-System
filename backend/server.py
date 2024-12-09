@@ -67,24 +67,13 @@ hugging_face_model_name = 'bert-base-multilingual-cased'
 tokenizer = BertTokenizer.from_pretrained(hugging_face_model_name)
  
 # Product Config
-product_labels = [
-    'Credit reporting, credit repair services, or other personal consumer reports',
-    'Debt collection',
-    'Checking or savings account',
-    'Credit card or prepaid card',
-    'Mortgage',
-    'Money transfer, virtual currency, or money service',
-    'Vehicle loan or lease',
-    'Student loan'
-    ]
+product_labels = ['checking or savings account','credit / debt management & repair services', 'credit / prepaid card services','money transfers','mortgage','vehicle loan']
 
-department_labels = [
-    "Customer Relations and Compliance",
-    "Loans and Credit",
-    "Fraud and Security",
-    "Account Services",
-    "Payments and Transactions"
-]
+department_labels =  ['fraud and security',
+ 'customer relations and compliance',
+ 'payments and transactions',
+ 'loans and credit',
+ 'account services']
 
 product_2_idx_map = {label: idx for idx, label in enumerate(product_labels)}
 idx_2_product_map = {idx: label for label, idx in product_2_idx_map.items()}

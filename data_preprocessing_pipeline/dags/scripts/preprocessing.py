@@ -494,23 +494,22 @@ def insert_data_to_bigquery(file_path: str):
 
     dataset = pl.read_parquet(file_path)
     df = dataset.to_pandas()
-    df = df[:500]
 
-    # df.rename(
-    #     columns={"complaint_id": "entity_id", "date_received": "feature_timestamp"},
-    #     inplace=True,
-    # )
+    df.rename(
+        columns={"complaint_id": "entity_id", "date_received": "feature_timestamp"},
+        inplace=True,
+    )
 
-    # df["feature_timestamp"] = pd.to_datetime(df["feature_timestamp"])
+    df["feature_timestamp"] = pd.to_datetime(df["feature_timestamp"])
 
-    # table_ref = f"{project_id}.{dataset_id}.{table_id}"
+    table_ref = f"{project_id}.{dataset_id}.{table_id}"
 
-    # # Configure load job
-    # job_config = bigquery.LoadJobConfig(
-    #     write_disposition=bigquery.WriteDisposition.WRITE_APPEND,  # Options: WRITE_TRUNCATE, WRITE_APPEND, WRITE_EMPTY
-    # )
+    # Configure load job
+    job_config = bigquery.LoadJobConfig(
+        write_disposition=bigquery.WriteDisposition.WRITE_APPEND,  # Options: WRITE_TRUNCATE, WRITE_APPEND, WRITE_EMPTY
+    )
 
-    # # Start the job to upload data
-    # job = client.load_table_from_dataframe(df, table_ref, job_config=job_config)
-    # # Wait for the job to complete
-    # job.result()
+    # Start the job to upload data
+    job = client.load_table_from_dataframe(df, table_ref, job_config=job_config)
+    # Wait for the job to complete
+    job.result()
