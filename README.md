@@ -176,8 +176,8 @@ For API Access: [Link](https://cfpb.github.io/api/ccdb/api.html)
 
 | Attribute Name              | Description                                                                                   | Data Type |
 |-----------------------------|-----------------------------------------------------------------------------------------------|-----------|
-| `complaint_id`              | Unique identifier for each complaint                                                          | Integer     |
-| `date_received`             | Date when CFPB received the complaint                                                          | Datetime      |
+| `entity_id`                 | Unique identifier for each complaint                                                          | Integer     |
+| `feature_timestamp`         | Date when CFPB received the complaint                                                          | Datetime      |
 | `date_resolved`             | Date when the complaint was resolved by the bank                                                          | Integer      |
 | `time_resolved_in_days`     | Duration in days taken to resolve the complaint by the bank                                               | Integer     |
 | `complaint`                 | Consumer's answer to "what happened" from the complaint. Consumers must opt-in to share their narrative. The  narrative is not published unless the consumer consents, and consumers can opt-out at any time. The CFPB takes reasonable steps to scrub personal information from each complaint that could be used to identify the consumer.                                                    | String    |
