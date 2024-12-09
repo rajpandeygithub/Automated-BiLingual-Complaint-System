@@ -801,7 +801,6 @@ This pipeline automates the deployment of the frontend application to Google Clo
 ![image](https://github.com/user-attachments/assets/c69b4c75-fab3-4986-a22b-954ea837ef21)
 
 
-
 ## User Interaction
 
 The **Customer Complaint Portal** allows users to submit complaints, validate inputs, and receive feedback about their concerns. Below is an example of the portal in action:
@@ -829,6 +828,14 @@ After submitting, the system processes the complaint and assigns it to the relev
 ## Backend API
 
 The backend of the **Bilingual Complaint Classification System** is powered by **FastAPI** and deployed on **Google Cloud Run**. It serves as the core processing engine for complaint classification, exposing endpoints for submitting complaints and predicting the relevant department and product.
+
+Features:
+- **Complaint Validation:** Ensures complaints meet language and content criteria.
+- **Data Preprocessing:** Cleans and prepares complaint text for analysis.
+- **Drift Detection:** Identifies deviations in complaint data distribution.
+- **Machine Learning Predictions:** Classifies complaints into product and department categories using Vertex AI.
+- **Data Storage:** Stores processed complaints and predictions in BigQuery.
+- **Logging and Monitoring:** Captures application events and errors using Google Cloud Logging.
 
 ### API Documentation
 The API is documented using **OpenAPI** standards, providing an interactive interface for testing and exploring available endpoints. Below is a snapshot of the `/docs` page:
