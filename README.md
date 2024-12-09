@@ -1,5 +1,13 @@
 # Automated-BiLingual-Complaint-System
 
+## Project Overview
+This project implements an automated system for handling customer complaints in the banking domain. Leveraging machine learning, the system analyzes complaints submitted in two languages (English & Hindi), and categorizes them using two distinct classifiers. The first classifier identifies the banking product related to the complaint (e.g., credit card, loan, account services), while the second routes the complaint to the appropriate department for efficient resolution. This solution streamlines complaint management, enhances response times, and significantly improves customer satisfaction by ensuring complaints are swiftly directed to the relevant teams.
+
+Key features include:
+- Simplified UI for complaint submission.
+- Support for two languages (English, & Hindi).
+- Automatic classification of products and departments using machine learning.
+- Agent assignment based on language proficiency and availability.
 
 ## Project Setup
 
@@ -148,16 +156,6 @@ Enable the following APIs in **APIs & Services > Library** in the GCP Console:
   - Docker configuration files.
 
 ---
-
-
-## Project Overview
-This project implements an automated system for handling customer complaints in the banking domain. Leveraging machine learning, the system analyzes complaints submitted in two languages (English & Hindi), and categorizes them using two distinct classifiers. The first classifier identifies the banking product related to the complaint (e.g., credit card, loan, account services), while the second routes the complaint to the appropriate department for efficient resolution. This solution streamlines complaint management, enhances response times, and significantly improves customer satisfaction by ensuring complaints are swiftly directed to the relevant teams.
-
-Key features include:
-- Simplified UI for complaint submission.
-- Support for two languages (English, & Hindi).
-- Automatic classification of products and departments using machine learning.
-- Agent assignment based on language proficiency and availability.
 
 
 ## Data Acquisition
