@@ -326,7 +326,8 @@ graph TB
 
 Summarizing the entire Airflow Orchestration Graph Below Using Dags:
    ![image](https://github.com/user-attachments/assets/086510ca-59a3-4370-811d-9f99dced6740)
-   <img width="972" alt="Validation Pipeline" src="https://github.com/user-attachments/assets/090ee270-0279-41bd-94cc-c5ba8c4423b8">
+   
+   <img width="1035" alt="Screenshot 2024-12-09 at 9 52 19 AM" src="https://github.com/user-attachments/assets/7754cf14-df8c-46ae-8edd-7933391f0eb1">
    <img width="1194" alt="Data Cleaning Pipeline" src="https://github.com/user-attachments/assets/978f7bf5-5a3e-45b9-a693-9e8c2b0a6e73">
 
 ## Tracking and Logging
