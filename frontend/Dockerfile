@@ -13,6 +13,9 @@ RUN pip install --no-cache-dir -r frontend_requirements.txt
 # Copy the application code into the container
 COPY . .
 
+# Copy the .env file into the container
+COPY .env .env
+
 # Expose port 8080 (required by Cloud Run)
 EXPOSE 8080
 

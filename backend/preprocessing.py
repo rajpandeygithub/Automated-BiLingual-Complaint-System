@@ -8,6 +8,7 @@ from nltk.corpus import stopwords
 from rapidfuzz import process, fuzz
 from bloom_filter2 import BloomFilter
 from fast_langdetect import detect_language
+from google.cloud import logging as gcloud_logging
 
 nltk.download("stopwords")
 abusive_words_path_eng = "https://storage.googleapis.com/mlops-group6-raw-data/profanity_bank_dataset.parquet"
@@ -25,17 +26,20 @@ for word in abusive_words_hindi:
 
 log_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
-# Configure the root logger
-logging.basicConfig(
-    level=logging.INFO,  # Set the logging level
-    format=log_format,  # Set the log format
-    handlers=[
-        logging.StreamHandler(sys.stdout),  # Output logs to stdout
-        logging.FileHandler("app.log"),  # Output logs to a file
-    ],
-)
+# # Configure the root logger
+# logging.basicConfig(
+#     level=logging.INFO,  # Set the logging level
+#     format=log_format,  # Set the log format
+#     handlers=[
+#         logging.StreamHandler(sys.stdout),  # Output logs to stdout
+#         logging.FileHandler("app.log"),  # Output logs to a file
+#     ],
+# )
 
-logger = logging.getLogger("preprocessor_log")
+# logger = logging.getLogger("preprocessor_log")
+
+client = gcloud_logging.Client()
+logger = client.logger("preprocessor-logger")
 
 
 # Define regex patterns for different PII entities
@@ -97,7 +101,16 @@ class DataValidationPipeline:
     def _language_check(self, text: str) -> bool:
         text_language = detect_language(text)
         self.text_language = text_language
-        return text_language in self.allowed_languages
+        language_validation = text_language in self.allowed_languages
+        if not language_validation:
+            logger.log_struct({
+                         "severity": "WARNING",
+                         "message": "Language Not Recognised",
+                         "type": "Language-UNRECOGNISED",
+                         "language": text_language,
+                         "count": 1
+                         })
+        return language_validation
 
     def get_recognised_language(self):
         return self.text_language
@@ -200,10 +213,16 @@ class DataTransformationPipeline:
     def process_text(self, text: str, language: str) -> str:
         processed_text = ""
         if language == "EN":
-            logger.info(f"Preprocessing English Text")
+            logger.log_struct({
+                "severity": "INFO",
+                "message": "Preprocessing English Text"
+                })
             processed_text = self._process_english(text.lower())
         elif language == "HI":
-            logger.info(f"Preprocessing Hindi Text")
+            logger.log_struct({
+                "severity": "INFO",
+                "message": "Preprocessing Hindi Text"
+                })
             processed_text = self._process_hindi(text)
         return processed_text
 

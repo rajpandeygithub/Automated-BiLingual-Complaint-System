@@ -2,7 +2,7 @@ from typing import Dict
 from kfp.dsl import component, Input, Output, Dataset, Model
 
 @component(
-    base_image="tensorflow/tensorflow:2.14.0",
+    base_image="us-docker.pkg.dev/vertex-ai/training/tf-cpu.2-14.py310:latest",
     packages_to_install = [
         'pandas==1.5.3',
         'numpy==1.26.4',
@@ -22,11 +22,66 @@ def train_huggingface_model_component(
     train_prec: float = 0.8,
     batch_size: int = 8,
     max_sequence_length: int = 128,
+    slack_url: str = None,
     ):
   import os
+  import requests
   import tensorflow as tf
   from transformers import TFAutoModelForSequenceClassification
   from datetime import datetime
+
+  def send_slack_message(
+        webhook_url: str,
+        message_str: str,
+        execution_date: str, 
+        execution_time: str, 
+        duration: str,
+        is_success: bool,
+        ):
+    
+    if is_success:
+        color = "#36a64f"
+        pretext = f":large_green_circle: {message_str}"
+    else:
+        color = "FF0000"
+        pretext = f":large_red_circle: {message_str}"
+
+    message = {
+        "attachments": [
+            {
+                "color": color,  # Green color for success
+                "pretext": pretext,
+                "fields": [
+                    {
+                        "title": "Component Name",
+                        "value": "Get Data KubeFlow Component",
+                        "short": True
+                    },
+                    {
+                        "title": "Execution Date",
+                        "value": str(execution_date),
+                        "short": True
+                    },
+                    {
+                        "title": "Execution Time",
+                        "value": str(execution_time),
+                        "short": True
+                    },
+                    {
+                        "title": "Duration",
+                        "value": f"{duration} minutes",
+                        "short": True
+                    }
+                ]
+            }
+        ]
+    }
+
+    try:
+        response = requests.post(webhook_url, json=message)
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        print(e)
 
   # Track the start time of the component execution
   start_time = datetime.now()
@@ -42,6 +97,14 @@ def train_huggingface_model_component(
     return parsed_example['feature'], parsed_example['label']
 
   try:
+
+    if slack_url:
+       send_slack_message(
+          webhook_url=slack_url, message_str=f'KubeFlow Component: Train HuggingFace Model | Model: {huggingface_model_name} started',
+          execution_date=start_time.date(), execution_time=start_time.time(), 
+          duration=0, is_success=True
+          )
+
     record_path = os.path.join(train_data.path, f'{train_data_name}.tfrecord')
     train_dataset = tf.data.TFRecordDataset(record_path)
     train_dataset = train_dataset.map(parse_tfrecord_fn)
@@ -98,6 +161,13 @@ def train_huggingface_model_component(
           epochs=max_epochs,
           callbacks=[early_stopping, lr_scheduler]
           )
+    
+    if slack_url:
+       send_slack_message(
+          webhook_url=slack_url, message_str=f'KubeFlow Component: Train HuggingFace Model | Model: {huggingface_model_name} Successfully Trained', 
+          execution_date=start_time.date(), execution_time=start_time.time(), 
+          duration=(datetime.now() - start_time).total_seconds() / 60, is_success=True
+       )
 
     os.makedirs(model_output.path, exist_ok=True)
 
@@ -109,4 +179,9 @@ def train_huggingface_model_component(
     duration = (end_time - start_time).total_seconds() / 60  # Duration in minutes
 
   except Exception as e:
-    print(e)
+    if slack_url:
+       send_slack_message(
+          webhook_url=slack_url, message_str=f'KubeFlow Component: Train HuggingFace Model | Model: {huggingface_model_name} Failed to Train', 
+          execution_date=start_time.date(), execution_time=start_time.time(), 
+          duration=(datetime.now() - start_time).total_seconds() / 60, is_success=True
+       )

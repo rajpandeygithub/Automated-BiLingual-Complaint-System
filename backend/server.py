@@ -2,7 +2,7 @@ import os
 import uvicorn
 import numpy as np
 import requests
-from google.cloud import aiplatform, logging as gcloud_logging
+from google.cloud import aiplatform, logging as gcloud_logging, bigquery
 from transformers import BertTokenizer
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Request
@@ -11,11 +11,15 @@ from custom_exceptions import ValidationException, DriftException
 from object_models import Complaint, PredictionResponse, ErrorResponse
 from preprocessing import DataValidationPipeline, DataTransformationPipeline
 from inference import make_inference
+from bigquery_operations import insert_to_prediction_table
+
+drift_en_url = os.environ.get('DRIFT_EN_URL')
+drift_hi_url = os.environ.get('DRIFT_HI_URL')
 
 log_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
-client = gcloud_logging.Client()
-logger = client.logger("complaint-portal")
+logger_client = gcloud_logging.Client()
+logger = logger_client.logger("complaint-portal")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -31,7 +35,6 @@ async def lifespan(app: FastAPI):
         "message": "Application shutdown"}
         )
 
-
 validation_checks = {
     "min_words": 5,
     "max_words": 300,
@@ -41,14 +44,20 @@ validation_pipeline = DataValidationPipeline(validation_checks)
 preprocessing_pipeline = DataTransformationPipeline()
 
 # Vertex AI Project Config
-PROJECT_ID = 'bilingualcomplaint-system'
-LOCATION = 'us-east1'
+project_id = os.environ.get('PROJECT_ID')
+location = os.environ.get('LOCATION')
 
 # Endpoint Config
-product_endpoint_id = '5930875671386521600'
-department_endpoint_id = '1069239873640071168'
+product_endpoint_id = os.environ.get('PRODUCT_ENDPOINT_ID')
+department_endpoint_id = os.environ.get('DEPARTMENT_ENDPOINT_ID')
 
-aiplatform.init(project=PROJECT_ID, location=LOCATION)
+# BigQuery Config
+dataset_id = os.environ.get('DATASET_ID')
+prediction_table_id = os.environ.get('PREDICTION_TABLE_ID')
+predicition_table_name = f"{project_id}.{dataset_id}.{prediction_table_id}"
+big_query_client = bigquery.Client(project=project_id)
+
+aiplatform.init(project=project_id, location=location)
 product_endpoint = aiplatform.Endpoint(product_endpoint_id)
 department_endpoint = aiplatform.Endpoint(department_endpoint_id)
 
@@ -82,8 +91,6 @@ idx_2_product_map = {idx: label for label, idx in product_2_idx_map.items()}
 
 department_2_idx_map = {label: idx for idx, label in enumerate(department_labels)}
 idx_2_department_map = {idx: label for label, idx in department_2_idx_map.items()}
-
-cloud_function_url = "https://us-east1-bilingualcomplaint-system.cloudfunctions.net/data_drift"
 
 app = FastAPI(
     title="MLOps - Bilingual Complaint Classification System",
@@ -139,6 +146,7 @@ async def submit_complaint(complaint: Complaint):
                     )
     try:
         is_valid = validation_pipeline.is_valid(text=complaint.complaint_text)
+        complaint_language = validation_pipeline.get_recognised_language()
         if not is_valid:
             logger.log_struct(
                      {
@@ -148,18 +156,24 @@ async def submit_complaint(complaint: Complaint):
                          "count": 1,
                     }
                     )
+            
             raise ValidationException(
                 error_code=1001,
                 error_message="Complaint Recieved failed validation checks",
             )
-        complaint_language = validation_pipeline.get_recognised_language()
+        
         processed_text = preprocessing_pipeline.process_text(
             text=complaint.complaint_text, language=complaint_language
         )
 
         # Drift Detection
+        if complaint_language == 'EN':
+            drift_url = drift_en_url
+        elif complaint_language == 'HI':
+            drift_url = drift_hi_url
+
         response = requests.post(
-            cloud_function_url,
+            drift_url,
             json={"current_text": [processed_text]},  
             headers={"Content-Type": "application/json"}
             )
@@ -231,6 +245,14 @@ async def submit_complaint(complaint: Complaint):
                          "count": 1,
                     }
                     )
+        
+        # Save the records to BigQuery
+
+        insert_to_prediction_table(
+            bqClient=big_query_client, processed_complaint=processed_text,
+            language=complaint_language, product=predicted_product, department=predicted_department, 
+            table_id=predicition_table_name
+        )
 
         return PredictionResponse(
             product=predicted_product,
@@ -242,8 +264,16 @@ async def submit_complaint(complaint: Complaint):
     except ValidationException as ve:
         raise ve
     except Exception as e:
+        logger.log_struct(
+                     {
+                         "severity": "ERROR",
+                         "message": f"Failed to Respond to Request\nException: {e}",
+                         "type": "PREDICTION-ROUTE-ERROR",
+                         "count": 1,
+                    }
+                    )
         raise HTTPException(
-            status_code=500, detail="An unexpected error occurred in prediction route."
+            status_code=500, detail=f"An unexpected error occurred in prediction route.\nError: {e}"
         )
 
 

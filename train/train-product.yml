@@ -1,3 +1,4 @@
+# Project Settings
 project:
   name: bilingual-complaint-classification
   description: Bilingual Complaint Classification Model training
@@ -31,14 +32,44 @@ data_params:
 # Model Configuration
 model_parms:
   num_models: 2
-  model_name: bert-base-multilingual-cased
+  model_names:
+    - bert-base-multilingual-cased
+    # - microsoft/Multilingual-MiniLM-L12-H384
   max_sequence_length: 128
 
 # Training Parameters
 training_params:
-  epochs: 2
+  epochs: 1
   batch_size: 4
 
 # Bias Detection Parameters
 bias_detection_params:
   accuracy_threshold: 0.1
+
+# Deploy Settings
+deploy_params:
+  deploy: True
+  endpoint_machine_type: n1-standard-4
+  min_replica_count: 2
+  max_replica_count: 3
+  performance_score_thresholds:
+    f1_score: 0.2
+
+# Communications
+email_params:
+  sender_email: sucessemailtrigger@gmail.com
+  reciever_email:
+   - hegde.anir@northeastern.edu
+   - nenavath.r@northeastern.edu
+   - pandey.raj@northeastern.edu
+   - khatri.say@northeastern.edu
+   - singh.arc@northeastern.edu
+   - goparaju.v@northeastern.edu
+  password: jomnpxbfunwjgitb
+  email_content:
+    subject: "[Kubeflow Product Training Job] - Submitted"
+    message: |
+      Hi team,
+      
+      A new Kubeflow Training Job is submitted on Vertex AI to train the Product Classifier.
+      Please monitor the pipeline for further updates. 

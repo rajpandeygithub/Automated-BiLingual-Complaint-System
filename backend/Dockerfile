@@ -1,6 +1,19 @@
 # Use the official Python image as the base
 FROM python:3.9-slim
 
+ENV PROJECT_ID=bilingualcomplaint-system
+ENV LOCATION=us-east1
+
+ENV DRIFT_EN_URL=https://us-east1-bilingualcomplaint-system.cloudfunctions.net/data_drift
+ENV DRIFT_HI_URL=https://us-east1-bilingualcomplaint-system.cloudfunctions.net/data-drift-hindi
+
+ENV PRODUCT_ENDPOINT_ID=5930875671386521600
+ENV DEPARTMENT_ENDPOINT_ID=7734848797125115904
+#7987050376257863680
+
+ENV DATASET_ID=MLOps
+ENV PREDICTION_TABLE_ID=predicted_records
+
 # Set the working directory inside the container
 WORKDIR /app
 
