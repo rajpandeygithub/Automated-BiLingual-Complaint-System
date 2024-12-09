@@ -324,8 +324,116 @@ Incorporated a comprehensive data quality assessment and anomaly detection proce
 ![image](https://github.com/user-attachments/assets/b82b8e42-4972-4464-8d64-849fc47d1ba2)
 
 
-  
-## Data Bias Detection and Mitigation
+## CI-CD
+
+### a. Data Source
+
+- Data is fetched in TFRecord format from the provided train_data path.
+- The primary feature (feature) represents tokenized text, and the target label (label) corresponds to the classification category.
+- A TFRecord parsing function converts the data into TensorFlow-compatible format.
+
+<img width="1429" alt="Screenshot 2024-11-19 at 5 33 13 PM" src="https://github.com/user-attachments/assets/4f6b7e25-6ae2-4934-ac3f-d66d28a3ad7c">
+
+### b. Model
+
+The pipeline now integrates a Hugging Face model for sequence classification:
+- Hugging Face Pretrained Model: Defaulting to bert-base-multilingual-cased.
+- Architecture: Fine-tunes the Hugging Face transformer using TensorFlow.
+
+Key Model Features:
+- Customizable Parameters:
+- max_epochs: Default of 2.
+- batch_size: Default of 8.
+- max_sequence_length: Default of 128 tokens.
+- Training Strategy:
+	- Dataset split into training and validation subsets (default split ratio: 80/20).
+	- Batch processing and shuffling for efficient training.
+
+### c. Model Components
+
+Key Components:
+ - Data Preprocessing:
+	- TFRecord dataset parsing function (parse_tfrecord_fn) decodes serialized examples.
+	- Dynamic dataset splitting into training and validation subsets.
+- Model Training:
+	- Fine-tunes a Hugging Face transformer model for sequence classification.
+	- Early stopping and learning rate scheduler optimize training.
+- Model Deployment:
+	- Saves the trained model in .keras format and as a complete directory structure for reuse.
+
+### d. Model Evaluation
+
+Metrics:
+- Accuracy: Measures the percentage of correct predictions.
+- Loss: Monitored for both training and validation datasets during training.
+
+Callbacks:
+- Early Stopping: Halts training if the validation loss doesn’t improve after 3 epochs.
+- ReduceLROnPlateau: Reduces the learning rate by a factor of 0.1 when the validation loss plateaus.
+
+### e. Model Deployment
+
+- Model Output:
+	- Trained model saved in the specified directory under the model_output path.
+	- Supports direct reloading via TensorFlow for inference or additional fine-tuning.
+- Slack Integration:
+	- Can be integrated with Slack for real-time notifications on training progress, errors, and completion.
+- Monitoring:
+	- Validation loss monitored via callbacks to ensure early detection of overfitting or underperformance.
+
+### f. Monitoring and Notifications
+- Slack Integration: Sends real-time notifications for each pipeline execution stage, ensuring immediate updates on success or failure.
+- BigQuery Tracking: Logs metrics and metadata, such as training duration, model performance, and record counts, for centralized analysis.
+
+### g. Automation
+- Pipeline Compilation: The entire machine learning workflow is compiled using Kubeflow and Vertex AI.
+- End-to-End Automation: Submitting the pipeline to Vertex AI automates data preprocessing, model training, evaluation, registration, and deployment, streamlining the entire lifecycle.
+
+### h. Bias Detection
+- Implements checks for model bias by analyzing predictions across different subsets of data (e.g., categories, demographics, or product types) to ensure fairness.
+
+### Model Pipeline:
+
+<img width="309" alt="Screenshot 2024-12-08 at 1 38 42 AM" src="https://github.com/user-attachments/assets/8da032e7-348f-483e-9168-f4fbb9bffca8">
+
+
+### Model Registry:
+
+<img width="1440" alt="Screenshot 2024-12-08 at 1 40 00 AM" src="https://github.com/user-attachments/assets/3e43328e-24c6-4bd1-a22e-6338f3eeb8ff">
+
+### Cloud Run function:
+
+![image](https://github.com/user-attachments/assets/ac3ce5ab-6c88-4c13-bcb8-3ca0b6841b09)
+
+
+
+## Data Drift Detection
+
+Data drift refers to changes in the statistical properties of data over time, which can affect the performance of machine learning models. To address this, we track data drift in the **The Automated BiLingual Complaint System** implements a robust mechanism to monitor data drift, leveraging advanced NLP techniques and cloud infrastructure. Below, we describe each component in detail.
+
+**Cosine Similarity Analysis**:  
+To monitor data drift, we compare incoming complaint data with a reference dataset using cosine similarity. This process helps identify whether new complaints deviate significantly from the patterns in historical data. The steps involved are:
+
+- **Sentence Embeddings**: Each complaint (in English or Hindi) is converted into a high-dimensional vector representation using a pre-trained model 'MiniLM-L12-v2' to generate english embeddings and 'paraphrase-multilingual-MiniLM-L12-v2' to generate hindi embeddings.This embedding captures the semantic meaning of the text, enabling us to analyze similarities at a deeper level than keyword matching.
+
+- **Reference Dataset**: A historical dataset of complaints (baseline data/reference embeddings) is maintained, representing typical complaints that the system has been trained on or encountered in the past. These embeddings are stored in a pickel file in Google Cloud Storage Bucket and is picked up from the cloud function through this path.
+
+- **Cosine Similarity Calculation**: The cosine similarity between each new complaint and the reference dataset is computed. Cosine similarity measures the angular distance between two vectors, providing a score between -1 (completely dissimilar) and 1 (identical).
+A threshold (e.g., 0.55) is defined to detect drift in case of english embeddings, whereas a threshold of (e.g. , 0.7) is used for hindi text drift detection. If the maximum cosine similarity score for a new complaint falls below this threshold, it indicates significant deviation, and the complaint is flagged as "drifted."
+
+- **Most Similar Complaint Identification**: For each incoming complaint, the system identifies the most similar complaint in the reference dataset and logs it along with the similarity score. This provides insight into whether the complaint is a slight variation of an existing pattern or entirely new.
+
+
+**Drift Records in BigQuery**:  
+  Drift events are logged in a BigQuery table, capturing details like:
+  - Timestamp of the event.
+  - Complaint text in English and Hindi.
+  - Product and department classifications.
+  - Maximum cosine similarity score.
+
+ <img width="1675" alt="image" src="https://github.com/user-attachments/assets/0a73ec7d-113b-4c34-b57b-61b05bea49fa">
+
+ ## Data Bias Detection and Mitigation
 
 The project routes customer complaints to the correct product and department based solely on complaint narratives, with demographic or personally identifiable information (PII) redacted to ensure privacy and mitigate demographic bias. This approach aligns with responsible ML fairness principles, ensuring that the model is not biased on demographic factors like location, gender, religion, ethnicity etc. 
 
@@ -438,135 +546,33 @@ The system leverages **Vertex AI Monitoring** for real-time tracking and visuali
 
 Below is a snapshot of the monitoring dashboard:
 
-<img width="1678" alt="image" src="https://github.com/user-attachments/assets/a6c51efc-536a-4c93-92d0-738cf67bd7dc">
-<img width="1674" alt="image" src="https://github.com/user-attachments/assets/3281cf0e-af8c-4415-985a-f915e629edac">
+![image](https://github.com/user-attachments/assets/86286400-5441-4228-8020-02802c90bbac)
+![image](https://github.com/user-attachments/assets/96a9762c-67b8-4f93-b79a-b42d26e1dee8)
 
-## CI-CD
-
-### a. Data Source
-
-- Data is fetched in TFRecord format from the provided train_data path.
-- The primary feature (feature) represents tokenized text, and the target label (label) corresponds to the classification category.
-- A TFRecord parsing function converts the data into TensorFlow-compatible format.
-
-<img width="1429" alt="Screenshot 2024-11-19 at 5 33 13 PM" src="https://github.com/user-attachments/assets/4f6b7e25-6ae2-4934-ac3f-d66d28a3ad7c">
-
-### b. Model
-
-The pipeline now integrates a Hugging Face model for sequence classification:
-- Hugging Face Pretrained Model: Defaulting to bert-base-multilingual-cased.
-- Architecture: Fine-tunes the Hugging Face transformer using TensorFlow.
-
-Key Model Features:
-- Customizable Parameters:
-- max_epochs: Default of 2.
-- batch_size: Default of 8.
-- max_sequence_length: Default of 128 tokens.
-- Training Strategy:
-	- Dataset split into training and validation subsets (default split ratio: 80/20).
-	- Batch processing and shuffling for efficient training.
-
-### c. Model Components
-
-Key Components:
- - Data Preprocessing:
-	- TFRecord dataset parsing function (parse_tfrecord_fn) decodes serialized examples.
-	- Dynamic dataset splitting into training and validation subsets.
-- Model Training:
-	- Fine-tunes a Hugging Face transformer model for sequence classification.
-	- Early stopping and learning rate scheduler optimize training.
-- Model Deployment:
-	- Saves the trained model in .keras format and as a complete directory structure for reuse.
-
-### d. Model Evaluation
-
-Metrics:
-- Accuracy: Measures the percentage of correct predictions.
-- Loss: Monitored for both training and validation datasets during training.
-
-Callbacks:
-- Early Stopping: Halts training if the validation loss doesn’t improve after 3 epochs.
-- ReduceLROnPlateau: Reduces the learning rate by a factor of 0.1 when the validation loss plateaus.
-
-### e. Model Deployment
-
-- Model Output:
-	- Trained model saved in the specified directory under the model_output path.
-	- Supports direct reloading via TensorFlow for inference or additional fine-tuning.
-- Slack Integration:
-	- Can be integrated with Slack for real-time notifications on training progress, errors, and completion.
-- Monitoring:
-	- Validation loss monitored via callbacks to ensure early detection of overfitting or underperformance.
-
-### f. Monitoring and Notifications
-- Slack Integration: Sends real-time notifications for each pipeline execution stage, ensuring immediate updates on success or failure.
-- BigQuery Tracking: Logs metrics and metadata, such as training duration, model performance, and record counts, for centralized analysis.
-
-### g. Automation
-- Pipeline Compilation: The entire machine learning workflow is compiled using Kubeflow and Vertex AI.
-- End-to-End Automation: Submitting the pipeline to Vertex AI automates data preprocessing, model training, evaluation, registration, and deployment, streamlining the entire lifecycle.
-
-### h. Bias Detection
-- Implements checks for model bias by analyzing predictions across different subsets of data (e.g., categories, demographics, or product types) to ensure fairness.
-
-### Model Pipeline:
-
-<img width="309" alt="Screenshot 2024-12-08 at 1 38 42 AM" src="https://github.com/user-attachments/assets/8da032e7-348f-483e-9168-f4fbb9bffca8">
-
-
-### Model Registry:
-
-<img width="1440" alt="Screenshot 2024-12-08 at 1 40 00 AM" src="https://github.com/user-attachments/assets/3e43328e-24c6-4bd1-a22e-6338f3eeb8ff">
-
-### Cloud Run function:
-
-<img width="1440" alt="Screenshot 2024-12-08 at 1 43 12 AM" src="https://github.com/user-attachments/assets/3aa4e0a9-776a-4d73-afb6-19f2a74ef942">
-
-
-## Data Drift Detection
-
-Data drift refers to changes in the statistical properties of data over time, which can affect the performance of machine learning models. To address this, we track data drift in the **The Automated BiLingual Complaint System** implements a robust mechanism to monitor data drift, leveraging advanced NLP techniques and cloud infrastructure. Below, we describe each component in detail.
-
-**Cosine Similarity Analysis**:  
-To monitor data drift, we compare incoming complaint data with a reference dataset using cosine similarity. This process helps identify whether new complaints deviate significantly from the patterns in historical data. The steps involved are:
-
-- **Sentence Embeddings**: Each complaint (in English or Hindi) is converted into a high-dimensional vector representation using a pre-trained model 'MiniLM-L12-v2' to generate english embeddings and 'paraphrase-multilingual-MiniLM-L12-v2' to generate hindi embeddings.This embedding captures the semantic meaning of the text, enabling us to analyze similarities at a deeper level than keyword matching.
-
-- **Reference Dataset**: A historical dataset of complaints (baseline data/reference embeddings) is maintained, representing typical complaints that the system has been trained on or encountered in the past. These embeddings are stored in a pickel file in Google Cloud Storage Bucket and is picked up from the cloud function through this path.
-
-- **Cosine Similarity Calculation**: The cosine similarity between each new complaint and the reference dataset is computed. Cosine similarity measures the angular distance between two vectors, providing a score between -1 (completely dissimilar) and 1 (identical).
-A threshold (e.g., 0.55) is defined to detect drift in case of english embeddings, whereas a threshold of (e.g. , 0.7) is used for hindi text drift detection. If the maximum cosine similarity score for a new complaint falls below this threshold, it indicates significant deviation, and the complaint is flagged as "drifted."
-
-- **Most Similar Complaint Identification**: For each incoming complaint, the system identifies the most similar complaint in the reference dataset and logs it along with the similarity score. This provides insight into whether the complaint is a slight variation of an existing pattern or entirely new.
-
-
-**Drift Records in BigQuery**:  
-  Drift events are logged in a BigQuery table, capturing details like:
-  - Timestamp of the event.
-  - Complaint text in English and Hindi.
-  - Product and department classifications.
-  - Maximum cosine similarity score.
-
- <img width="1675" alt="image" src="https://github.com/user-attachments/assets/0a73ec7d-113b-4c34-b57b-61b05bea49fa">
 
 ## User Interaction
 
 The **Customer Complaint Portal** allows users to submit complaints, validate inputs, and receive feedback about their concerns. Below is an example of the portal in action:
 
 ### 1. Homepage
-The homepage provides a simple interface for users to begin submitting their complaints. Users are greeted with the title and a text area for input.
+The homepage provides a homepage for users to get an overview of the project.
 
-<img width="1679" alt="image" src="https://github.com/user-attachments/assets/0deb5a70-abdb-4d01-8707-7553a0024800">
+![image](https://github.com/user-attachments/assets/3a4c5bb9-0174-43b4-bee8-72a3d83c8d42)
+![image](https://github.com/user-attachments/assets/c751ff8b-31ac-4176-8330-c4fc1cd8929e)
 
 ### 2. Complaint Submission
+It provides a simple interface for users to begin submitting their complaints. Users are greeted with the title and a text area for input.
 Users can type their complaints in the provided text area. For example, here's a complaint involving a credit card issue:
 
-<img width="1676" alt="image" src="https://github.com/user-attachments/assets/3280ceeb-305c-43ee-abe3-78c263eac2ba">
+![image](https://github.com/user-attachments/assets/5caebcc4-309c-4b44-8afe-218deb9fad39)
+
+
 
 ### 3. Complaint Resolution
 After submitting, the system processes the complaint and assigns it to the relevant department or product owner. A success message is displayed along with the assignment details.
 
-<img width="1676" alt="image" src="https://github.com/user-attachments/assets/18c75858-a87d-45dc-aeda-1cc97a0f2715">
+![image](https://github.com/user-attachments/assets/9f6000a2-1de1-4b6f-b506-0e3894c2e53a)
+
 
 ## Backend API
 
