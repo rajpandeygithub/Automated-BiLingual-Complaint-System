@@ -155,8 +155,6 @@ Enable the following APIs in **APIs & Services > Library** in the GCP Console:
   - `.yml` files (CICD pipelines)
   - Docker configuration files.
 
----
-
 
 ## Data Acquisition
 
@@ -190,10 +188,9 @@ For API Access: [Link](https://cfpb.github.io/api/ccdb/api.html)
 | `timely_response`           | Whether the company gave a timely response                                 | String    |
 | `consumer_disputed`         | Whether the consumer disputed the company’s response                                     | String    |
 
-
 ## Data Preprocessing Pipeline
 
-The preprocessing pipeline performs comprehensive data cleaning, filtering, and anonymization on the Consumer Complaint Database from Consumer Financial Protection Bureau (CFPB). The pipeline includes multiple stages to ensure data quality and privacy.
+The preprocessing pipeline performs comprehensive data cleaning, filtering, and anonymization on the Consumer Complaint Database from Consumer Financial Protection Bureau (CFPB). The pipeline includes multiple stages to ensure data quality and privacy. We prefer `Polars` over `Pandas` to process data faster.
 
 ### Preprocessing Steps
 
@@ -201,37 +198,43 @@ The preprocessing pipeline performs comprehensive data cleaning, filtering, and 
 - Loads the raw dataset from Google Cloud Storage
 - Dataset format: Parquet
 
-### 2. Basic Filtering
-- Removes records with insufficient word count
-- Filters records based on date range (March 19, 2015 to July 28, 2024)
-- Converts date fields to proper date format
+### 2. Data Quality Checks
+- We employe the following data quality checks:
+- - Textual Data Validation
+- - Date Field Validation
+- - Numeric Field Validation
+- - Categorical and Format Validation
 
-### 3. Language Detection
+### 3. Schema Statistics Generation
+- Data Types and Casting to ensure consistency
+- Categorical Feature Distribution to learn distribution
+- Yearly Aggregated Statistics - unique products/departments per year
+- Year-over-Year Changes: Complaint counts, Product counts, Department counts
+- Finding Duplicates
+
+### 4.a Language Detection (Parallel)
 - Uses `fast_langdetect` (based on fast-text) for language identification
 - Implements multi-threaded processing for improved performance
 - Retains only English (EN) and Hindi (HI) complaints
 - Removes records in other languages
 
-### 4. Data Cleaning
-- Converts complaint text to lowercase
-- Removes special characters using regex
-- Eliminates duplicate records based on:
-  - Product
-  - Sub-product
-  - Complaint text
-- Removes records with null values in critical fields:
-  - Product
-  - Sub-product
-  - Department
-  - Complaint text
+### 4.b Remove records with minimum words & Outdated dates (Parallel)
+- Removes records with insufficient word count
+- Filters records based on date range (March 19, 2015 to July 28, 2024)
+- Converts date fields to proper date format
 
-### 5. Abusive Content Filtering
-- Removes words from a set of abusive words
-- Implements Bloom filter for abusive words set to efficient filter out abusive words
-- Replaces abusive words with placeholder text
-- Processes text while maintaining sentence structure
+### 5. Aggregate Parallel Tasks
+- Joins filtered datasets on complaint ID
+- Selects and maintains relevant columns
 
-### 6. PII Data Anonymization
+
+### 6 Data Preprocessing:
+- Lowercasing text
+- Remove Duplicates records.
+- Handle Missing Values like filling null values appropriately.
+- Clean specific patterns like `xxxx`, `xxxx2022`, or `abcxxxx` and replace redacted information with standard placeholder.
+
+### 7. PII Data Anonymization
 - Detects and masks personally identifiable information (PII)
 - PII types handled:
   - Bank account numbers
@@ -247,20 +250,25 @@ The preprocessing pipeline performs comprehensive data cleaning, filtering, and 
   - Demographic information (race, ethnicity, gender)
   - Transaction amounts
 
-### 7. Data Aggregation
-- Joins filtered datasets on complaint ID
-- Selects and maintains relevant columns
-
 ### 8. Abusive Content Filtering
 -	Removes words from a set of abusive words
 -	Implements Bloom filter for efficient filtering
 -	Replaces abusive words with placeholder text
 -	Processes text while maintaining sentence structure
 
-### 9. Success Email Trigger
+
+### 9. Standardize Product labels
+- Excludes records where the ‘product’ column is labeled as ‘other financial service’, as this classification is overly broad and lacks specificity.
+- Standardized categories using a predefined dictionary (product_map), ensuring synonymous or similar product types are grouped under a consistent label.
+
+
+### 10. Insert Into BigQuery
+- Inset the clean dataset into BigQuery warehouse
+
+### 11. Success Email Trigger
 - Once all the pipelines have successfully run, a success email is triggered to notify stakeholders of the pipeline completion
 
-### 10. Slack Alerts Integration
+### 12. Slack Alerts Integration
 - On every DAG success and failure, we trigger a slack notification a private channel in the MLOps workspace.
 ![image](https://github.com/user-attachments/assets/324c90ac-e6fa-40c5-a61e-8a9e3c138bf6)
 
