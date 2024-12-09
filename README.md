@@ -15,8 +15,9 @@ Key features include:
 - Ensure you have **Docker** installed.
 - Ensure you have **Visual Studio Code** installed.
 - Allocate sufficient resources to Docker (e.g., memory, CPU) to ensure the project runs smoothly.
+- GCP Project setup (We provide details below)
 
-### Step-by-Step Guide
+### Step-by-Step Project Setup Guide
 
 #### Step 1: Clone the Repository
 Clone the repository to your local machine and navigate into the project directory:
@@ -25,52 +26,63 @@ git clone https://github.com/rajpandeygithub/Automated-BiLingual-Complaint-Syste
 cd Automated-BiLingual-Complaint-System
 ```
 
-#### Step 2: Open the Project in Visual Studio Code
-Open the project folder (`Automated-BiLingual-Complaint-System`) in **Visual Studio Code**.
+#### Step 2: Open the Project in Visual Studio Code or any local termnial app
+Open the project folder (`Automated-BiLingual-Complaint-System`)
 
-#### Step 3: Initialize and Start Docker Containers
-**Note: All necessary libraries are listed in the `requirements.txt` file, making it easy to install dependencies automatically. This file is also used in the `docker-compose.yaml` setup to ensure all dependencies are installed when running the project.**
+---
 
-Run the following commands in your Visual Studio Code terminal to initialize and start the Docker containers for Airflow:
+### Data Preprocessing Setup
+The Data Preprocessing Pipeline built using `AirFlow` and is present as an Directed Acyclic Graph. All necessary libraries are listed in the `requirements.txt` file. This file is also used in the `docker-compose.yaml` setup to ensure all dependencies are installed when running the project.
+
+The following are the steps to start the data preprocessing pipeline:
+
+#### Step 1: Initialize Docker Compose:
+
+```bash 
+cd data_preprocessing_pipeline/
+```
 
 1. Initialize Airflow:
-   ```bash
-   docker compose up airflow-init
-   ```
+```bash
+docker compose up airflow-init
+```
 2. Start all containers:
-   ```bash
-   docker compose up
-   ```
+```bash
+docker compose up
+```
 
-#### Step 4: Access the Airflow Web Interface
+#### Step 2: Access the Airflow Web Interface
 Once the containers are up and running, open your browser and go to:
 ```
 http://localhost:8080/home
 ```
 Login with default username password:
 
-**Username: airflow2**
+**Username: airflow**
 
-**Password: airflow2**
+**Password: airflow**
 
-#### Step 5: Enable and Run DAGs
+#### Step 3: Enable and Run DAGs
+
 In the Airflow web interface:
 1. Enable the toggles for all DAGs to activate them.
 2. **First-time Setup**: If this is your first time running the DAGs, they should start automatically.
 ![image](https://github.com/user-attachments/assets/59721744-b1eb-435a-a7c8-365cac76f783)
 
-3. **Subsequent Runs**: If the DAGs have been run before, trigger the `Data_Preprocessing_INIT` DAG manually. This will initiate a sequence:
-   - `Data_Preprocessing_INIT` will trigger `data_validation_trigger`, which will, in turn, trigger the `Data_Validation_Pipeline`.
+3. **Subsequent Runs**: If the DAGs have been run before, trigger the `Data_Preprocessing_INIT` DAG **manually**. This will initiate a sequence:
+   - `Data_Preprocessing_INIT` will trigger `Data_Validation_Pipeline`, which will, in turn, trigger the `Data_Cleaning_Pipeline`.
 ![image](https://github.com/user-attachments/assets/23bfa4cd-d7d8-4b91-9993-966873143c04)
 
 
-#### Step 6: Shut Down Docker Containers
-To stop and shut down the Docker containers, go to the **Visual Studio Code** terminal and run:
+#### Step 4: Shut Down Docker Containers
+To stop and shut down the Docker containers, go to the terminal and run:
 ```bash
 docker compose down
 ```
+\
+Next, we build the solution on Google Cloud Platform (GCP) so we recommend GCP for reproducability.
 
-### Steps to Set Up GCP for Replicating the Project
+### GCP Setup Steps:
 ---
 
 ### **1. Create a GCP Project**
@@ -78,7 +90,8 @@ docker compose down
 - Create a new project:
   - **Project ID**: Choose a unique name for your project (e.g., `my-project-name`).
   - **Location**: Choose `us-east1` or your preferred location.
-- **Note**: Save your Project ID, as it will be needed to update configuration files.
+  - **Setup a Billing Account** in GCP.
+- **Note**: Save your Project ID and Location, as it will be needed to update configuration files.
 
 ---
 
@@ -137,15 +150,7 @@ Enable the following APIs in **APIs & Services > Library** in the GCP Console:
 
 ---
 
-### **7. Clone the Repository**
-- Clone the project repository to your local machine:
-  ```bash
-  git clone https://github.com/rajpandeygithub/Automated-BiLingual-Complaint-System.git
-  ```
-
----
-
-### **8. Update Configuration Files**
+### **7. Update Configuration Files**
 - Replace the following in the configuration files:
   - **Project ID**:
     - Replace `bilingualcomplaint-system` with your Project ID.
@@ -361,10 +366,6 @@ Below is the Gantt chart illustrating the pipeline flow after optimization:
    ![image](https://github.com/user-attachments/assets/52757af9-7a15-4146-a083-f273ff67a5ef)
    
    ![image](https://github.com/user-attachments/assets/ca715dc8-3836-4d60-92de-e1f1f8a01029)
-
-
-
-
 
 
 ## Data Schema & Statistics Generation: 
