@@ -31,7 +31,7 @@ Open the project folder (`Automated-BiLingual-Complaint-System`)
 
 ## Project Setup
 
-![Project Architecture Diagram](images/architecutre-diagram.jpeg)
+![Project Architecture Diagram](images/architecture-diagram.jpeg)
 
 ---
 
